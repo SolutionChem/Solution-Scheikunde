@@ -174,7 +174,6 @@
   .pse .nietmetaal { background: var(--nietmetaal); }
   .pse .metalloide { background: var(--metalloide); }
   .pse .metaal { background: var(--metaal); }
-  .pse .el.buiten { opacity: .45; }
   .pse .leegvak { border: 1px dashed #2b2b2b; margin: 0 -1px -1px 0; }
   .pse .pse-legenda {
     grid-column: 5 / span 9; grid-row: 2 / span 2; display: flex; flex-wrap: wrap;
@@ -1441,7 +1440,7 @@ document.getElementById("s-stop").addEventListener("click", () => spelScherm("st
 document.getElementById("s-leg").addEventListener("click", () => { sp.atomen.forEach(a => a.fout = false); spelLeg(); });
 /* ===================== periodiek systeem =====================
    Hetzelfde periodiek systeem als in Bouw een atoom (§1.2): groep- en periodenummers,
-   niet-metaal / metalloïde / metaal, en t/m calcium (atoomnummer 20) helder. */
+   niet-metaal / metalloïde / metaal. Alle elementen even duidelijk, zonder markering. */
 const SYMBOLEN = ("H He Li Be B C N O F Ne Na Mg Al Si P S Cl Ar K Ca Sc Ti V Cr Mn Fe Co Ni Cu Zn " +
   "Ga Ge As Se Br Kr Rb Sr Y Zr Nb Mo Tc Ru Rh Pd Ag Cd In Sn Sb Te I Xe Cs Ba La Ce Pr Nd Pm Sm " +
   "Eu Gd Tb Dy Ho Er Tm Yb Lu Hf Ta W Re Os Ir Pt Au Hg Tl Pb Bi Po At Rn Fr Ra Ac Th Pa U Np Pu " +
@@ -1463,7 +1462,6 @@ const NAMEN = ["Waterstof", "Helium", "Lithium", "Beryllium", "Boor", "Koolstof"
   "Darmstadtium", "Roentgenium", "Copernicium", "Nihonium", "Flerovium", "Moscovium", "Livermorium",
   "Tennessine", "Oganesson"];
 
-const MAX_Z = 20;
 const NIET_METAAL = [1, 2, 6, 7, 8, 9, 10, 15, 16, 17, 18, 34, 35, 36, 53, 54, 86, 118];
 const METALLOIDE = [5, 14, 32, 33, 51, 52, 84, 85, 117];
 const naam = (z) => NAMEN[z - 1] || "";
@@ -1486,8 +1484,8 @@ function positie(z) {
   return [7, z - 100];
 }
 
-function pseHTML({ markeer = 0, klikbaar = false, beperkt = false } = {}) {
-  let s = `<div class="pse-wrap ${klikbaar ? "klik" : ""}"><div class="pse ${klikbaar ? "klikbaar" : ""}" role="group" aria-label="Periodiek systeem">`;
+function pseHTML() {
+  let s = `<div class="pse-wrap"><div class="pse" role="group" aria-label="Periodiek systeem">`;
   for (let g = 1; g <= 18; g++) s += `<div class="gnr" style="grid-row:1;grid-column:${g + 1}">${g}</div>`;
   for (let p = 1; p <= 7; p++) s += `<div class="pnr" style="grid-row:${p + 1};grid-column:1">${p}</div>`;
   s += `<div class="pse-legenda">
@@ -1499,14 +1497,7 @@ function pseHTML({ markeer = 0, klikbaar = false, beperkt = false } = {}) {
   for (let z = 1; z <= SYMBOLEN.length; z++) {
     const [rij, kolom] = positie(z);
     const r = rij === "f1" ? 10 : rij === "f2" ? 11 : rij + 1;
-    const binnen = !beperkt || z <= MAX_Z;
-    const cls = `el ${categorie(z)} ${binnen ? "binnen" : "buiten"} ${z === markeer ? "markeer" : ""}`;
-    const stijl = `grid-row:${r};grid-column:${kolom + 1}`;
-    if (klikbaar && binnen) {
-      s += `<button type="button" class="${cls}" style="${stijl}" data-z="${z}" aria-label="${naam(z)}">${SYMBOLEN[z - 1]}</button>`;
-    } else {
-      s += `<div class="${cls}" style="${stijl}" title="${naam(z)}">${SYMBOLEN[z - 1]}</div>`;
-    }
+    s += `<div class="el ${categorie(z)}" style="grid-row:${r};grid-column:${kolom + 1}" title="${naam(z)}">${SYMBOLEN[z - 1]}</div>`;
   }
   return s + `</div></div>`;
 }
@@ -1515,7 +1506,7 @@ const psKaart = document.getElementById("s-ps-kaart");
 document.getElementById("s-ps-aan").addEventListener("change", e => {
   psKaart.hidden = !e.target.checked;
   if (!e.target.checked) return;
-  if (!psKaart.dataset.klaar) { document.getElementById("s-ps").innerHTML = pseHTML({ beperkt: true }); psKaart.dataset.klaar = "1"; }
+  if (!psKaart.dataset.klaar) { document.getElementById("s-ps").innerHTML = pseHTML(); psKaart.dataset.klaar = "1"; }
   psKaart.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "nearest" });
 });
 // het speelveld wordt pas opgebouwd na Start (dan is de breedte van het veld bekend)

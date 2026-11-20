@@ -47,7 +47,7 @@ materialen/<jaar>/h<nr>/<naam>/index.html   eigen animaties en bestanden
 - Laat bij een overgang naar een andere weergave het model staan en zet de nieuwe weergave ernaast (bijv. atoommodel → structuurformule), zodat leerlingen ze kunnen vergelijken.
 - Slepen en tikken: gebruik `pointerdown`/`pointerup` met `touch-action: none` op het speelveld, niet `click`; op touchschermen valt de eerste tik na het slepen anders weg.
 - Scheikundig correct: controleer gegevens (atoommassa's, elektronenverdeling, formules) tegen de Binas/het boek.
-- Periodiek systeem in een animatie of spel: gebruik dat van *Bouw een atoom* (§1.2: groep- en periodenummers, niet-metaal/metalloïde/metaal, t/m calcium helder). Het spel *Bouw een molecuul* heeft er een kopie van (schakelaar "Toon het periodiek systeem"); pas ze samen aan.
+- Periodiek systeem in een animatie of spel: gebruik dat van *Bouw een atoom* (§1.2: groep- en periodenummers, niet-metaal/metalloïde/metaal). Het spel *Bouw een molecuul* heeft er een kopie van (schakelaar "Toon het periodiek systeem"), daar onbewerkt: alle elementen even duidelijk, niets vervaagd of gemarkeerd; pas ze samen aan.
 - Na het maken: voeg het materiaal toe in `data.js` bij het juiste hoofdstuk, met de paragrafen in `paragrafen`.
 
 ## Eigen materialen, geen externe bronnen

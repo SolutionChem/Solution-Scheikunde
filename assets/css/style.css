@@ -403,7 +403,6 @@ h1, h2, h3 { line-height: 1.2; color: var(--navy-800); }
   background: var(--wit);
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(11,26,51,.1);
-  border-top: 4px solid var(--k);
   padding: 14px 16px 14px;
   display: flex; flex-direction: column; gap: 8px;
   color: inherit;

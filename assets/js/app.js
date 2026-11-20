@@ -262,7 +262,7 @@
     const typen = typenVan(m);
     const delen = m.onderdelen || [];
     return `
-      <article class="mat-kaart${delen.length ? " breed" : ""}" data-typen="${esc(typen.join(" "))}" style="--k:${type(typen[0]).kleur}">
+      <article class="mat-kaart${delen.length ? " breed" : ""}" data-typen="${esc(typen.join(" "))}">
         <div class="mat-labels">
           ${typen.map(chip).join("")}
           ${m.paragrafen ? `<span class="par-tag">${paragraafTekst(h, m.paragrafen)}</span>` : ""}

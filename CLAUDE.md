@@ -36,6 +36,7 @@ materialen/<jaar>/h<nr>/<naam>/index.html   eigen animaties en bestanden
 - Kleuren (CSS-variabelen in `style.css`): navy `#11264a` / `#163a63`, lichtblauw `#dbe8f5` / `#eef4fb`. Hergebruik de variabelen en de klasse `.tegel`; voer geen nieuwe hoofdkleuren in.
 - Lettertypen: Inter (tekst), Oswald (koppen en labels in hoofdletters).
 - Paragraafkoppen gebruiken de navy `.balk`, zoals in de inhoudsopgave van het boek.
+- De soort materiaal (animatie, simulatie, oefening, …) zie je alleen aan de gekleurde labels (`.chip`). Tegels krijgen geen gekleurde rand of balk per soort.
 
 ## Eigen animaties (materialen/…/index.html)
 - Eén zelfstandig HTML-bestand per animatie (CSS/JS inline), zonder externe afhankelijkheden waar mogelijk. Voorbeeld en referentie: `materialen/3hv/h1/atoommodel/index.html`.

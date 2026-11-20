@@ -96,6 +96,12 @@ Het venster op de materiaalpagina wordt dan bijna schermvullend.
 
 Zet het bestand in de juiste `materialen/...`-map en gebruik `type: "document"` met `url: "materialen/…/bestand.pdf"`.
 
+### Na het aanpassen van een animatie of simulatie
+
+Browsers bewaren pagina's een tijdje in hun geheugen (cache). Verhoog daarom bovenaan `data.js` het
+veld `versie` (bijvoorbeeld naar de datum van vandaag) als je een bestand in `materialen/` hebt aangepast.
+Leerlingen krijgen dan meteen de nieuwe versie te zien.
+
 ### Soorten materiaal
 
 Bovenaan `data.js` staan de soorten (`animatie`, `simulatie`, `video`, `oefening`, `document`, `link`) met hun kleur.

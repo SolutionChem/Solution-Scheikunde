@@ -89,6 +89,11 @@
   .m-bol { fill: var(--metaal); stroke: #a88d2c; stroke-width: 2; }
   .m-tekst { font-size: 22px; font-weight: 700; fill: #1b1b1b; text-anchor: middle; dominant-baseline: central; }
   .vrij { fill: var(--valentie); stroke: #fff; stroke-width: 2; }
+  /* covalente binding */
+  .paar { fill: none; stroke: var(--navy3); stroke-width: 2; stroke-dasharray: 4 3; }
+  .sf-lijn { stroke: var(--navy); stroke-width: 5; stroke-linecap: round; }
+  .sf-sym { font-size: 52px; font-weight: 700; fill: var(--navy); text-anchor: middle; dominant-baseline: central; }
+  .lab3 { font-size: 19px; font-weight: 600; fill: var(--navy3); text-anchor: middle; }
   .ion-tekst { font-size: 26px; font-weight: 700; fill: #1b1b1b; text-anchor: middle; dominant-baseline: central; }
 
   @media (max-width: 760px) {
@@ -107,7 +112,7 @@
 <nav class="tabs" role="tablist" aria-label="Soort binding">
   <button role="tab" data-tab="ion" aria-selected="true">Ionbinding</button>
   <button role="tab" data-tab="metaal" aria-selected="false">Metaalbinding</button>
-  <button role="tab" data-tab="covalent" aria-selected="false">Covalente binding<span class="binnenkort">(binnenkort)</span></button>
+  <button role="tab" data-tab="covalent" aria-selected="false">Covalente binding</button>
 </nav>
 
 <main class="scherm">
@@ -175,10 +180,35 @@
     </div>
   </section>
 
-  <!-- ===== later: covalente binding ===== -->
-  <section data-paneel="covalent" class="kaart leeg" hidden>
-    <h2>Covalente binding</h2>
-    <p>Deze simulatie komt binnenkort.</p>
+  <!-- ===== Covalente binding ===== -->
+  <section data-paneel="covalent" class="app" hidden>
+    <div class="kaart podium">
+      <svg id="c-tekening" class="tekening" role="img" aria-label="Atoommodellen die samen een molecuul vormen"></svg>
+      <div class="onderschrift" id="c-onderschrift" aria-live="polite"></div>
+    </div>
+    <div class="paneel">
+      <div class="kaart kies">
+        <h2>Kies een molecuul</h2>
+        <select id="c-keuze" aria-label="Molecuul"></select>
+        <div class="knoppen">
+          <button class="hoofd" id="c-start">▶ Start</button>
+          <button id="c-opnieuw">↺ Opnieuw</button>
+        </div>
+      </div>
+      <div class="kaart uitleg">
+        <h2>Wat gebeurt er?</h2>
+        <p class="stap" id="c-stap"></p>
+      </div>
+      <div class="kaart leg">
+        <h2>Legenda</h2>
+        <div class="legenda">
+          <div><span class="stip" style="background:var(--kern)"></span>Kern (protonen en neutronen)</div>
+          <div><span class="stip" style="background:var(--elektron)"></span>Elektron</div>
+          <div><span class="stip" style="background:var(--valentie)"></span>Valentie-elektron (buitenste schil)</div>
+          <div><span class="bol" style="background:transparent;border:2px dashed var(--navy3);border-radius:40%"></span>Gedeeld elektronenpaar = atoombinding</div>
+        </div>
+      </div>
+    </div>
   </section>
 </main>
 
@@ -189,6 +219,7 @@ document.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click
   document.querySelectorAll("[data-paneel]").forEach(p => p.hidden = p.dataset.paneel !== b.dataset.tab);
   if (b.dataset.tab !== "ion") pauzeer();
   if (b.dataset.tab !== "metaal") metaalPauze();
+  if (b.dataset.tab !== "covalent") covPauze();
 }));
 // ?tab=metaal (of covalent) opent meteen dat tabblad; zo kan dezelfde simulatie bij meer paragrafen staan
 window.addEventListener("DOMContentLoaded", () => {
@@ -468,8 +499,9 @@ function teksten() {
   let s, o;
   if (t === 0) {
     const vol = verdeling(Em.z).at(-2); // de schil onder de buitenste: 8, of 2 bij lithium
-    s = `${hoofdletter(Em.naam)} is een metaal met ${vm} ${meervoud(vm, "valentie-elektron", "valentie-elektronen")}. ` +
-        `Als het ${vm === 1 ? "dat elektron" : "die elektronen"} afstaat, wordt de schil eronder de buitenste schil, en die is al vol (${vol}). ` +
+    s = `Atomen worden stabiel met 8 elektronen in hun buitenste schil: dat heet de <b>octetregel</b>. ` +
+        `${hoofdletter(Em.naam)} is een metaal met ${vm} ${meervoud(vm, "valentie-elektron", "valentie-elektronen")}. ` +
+        `Als het ${vm === 1 ? "dat elektron" : "die elektronen"} afstaat, wordt de schil eronder de buitenste schil, en die is al vol (${vol}${vol === 2 ? ", bij lithium is de K-schil met 2 al vol" : ""}). ` +
         `${hoofdletter(Ex.naam)} is een niet-metaal met ${vx} valentie-elektronen; het heeft er nog ${I.qx} nodig voor een volle buitenste schil (8). ` +
         `Klik op <b>Start</b>.`;
     o = `<b>${I.formule}</b> · ${I.naam}${I.extra ? " (" + I.extra + ")" : ""}`;
@@ -481,7 +513,7 @@ function teksten() {
     o = `Elektron ${Math.max(bezig, 1)} van ${I.overgedragen} gaat van ${I.m} naar ${I.x} · <b>${klaar} ${meervoud(klaar, "elektron", "elektronen")} overgedragen</b>`;
   } else if (t < S.tB) {
     s = `Alle elektronen zijn overgedragen. Elk ${I.m}-atoom is nu een <b>${ionM}</b>-ion en elk ${I.x}-atoom een <b>${ionX}</b>-ion. ` +
-        `Alle ionen hebben nu een volle buitenste schil.`;
+        `Alle ionen hebben nu 8 elektronen in hun buitenste schil${I.m === "Li" ? " (Li⁺ heeft er 2: een volle K-schil)" : ""}: ze voldoen aan de <b>octetregel</b>.`;
     o = `<b>${I.overgedragen} ${meervoud(I.overgedragen, "elektron", "elektronen")} overgedragen</b> · ontstaan: ${I.nm} × ${ionM} en ${I.nx} × ${ionX}`;
   } else if (t < S.tEind) {
     s = `Positieve en negatieve ionen trekken elkaar aan. Ze gaan tegen elkaar aan liggen: zo ontstaat een zout.`;
@@ -574,8 +606,8 @@ function mBouw() {
       const h = -Math.PI / 4 + (i - (v - 1) / 2) * 0.9;
       const p = pol(x, y, MR_ATOOM, h);
       const el = maak("circle", { class: "vrij", cx: p.x, cy: p.y, r: 7.5, opacity: 0 }, eLaag);
-      const hoekV = Math.random() * 2 * Math.PI;
-      ms.elektronen.push({ el, x: p.x, y: p.y, vx: Math.cos(hoekV), vy: Math.sin(hoekV), los: MT.los + Math.random() * 1.8, vast: true });
+      // begint naar buiten gericht, weg van het eigen atoom
+      ms.elektronen.push({ el, x: p.x, y: p.y, vx: Math.cos(h) * 40, vy: Math.sin(h) * 40, zin: h, los: MT.los + Math.random() * 1.8 });
     }
   }
   const b = ms.grens;
@@ -586,19 +618,44 @@ function mBouw() {
 }
 
 function mBeweeg(dt) {
-  const b = ms.grens, SNEL = 80;
-  ms.elektronen.forEach(e => {
-    if (ms.t < e.los) return;
-    e.vast = false;
-    // willekeurig bijsturen, met vaste snelheid; terugkaatsen aan de rand van het metaal
-    const h = Math.atan2(e.vy, e.vx) + (Math.random() - 0.5) * 3 * dt;
-    e.vx = Math.cos(h); e.vy = Math.sin(h);
+  // Geen echte natuurkunde, wel een natuurlijk ogende beweging:
+  // - elk elektron heeft een langzaam draaiende "zin" om een kant op te gaan;
+  // - positieve ionen trekken zwak aan (de baan buigt om de ionen heen), maar te dichtbij duwen ze terug;
+  // - elektronen stoten elkaar af;
+  // - bij de rand van het metaal buigen ze geleidelijk om in plaats van te botsen.
+  const b = ms.grens, RAND = 75, MAX = 110, MIN = 45;
+  const losse = ms.elektronen.filter(e => ms.t >= e.los);
+  const rIon = ms.t >= MT.ion ? MR_ION : MR_ATOOM;
+  losse.forEach(e => {
+    let ax = 0, ay = 0;
+    e.zin += (Math.random() - 0.5) * 5 * Math.sqrt(dt);
+    ax += Math.cos(e.zin) * 45; ay += Math.sin(e.zin) * 45;
+    const duw = (d) => d < RAND ? 420 * Math.pow(1 - Math.max(d, 0) / RAND, 2) : 0;
+    ax += duw(e.x - b.x0) - duw(b.x1 - e.x);
+    ay += duw(e.y - b.y0) - duw(b.y1 - e.y);
+    ms.atomen.forEach(a => {
+      const dx = a.x - e.x, dy = a.y - e.y, d2 = dx * dx + dy * dy;
+      if (d2 > 160 * 160) return;
+      const d = Math.sqrt(d2) || 1;
+      let f = 230000 / (d2 + 2500);                       // aantrekking
+      if (d < rIon + 14) f -= 900 * (1 - d / (rIon + 14)); // niet ín het ion
+      ax += f * dx / d; ay += f * dy / d;
+    });
+    losse.forEach(o => {
+      if (o === e) return;
+      const dx = e.x - o.x, dy = e.y - o.y, d2 = dx * dx + dy * dy;
+      if (d2 > 48 * 48 || d2 === 0) return;
+      const d = Math.sqrt(d2), f = 700 * (1 - d / 48);
+      ax += f * dx / d; ay += f * dy / d;
+    });
+    e.vx += ax * dt; e.vy += ay * dt;
+    const v = Math.hypot(e.vx, e.vy) || 1, doel = Math.min(MAX, Math.max(MIN, v));
+    e.vx *= doel / v; e.vy *= doel / v;
     const op = Math.min(1, (ms.t - e.los) / 1.5); // rustig op gang komen
-    e.x += e.vx * SNEL * op * dt; e.y += e.vy * SNEL * op * dt;
-    if (e.x < b.x0) { e.x = b.x0; e.vx = Math.abs(e.vx); }
-    if (e.x > b.x1) { e.x = b.x1; e.vx = -Math.abs(e.vx); }
-    if (e.y < b.y0) { e.y = b.y0; e.vy = Math.abs(e.vy); }
-    if (e.y > b.y1) { e.y = b.y1; e.vy = -Math.abs(e.vy); }
+    e.x += e.vx * op * dt; e.y += e.vy * op * dt;
+    // vangnet: binnen het metaal blijven
+    e.x = Math.max(b.x0 - 10, Math.min(b.x1 + 10, e.x));
+    e.y = Math.max(b.y0 - 10, Math.min(b.y1 + 10, e.y));
   });
 }
 
@@ -682,6 +739,257 @@ const mKeuze = document.getElementById("m-keuze");
 METALEN.forEach((m, i) => mKeuze.add(new Option(`${hoofdletter(m.naam)} (${m.sym})`, i)));
 mKeuze.addEventListener("change", () => { ms.metaal = METALEN[mKeuze.value]; mBouw(); });
 mBouw();
+
+/* ===================== COVALENTE BINDING ===================== */
+// Atomen met valentie-elektronen gaan naar elkaar toe; ongepaarde elektronen vormen
+// gedeelde elektronenparen (atoombindingen). Daarna: de structuurformule.
+const CATOOM = {
+  H:  { z: 1,  n: 0,  naam: "waterstof" },
+  C:  { z: 6,  n: 6,  naam: "koolstof" },
+  N:  { z: 7,  n: 7,  naam: "stikstof" },
+  O:  { z: 8,  n: 8,  naam: "zuurstof" },
+  Cl: { z: 17, n: 18, naam: "chloor" }
+};
+// atomen: [symbool, ouder, richting in graden (0 = rechts, 90 = omlaag), bindingsorde]
+const MOLECULEN = [
+  { formule: "H₂",  naam: "waterstof",        atomen: [["H"], ["H", 0, 0, 1]] },
+  { formule: "Cl₂", naam: "chloor",           atomen: [["Cl"], ["Cl", 0, 0, 1]] },
+  { formule: "HCl", naam: "waterstofchloride", atomen: [["H"], ["Cl", 0, 0, 1]] },
+  { formule: "H₂O", naam: "water",            atomen: [["O"], ["H", 0, 142, 1], ["H", 0, 38, 1]] }, // met een knik van ± 104°
+  { formule: "NH₃", naam: "ammoniak",         atomen: [["N"], ["H", 0, 180, 1], ["H", 0, 0, 1], ["H", 0, 90, 1]] },
+  { formule: "CH₄", naam: "methaan",          atomen: [["C"], ["H", 0, 180, 1], ["H", 0, 0, 1], ["H", 0, 270, 1], ["H", 0, 90, 1]] },
+  { formule: "O₂",  naam: "zuurstof",         atomen: [["O"], ["O", 0, 0, 2]] },
+  { formule: "CO₂", naam: "koolstofdioxide",  atomen: [["C"], ["O", 0, 180, 2], ["O", 0, 0, 2]] },
+  { formule: "N₂",  naam: "stikstof",         atomen: [["N"], ["N", 0, 0, 3]] }
+];
+const OVERLAP = { 1: 20, 2: 30, 3: 30 }, SPREID = 150, SF_LENGTE = 105;
+const bindAfstand = b => b.a.R + b.b.R - OVERLAP[b.orde];
+const CT = { weg: 1.2, samen0: 1.5, samen1: 5.5, paren: 6.0, formule: 13.5, eind: 16 };
+const cs = { mol: MOLECULEN[3], t: 0, speelt: false, vorige: null };
+const csvg = document.getElementById("c-tekening");
+const covalentie = sym => sym === "H" ? 1 : 8 - verdeling(CATOOM[sym].z).at(-1);
+const graden = g => g * Math.PI / 180;
+
+function cBouw() {
+  csvg.innerHTML = "";
+  const M = cs.mol;
+  // ----- atomen en bindingen -----
+  const at = M.atomen.map(([sym]) => {
+    const sch = verdeling(CATOOM[sym].z);
+    return { sym, sch, R: R[sch.length], v: sch.at(-1), cov: covalentie(sym), bindingen: [] };
+  });
+  const bindingen = [];
+  M.atomen.forEach(([, ouder, richting, orde], i) => {
+    if (ouder == null) return;
+    const b = { a: at[ouder], b: at[i], orde, hoek: graden(richting) };
+    bindingen.push(b);
+    at[ouder].bindingen.push({ b, hoek: b.hoek, ander: at[i] });
+    at[i].bindingen.push({ b, hoek: b.hoek + Math.PI, ander: at[ouder] });
+  });
+  // ----- posities: model (atomen overlappen), uit elkaar (begin) en structuurformule -----
+  at[0].fx = 0; at[0].fy = 0; at[0].sx = 0; at[0].sy = 0; at[0].px = 0; at[0].py = 0;
+  bindingen.forEach(b => {
+    const d = bindAfstand(b), ux = Math.cos(b.hoek), uy = Math.sin(b.hoek);
+    b.b.fx = b.a.fx + ux * d; b.b.fy = b.a.fy + uy * d;
+    b.b.sx = b.a.sx + ux * (d + SPREID); b.b.sy = b.a.sy + uy * (d + SPREID);
+    b.b.px = b.a.px + ux * SF_LENGTE; b.b.py = b.a.py + uy * SF_LENGTE;
+  });
+  const centreer = (kx, ky) => {
+    const xs = at.map(a => a[kx]), ys = at.map(a => a[ky]);
+    const mx = (Math.min(...xs) + Math.max(...xs)) / 2, my = (Math.min(...ys) + Math.max(...ys)) / 2;
+    at.forEach(a => { a[kx] -= mx; a[ky] -= my; });
+  };
+  centreer("fx", "fy"); centreer("sx", "sy"); centreer("px", "py");
+
+  // ----- elektronen -----
+  const elektronen = []; // {el, sa (atoom), rx, ry (relatief begin), ex, ey (absoluut eind) of mee met atoom}
+  const model = maak("g", {}, csvg);
+  const parenLaag = maak("g", { opacity: 0 }, csvg);
+  const labels = maak("g", {}, csvg);
+  at.forEach(a => {
+    a.g = maak("g", {}, model);
+    for (let s = 1; s <= a.sch.length; s++) maak("circle", { class: "schil", cx: 0, cy: 0, r: R[s] }, a.g);
+    const E = CATOOM[a.sym];
+    // waterstof: kleinere kern, zodat het gedeelde paar in de K-schil past
+    maak("circle", { class: "kern", cx: 0, cy: 0, r: a.sym === "H" ? 15 : RK }, a.g);
+    maak("text", { class: "kern-tekst", x: 0, y: E.n ? -2 : 4, "font-size": a.sym === "H" ? 11 : 15 }, a.g, E.z + "p⁺");
+    if (E.n) maak("text", { class: "kern-tekst", x: 0, y: 14, "font-size": 12, "font-weight": 500 }, a.g, E.n + "n");
+    for (let s = 1; s < a.sch.length; s++) {
+      const n = a.sch[s - 1];
+      for (let i = 0; i < n; i++) {
+        const p = pol(0, 0, R[s], -Math.PI / 2 + (i / n) * 2 * Math.PI + (s % 2 ? 0 : Math.PI / n));
+        maak("circle", { class: "e binnen", cx: p.x, cy: p.y, r: RE }, a.g);
+      }
+    }
+    // niet-bindende elektronenparen: gelijkmatig verdeeld over de grootste lege ruimte tussen de bindingen
+    const vrijeParen = (a.v - a.cov) / 2;
+    const bindHoeken = [...new Set(a.bindingen.map(x => ((x.hoek % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI)))].sort((p, q) => p - q);
+    let gatStart = bindHoeken.at(-1), gat = 2 * Math.PI - bindHoeken.at(-1) + bindHoeken[0];
+    bindHoeken.forEach((h, i) => { if (i && h - bindHoeken[i - 1] > gat) { gat = h - bindHoeken[i - 1]; gatStart = bindHoeken[i - 1]; } });
+    const lpHoeken = [];
+    for (let i = 0; i < vrijeParen; i++) lpHoeken.push(gatStart + gat * (i + 1) / (vrijeParen + 1));
+    lpHoeken.forEach(h => [-0.2, 0.2].forEach(d => {
+      const p = pol(0, 0, a.R, h + d);
+      maak("circle", { class: "e val", cx: p.x, cy: p.y, r: RE }, a.g);
+    }));
+    // labels onder het atoom (alleen in de beginsituatie)
+    const ly = a.sy + a.R + 30;
+    maak("text", { class: "lab1", x: a.sx, y: ly }, labels, `${hoofdletter(E.naam)} (${a.sym}) · ${a.sch.join(", ")}`);
+    maak("text", { class: "lab2", x: a.sx, y: ly + 24 }, labels, `${a.v} ${meervoud(a.v, "valentie-elektron", "valentie-elektronen")}`);
+    maak("text", { class: "lab3", x: a.sx, y: ly + 47 }, labels, `covalentie ${a.cov}`);
+  });
+  // bindende elektronen: beginnen als losse elektronen op de schil, richting de partner;
+  // eindigen als gedeeld paar in het overlapgebied van de twee schillen
+  const RIJEN = { 1: [0], 2: [-13, 13], 3: [-22, 0, 22] }, SPREIDHOEK = { 1: [0], 2: [-0.4, 0.4], 3: [-0.55, 0, 0.55] };
+  bindingen.forEach(b => {
+    const ux = Math.cos(b.hoek), uy = Math.sin(b.hoek), px = -uy, py = ux;
+    const d = bindAfstand(b), mid = (d - b.b.R + b.a.R) / 2;
+    b.paren = [];
+    // enkele binding: het paar staat dwars op de binding (past ook bij het kleine waterstofatoom);
+    // dubbele/drievoudige binding: de paren naast elkaar, elk paar langs de binding
+    const dwars = b.orde === 1;
+    RIJEN[b.orde].forEach((rij, k) => {
+      // middelpunt van dit paar, relatief aan atoom a in het model
+      const cx = ux * mid + px * rij, cy = uy * mid + py * rij;
+      [[b.a, -1, SPREIDHOEK[b.orde][k]], [b.b, 1, -SPREIDHOEK[b.orde][k]]].forEach(([atoom, kant, dh]) => {
+        const eigenHoek = atoom === b.a ? b.hoek : b.hoek + Math.PI;
+        const start = pol(0, 0, atoom.R, eigenHoek + dh);
+        const el = maak("circle", { class: "e val", r: RE }, model);
+        const ex = dwars ? cx + px * 9 * kant : cx + ux * 9 * kant, ey = dwars ? cy + py * 9 * kant : cy + uy * 9 * kant;
+        elektronen.push({ el, atoom, start, eind: { a: b.a, x: ex, y: ey } });
+      });
+      b.paren.push({ cx, cy });
+    });
+  });
+  // ----- structuurformule -----
+  const sf = maak("g", { opacity: 0 }, csvg);
+  const VERSCHUIF = { 1: [0], 2: [-7, 7], 3: [-12, 0, 12] };
+  bindingen.forEach(b => {
+    const ux = Math.cos(b.hoek), uy = Math.sin(b.hoek), px = -uy, py = ux;
+    VERSCHUIF[b.orde].forEach(o => maak("line", {
+      class: "sf-lijn",
+      x1: b.a.px + ux * 30 + px * o, y1: b.a.py + uy * 30 + py * o,
+      x2: b.b.px - ux * 30 + px * o, y2: b.b.py - uy * 30 + py * o
+    }, sf));
+  });
+  at.forEach(a => maak("text", { class: "sf-sym", x: a.px, y: a.py }, sf, a.sym));
+  // gedeelde paren omcirkelen (na het samenkomen)
+  bindingen.forEach(b => {
+    const ux = Math.cos(b.hoek), uy = Math.sin(b.hoek);
+    b.paren.forEach(pp => maak("ellipse", {
+      class: "paar", cx: b.a.fx + pp.cx, cy: b.a.fy + pp.cy, rx: 22, ry: 13,
+      transform: `rotate(${b.hoek * 180 / Math.PI + (b.orde === 1 ? 90 : 0)} ${b.a.fx + pp.cx} ${b.a.fy + pp.cy})`
+    }, parenLaag));
+  });
+  // ----- passend venster -----
+  // drie kaders: begin (met labels), molecuulmodel en structuurformule; tijdens de animatie zoomt de tekening in
+  const kader = (vul) => {
+    const k = { x0: Infinity, y0: Infinity, x1: -Infinity, y1: -Infinity };
+    vul((x, y, rx, ry = rx) => { k.x0 = Math.min(k.x0, x - rx); k.x1 = Math.max(k.x1, x + rx); k.y0 = Math.min(k.y0, y - ry); k.y1 = Math.max(k.y1, y + ry); });
+    // niet te ver inzoomen: minimaal 360 breed en 260 hoog
+    const mx = (k.x0 + k.x1) / 2, my = (k.y0 + k.y1) / 2, w = Math.max(360, k.x1 - k.x0 + 40), h = Math.max(260, k.y1 - k.y0 + 40);
+    return [mx - w / 2, my - h / 2, w, h];
+  };
+  const kaders = {
+    begin: kader(neem => at.forEach(a => { neem(a.sx, a.sy, Math.max(a.R + 15, 120), a.R + 15); neem(a.sx, a.sy + a.R + 85, 120, 0); })),
+    model: kader(neem => at.forEach(a => neem(a.fx, a.fy, a.R + 15))),
+    formule: kader(neem => at.forEach(a => neem(a.px, a.py, 45)))
+  };
+  csvg.style.setProperty("--verhouding", `${kaders.begin[2]} / ${kaders.begin[3]}`);
+
+  Object.assign(cs, { at, bindingen, elektronen, model, labels, parenLaag, sf, kaders, t: 0, speelt: false });
+  cKnoppen(); cRender();
+}
+
+function cRender() {
+  const t = cs.t, p = voortgang(t, CT.samen0, CT.samen1);
+  const K = cs.kaders, zoom1 = voortgang(t, CT.samen0 + 0.5, CT.samen1 + 0.3), zoom2 = voortgang(t, CT.formule, CT.formule + 1.6);
+  const vb = K.begin.map((v, i) => v + (K.model[i] - v) * zoom1).map((v, i) => v + (K.formule[i] - v) * zoom2);
+  csvg.setAttribute("viewBox", vb.join(" "));
+  cs.at.forEach(a => {
+    a.x = a.sx + (a.fx - a.sx) * p; a.y = a.sy + (a.fy - a.sy) * p;
+    a.g.setAttribute("transform", `translate(${a.x} ${a.y})`);
+  });
+  // bindende elektronen: van de eigen schil naar het gedeelde paar
+  const pe = voortgang(t, CT.samen0 + 0.6, CT.samen1);
+  // (relatief aan het eigen atoom, zodat het elektron met zijn atoom meebeweegt)
+  cs.elektronen.forEach(e => {
+    const ex = e.eind.a.fx + e.eind.x - e.atoom.fx, ey = e.eind.a.fy + e.eind.y - e.atoom.fy;
+    e.el.setAttribute("cx", e.atoom.x + e.start.x + (ex - e.start.x) * pe);
+    e.el.setAttribute("cy", e.atoom.y + e.start.y + (ey - e.start.y) * pe);
+  });
+  cs.labels.setAttribute("opacity", 1 - voortgang(t, CT.weg - 0.6, CT.samen0 + 0.4));
+  cs.parenLaag.setAttribute("opacity", voortgang(t, CT.paren, CT.paren + 0.8) * (1 - voortgang(t, CT.formule, CT.formule + 0.8)));
+  cs.model.setAttribute("opacity", 1 - voortgang(t, CT.formule, CT.formule + 0.9));
+  cs.sf.setAttribute("opacity", voortgang(t, CT.formule + 0.7, CT.formule + 1.6));
+  cTeksten();
+}
+
+function cTeksten() {
+  const t = cs.t, M = cs.mol;
+  const soorten = [...new Set(cs.at.map(a => a.sym))].map(sym => cs.at.find(a => a.sym === sym));
+  const nParen = cs.bindingen.reduce((s, b) => s + b.orde, 0);
+  const soortBinding = { 1: "enkele binding", 2: "dubbele binding", 3: "drievoudige binding" };
+  const sfTekst = (() => { // eenvoudige weergave, bijv. H–O–H of O=C=O
+    const teken = { 1: "–", 2: "=", 3: "≡" };
+    if (cs.at.length === 2) return cs.at[0].sym + teken[cs.bindingen[0].orde] + cs.at[1].sym;
+    const [l, r] = cs.bindingen;
+    return cs.at.length === 3 ? l.b.sym + teken[l.orde] + cs.at[0].sym + teken[r.orde] + r.b.sym : "";
+  })();
+  let s, o;
+  if (t === 0) {
+    s = `Volgens de <b>octetregel</b> wil een atoom 8 elektronen in zijn buitenste schil (waterstof 2: een volle K-schil). ` +
+        `Niet-metaalatomen bereiken dat door elektronen te <b>delen</b>. ` +
+        soorten.map((a, i) => `${i ? CATOOM[a.sym].naam : hoofdletter(CATOOM[a.sym].naam)} heeft ${a.v} ${meervoud(a.v, "valentie-elektron", "valentie-elektronen")} en komt er ${a.cov} tekort`).join("; ") + `. ` +
+        `Zoveel bindingen vormt het atoom: dat heet de <b>covalentie</b>. Klik op <b>Start</b>.`;
+    o = `<b>${M.formule}</b> · ${M.naam} · covalentie: ` + soorten.map(a => `${a.sym} ${a.cov}`).join(", ");
+  } else if (t < CT.paren) {
+    s = `De atomen gaan naar elkaar toe. Een ongepaard valentie-elektron van het ene atoom vormt samen met een elektron van het andere atoom een <b>gedeeld elektronenpaar</b>.`;
+    o = `De buitenste schillen gaan elkaar overlappen`;
+  } else if (t < CT.formule) {
+    const dubbel = cs.bindingen.filter(b => b.orde > 1);
+    s = `Elk gedeeld elektronenpaar is een <b>atoombinding</b> (covalente binding). Het paar hoort bij béide atomen. ` +
+        `Tel je de gedeelde elektronen bij allebei de atomen mee, dan heeft ` +
+        soorten.map(a => `${a.sym} er ${a.sym === "H" ? 2 : 8}`).join(" en ") + `: alle atomen voldoen aan de octetregel.` +
+        (dubbel.length ? ` Tussen ${dubbel[0].a.sym} en ${dubbel[0].b.sym} zitten ${dubbel[0].orde} gedeelde paren: een <b>${soortBinding[dubbel[0].orde]}</b>.` : "");
+    o = `<b>${nParen} ${meervoud(nParen, "gedeeld elektronenpaar", "gedeelde elektronenparen")}</b> · ` +
+        `${cs.bindingen.length} ${meervoud(cs.bindingen.length, soortBinding[cs.bindingen[0].orde], soortBinding[cs.bindingen[0].orde].replace("binding", "bindingen"))}`;
+  } else {
+    s = `In de <b>structuurformule</b> is elke atoombinding (elk gedeeld elektronenpaar) een streepje. ` +
+        `De elektronen die niet in een binding zitten, en de schillen, tekenen we niet.`;
+    o = sfTekst ? `Structuurformule van ${M.naam}: <b>${sfTekst}</b>`
+                : `Structuurformule van ${M.naam} (${M.formule}): ${nParen} streepjes = ${nParen} atoombindingen`;
+  }
+  document.getElementById("c-stap").innerHTML = s;
+  document.getElementById("c-onderschrift").innerHTML = o;
+}
+
+const cStartKnop = document.getElementById("c-start");
+function cKnoppen() {
+  if (cs.t >= CT.eind) { cStartKnop.textContent = "✓ Klaar"; cStartKnop.disabled = true; return; }
+  cStartKnop.disabled = false;
+  cStartKnop.textContent = cs.speelt ? "⏸ Pauzeer" : (cs.t === 0 ? "▶ Start" : "▶ Verder");
+}
+function covPauze() { cs.speelt = false; if (cs.at) cKnoppen(); }
+function cStap(nu) {
+  if (!cs.speelt) return;
+  if (cs.vorige != null) cs.t = Math.min(CT.eind, cs.t + Math.min(0.05, (nu - cs.vorige) / 1000));
+  cs.vorige = nu;
+  cRender();
+  if (cs.t >= CT.eind) { cs.speelt = false; cKnoppen(); return; }
+  requestAnimationFrame(cStap);
+}
+cStartKnop.addEventListener("click", () => {
+  cs.speelt = !cs.speelt;
+  if (cs.speelt) { cs.vorige = null; requestAnimationFrame(cStap); }
+  cKnoppen();
+});
+document.getElementById("c-opnieuw").addEventListener("click", cBouw);
+const cKeuze = document.getElementById("c-keuze");
+MOLECULEN.forEach((m, i) => cKeuze.add(new Option(`${m.formule} – ${m.naam}`, i)));
+cKeuze.value = 3;
+cKeuze.addEventListener("change", () => { cs.mol = MOLECULEN[cKeuze.value]; cBouw(); });
+cBouw();
 </script>
 </body>
 </html>

@@ -55,7 +55,19 @@ window.SOLUTION = {
                 }
               ]
             },
-            { nr: 3, titel: "Het Periodiek Systeem", pagina: 15, materialen: [] }
+            {
+              nr: 3, titel: "Het Periodiek Systeem", pagina: 15,
+              materialen: [
+                {
+                  id: "periodiek-systeem",
+                  type: "simulatie",
+                  titel: "Interactief periodiek systeem",
+                  beschrijving: "Ontdek de metalen, niet-metalen, metalloïden en de groepen in het periodiek systeem. Beweeg over een element en lees de fase, waar het voorkomt en waarvoor het wordt gebruikt.",
+                  url: "materialen/3hv/h1/periodiek-systeem/index.html",
+                  formaat: "groot"
+                }
+              ]
+            }
           ]
         },
         {

@@ -1089,16 +1089,29 @@ const SPEL_MOL = [
   { formule: "CH₂O", atomen: [["C"], ["O", 0, 0, 2], ["H", 0, 135, 1], ["H", 0, 225, 1]] },
   { formule: "HCN",  atomen: [["C"], ["H", 0, 180, 1], ["N", 0, 0, 3]] },
   { formule: "C₂H₆", atomen: [["C"], ["C", 0, 0, 1], ["H", 0, 180, 1], ["H", 0, 270, 1], ["H", 0, 90, 1], ["H", 1, 0, 1], ["H", 1, 270, 1], ["H", 1, 90, 1]] },
-  { formule: "C₂H₄", atomen: [["C"], ["C", 0, 0, 2], ["H", 0, 135, 1], ["H", 0, 225, 1], ["H", 1, 45, 1], ["H", 1, 315, 1]] }
+  { formule: "C₂H₄", atomen: [["C"], ["C", 0, 0, 2], ["H", 0, 135, 1], ["H", 0, 225, 1], ["H", 1, 45, 1], ["H", 1, 315, 1]] },
+  // extra moleculen met dubbele en drievoudige bindingen
+  { formule: "C₂H₂", atomen: [["C"], ["C", 0, 0, 3], ["H", 0, 180, 1], ["H", 1, 0, 1]] },                       // ethyn
+  { formule: "CS₂",  atomen: [["C"], ["S", 0, 180, 2], ["S", 0, 0, 2]] },                                        // koolstofdisulfide
+  { formule: "CH₂O₂", atomen: [["C"], ["O", 0, 270, 2], ["O", 0, 0, 1], ["H", 0, 180, 1], ["H", 2, 0, 1]] },     // methaanzuur
+  { formule: "H₂CO₃", atomen: [["C"], ["O", 0, 270, 2], ["O", 0, 150, 1], ["O", 0, 30, 1], ["H", 2, 180, 1], ["H", 3, 0, 1]] }, // koolzuur
+  { formule: "CH₄N₂O", atomen: [["C"], ["O", 0, 270, 2], ["N", 0, 150, 1], ["N", 0, 30, 1],
+                                ["H", 2, 180, 1], ["H", 2, 90, 1], ["H", 3, 0, 1], ["H", 3, 90, 1]] },          // ureum
+  { formule: "C₂H₄O₂", atomen: [["C"], ["C", 0, 0, 1], ["H", 0, 180, 1], ["H", 0, 270, 1], ["H", 0, 90, 1],
+                                ["O", 1, 270, 2], ["O", 1, 0, 1], ["H", 6, 0, 1]] }                              // azijnzuur
 ];
-const S_AANTAL = 6, S_R = 30, S_LENGTE = 118, S_PAK = 150, S_BREEK = 190;
+// S_PAK: zo dicht (middelpunt tot middelpunt) moet je een atoom bij een ander leggen voor een binding
+const S_AANTAL = 5, S_R = 30, S_LENGTE = 118, S_PAK = 75, S_BREEK = 190, S_START = 175;
 const ssvg = document.getElementById("s-tekening");
 const sp = { ronde: [], i: 0, poging: 0, punten: [], atomen: [], bindingen: [], klaar: false, W: 800, H: 480 };
 const schud = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const spelNaam = sym => CATOOM[sym].naam;
 
 function spelNieuw() {
-  sp.ronde = schud(SPEL_MOL.map((_, i) => i)).slice(0, S_AANTAL);
+  // per ronde 3 moleculen met een dubbele of drievoudige binding en 2 met alleen enkele bindingen
+  const meervoudig = SPEL_MOL.map((m, i) => i).filter(i => SPEL_MOL[i].atomen.some(a => a[3] > 1));
+  const enkel = SPEL_MOL.map((m, i) => i).filter(i => !meervoudig.includes(i));
+  sp.ronde = schud([...schud(meervoudig).slice(0, 3), ...schud(enkel).slice(0, S_AANTAL - 3)]);
   sp.i = 0; sp.punten = [];
   spelVraag();
 }
@@ -1126,7 +1139,7 @@ function spelLeg() {
     let x, y, n = 0;
     do {
       x = 60 + Math.random() * (sp.W - 120); y = 60 + Math.random() * (sp.H - 120); n++;
-    } while (n < 300 && plekken.some(p => Math.hypot(p.x - x, p.y - y) < S_PAK + 25));
+    } while (n < 300 && plekken.some(p => Math.hypot(p.x - x, p.y - y) < S_START));
     plekken.push({ x, y }); a.x = x; a.y = y;
   });
   spelTeken();
@@ -1275,7 +1288,11 @@ function spelToonAntwoord() {
     doel[i] = { x: doel[ouder].x + Math.cos(graden(richting)) * S_LENGTE, y: doel[ouder].y + Math.sin(graden(richting)) * S_LENGTE };
     sp.bindingen.push({ a: sp.atomen[ouder], b: sp.atomen[i], orde });
   });
-  const xs = doel.map(d => d.x), ys = doel.map(d => d.y);
+  let xs = doel.map(d => d.x), ys = doel.map(d => d.y);
+  // grote moleculen (bijv. azijnzuur op een smal scherm) iets kleiner zetten, zodat ze in het veld passen
+  const f = Math.min(1, (sp.W - 2 * S_R - 20) / (Math.max(...xs) - Math.min(...xs) || 1), (sp.H - 2 * S_R - 20) / (Math.max(...ys) - Math.min(...ys) || 1));
+  doel.forEach(d => { d.x *= f; d.y *= f; });
+  xs = doel.map(d => d.x); ys = doel.map(d => d.y);
   const mx = (Math.min(...xs) + Math.max(...xs)) / 2, my = (Math.min(...ys) + Math.max(...ys)) / 2;
   const van = sp.atomen.map(a => ({ x: a.x, y: a.y }));
   sp.atomen.forEach(a => a.fout = false);

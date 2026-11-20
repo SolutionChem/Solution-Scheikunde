@@ -1015,7 +1015,9 @@ function renderResultaat() {
 }
 
 /* ===================== start ===================== */
-zetModus("bouw");
+// Met ?spel=1, 2 of 3 in de URL opent meteen dat spel (zo staat het als oefening in het overzicht).
+const spelUitUrl = new URLSearchParams(location.search).get("spel");
+zetModus(["1", "2", "3"].includes(spelUitUrl) ? spelUitUrl : "bouw");
 </script>
 </body>
 </html>

@@ -28,7 +28,8 @@ assets/css/style.css  Huisstijl (kleuren, lettertypen, elementtegels)
 
 materialen/           Eigen animaties en bestanden, per leerjaar en hoofdstuk
   3hv/h1/atoommodel/      Animatie: het atoommodel van Bohr (§1.1)
-  3hv/h1/bouw-een-atoom/  Simulatie met drie spellen: bouw een atoom (§1.2); met ?ionen=1 ook "Bouw een ion" (§2.1)
+  3hv/h1/bouw-een-atoom/  Simulatie met drie spellen: bouw een atoom (§1.2); met ?spel=1 meteen de spellen (oefening bij §1.2),
+                          met ?ionen=1 "Bouw een ion" (§2.1), met ?spel=1&ionen=1 de spellen met ionen (oefening bij §2.1)
   3hv/h1/periodiek-systeem/  Simulatie: interactief periodiek systeem (§1.3)
   3hv/h2/bindingen/       Simulatie: ionbinding (§2.2), metaalbinding (§2.3, ?tab=metaal), atoombinding (§2.4, ?tab=covalent)
                           en het spel Bouw een molecuul (§2.4, ?tab=spel)

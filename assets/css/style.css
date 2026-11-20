@@ -454,6 +454,7 @@ h1, h2, h3 { line-height: 1.2; color: var(--navy-800); }
   width: 100%;
 }
 .frame-wrap iframe { width: 100%; height: 100%; border: 0; display: block; background: var(--wit); }
+.frame-wrap.groot { aspect-ratio: auto; height: min(88vh, 940px); max-height: none; }
 .frame-wrap:fullscreen { aspect-ratio: auto; max-height: none; border-radius: 0; }
 .extern {
   margin: 18px 0; padding: 30px; text-align: center;
@@ -481,6 +482,7 @@ h1, h2, h3 { line-height: 1.2; color: var(--navy-800); }
   .hs-layout { grid-template-columns: 1fr; gap: 20px; }
   .zijbalk { position: static; }
   .frame-wrap { aspect-ratio: 3 / 4; max-height: 82vh; }
+  .frame-wrap.groot { aspect-ratio: auto; height: 85vh; }
 }
 @media (max-width: 560px) {
   .site-header .container { flex-wrap: wrap; padding-top: 8px; padding-bottom: 8px; }

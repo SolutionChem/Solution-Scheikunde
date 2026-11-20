@@ -39,14 +39,6 @@ window.SOLUTION = {
                   titel: "Het atoommodel van Bohr",
                   beschrijving: "Kies een element en bekijk hoe protonen, neutronen en elektronen in het atoom zijn verdeeld.",
                   url: "materialen/3hv/h1/atoommodel/index.html"
-                },
-                {
-                  id: "bouw-een-atoom",
-                  type: "simulatie",
-                  titel: "Bouw een atoom (PhET)",
-                  beschrijving: "Bouw zelf een atoom uit protonen, neutronen en elektronen en ontdek welk element je maakt.",
-                  url: "https://phet.colorado.edu/sims/html/build-an-atom/latest/build-an-atom_nl.html",
-                  bron: "PhET Interactive Simulations, University of Colorado Boulder"
                 }
               ]
             },
@@ -54,12 +46,12 @@ window.SOLUTION = {
               nr: 2, titel: "Massagetal, atoomnummer en isotopen", pagina: 10,
               materialen: [
                 {
-                  id: "isotopen",
+                  id: "bouw-een-atoom",
                   type: "simulatie",
-                  titel: "Isotopen en atoommassa (PhET)",
-                  beschrijving: "Maak isotopen van verschillende elementen en ontdek hoe de gemiddelde atoommassa ontstaat.",
-                  url: "https://phet.colorado.edu/sims/html/isotopes-and-atomic-mass/latest/isotopes-and-atomic-mass_nl.html",
-                  bron: "PhET Interactive Simulations, University of Colorado Boulder"
+                  titel: "Bouw een atoom",
+                  beschrijving: "Bouw atomen en ionen uit protonen, neutronen en elektronen en ontdek wat er gebeurt met het element, het massagetal en de lading. Met drie spellen.",
+                  url: "materialen/3hv/h1/bouw-een-atoom/index.html",
+                  formaat: "groot"
                 }
               ]
             },
@@ -84,18 +76,7 @@ window.SOLUTION = {
           pagina: 60,
           paragrafen: [
             { nr: 1, titel: "Stofeigenschappen", pagina: 61, materialen: [] },
-            { nr: 2, titel: "Stofeigenschappen op microniveau", pagina: 72,
-              materialen: [
-                {
-                  id: "fasen",
-                  type: "simulatie",
-                  titel: "Fasen van stoffen (PhET)",
-                  beschrijving: "Bekijk hoe deeltjes bewegen in de vaste stof, vloeistof en het gas, en wat er gebeurt als je verwarmt.",
-                  url: "https://phet.colorado.edu/sims/html/states-of-matter-basics/latest/states-of-matter-basics_nl.html",
-                  bron: "PhET Interactive Simulations, University of Colorado Boulder"
-                }
-              ]
-            },
+            { nr: 2, titel: "Stofeigenschappen op microniveau", pagina: 72, materialen: [] },
             { nr: 3, titel: "Zuivere stoffen en mengsels", pagina: 80, materialen: [] },
             { nr: 4, titel: "Scheidingsmethoden", pagina: 91, materialen: [] }
           ]
@@ -105,18 +86,7 @@ window.SOLUTION = {
           titel: "Chemische reacties",
           pagina: 106,
           paragrafen: [
-            { nr: 1, titel: "Reactievergelijkingen", pagina: 107,
-              materialen: [
-                {
-                  id: "kloppend-maken",
-                  type: "oefening",
-                  titel: "Reactievergelijkingen kloppend maken (PhET)",
-                  beschrijving: "Oefen met het kloppend maken van reactievergelijkingen, met directe controle.",
-                  url: "https://phet.colorado.edu/sims/html/balancing-chemical-equations/latest/balancing-chemical-equations_nl.html",
-                  bron: "PhET Interactive Simulations, University of Colorado Boulder"
-                }
-              ]
-            },
+            { nr: 1, titel: "Reactievergelijkingen", pagina: 107, materialen: [] },
             { nr: 2, titel: "Ontleding", pagina: 114, materialen: [] },
             { nr: 3, titel: "Verbranding", pagina: 121, materialen: [] },
             { nr: 4, titel: "Organische chemie", pagina: 129, materialen: [] }

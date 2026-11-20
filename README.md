@@ -19,7 +19,7 @@ Lokaal bekijken kan ook: open `index.html` in je browser, of start in deze map `
 ```
 index.html            Startpagina met logo en keuze van het leerjaar
 leerjaar.html         Overzicht van de hoofdstukken van één leerjaar
-hoofdstuk.html        Eén hoofdstuk: paragrafen met hun materialen
+hoofdstuk.html        Eén hoofdstuk: alle tools van het hoofdstuk, elk één keer
 materiaal.html        Bekijken van één materiaal (met volledig-scherm-knop)
 
 assets/js/data.js     ← ALLE INHOUD: leerjaren, hoofdstukken, paragrafen, materialen
@@ -40,8 +40,37 @@ Dat kan zelfs direct op github.com: open het bestand, klik op het potloodje, wij
 
 ## Materiaal toevoegen
 
-Zoek in `data.js` de juiste paragraaf en zet een nieuw blok in de lijst `materialen: [ ... ]`.
-Let op de komma tussen twee blokken.
+Zoek in `data.js` het juiste hoofdstuk en zet een nieuw blok in de lijst `materialen: [ ... ]` van dat hoofdstuk.
+Let op de komma tussen twee blokken. Met `paragrafen: [2]` geef je aan bij welke paragraaf (of paragrafen) het hoort;
+dat staat als label (§2.2) op de tegel.
+
+### Eén tool die meer kan: onderdelen
+
+Elke tool staat maar één keer op de hoofdstukpagina. Kan een tool meer dingen (zoals *Bindingen*: zouten, metalen,
+moleculen en een spel), beschrijf dat dan met `onderdelen`. Ze verschijnen in de tegel onder *Wat kun je ermee?*
+en als knoppen boven het venster. Een tool kan meer soorten hebben: `type: ["simulatie", "oefening"]`.
+
+```js
+{
+  id: "bindingen",
+  type: ["simulatie", "oefening"],
+  paragrafen: [2, 3, 4],
+  titel: "Bindingen: zouten, metalen en moleculen",
+  beschrijving: "Eén simulatie voor de drie soorten binding …",
+  url: "materialen/3hv/h2/bindingen/index.html",
+  formaat: "groot",
+  onderdelen: [
+    { id: "ionbinding", paragraaf: 2, titel: "Ionbinding", tekst: "Wat de leerling hier kan doen." },
+    { id: "metaalbinding", paragraaf: 3, titel: "Metaalbinding", tekst: "…",
+      url: "materialen/3hv/h2/bindingen/index.html?tab=metaal" },
+    { id: "bouw-een-molecuul", type: "oefening", paragraaf: 4, titel: "Spel: bouw een molecuul", tekst: "…",
+      url: "materialen/3hv/h2/bindingen/index.html?tab=spel" }
+  ]
+}
+```
+
+Zonder `url` opent een onderdeel het gewone adres van de tool. Een onderdeel kun je direct openen met
+`materiaal.html?jaar=3hv&h=2&m=bindingen&deel=metaalbinding` (of kort: `&m=metaalbinding`).
 
 ### Een eigen animatie of HTML-bestand
 

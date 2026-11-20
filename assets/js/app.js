@@ -23,18 +23,38 @@
   const type = (t) => D.typen[t] || { label: t, kleur: "#5b6b7c" };
   const chip = (t) => `<span class="chip" style="--k:${type(t).kleur}">${esc(type(t).label)}</span>`;
 
-  const alleMaterialen = (hs) => hs.paragrafen.flatMap((p) =>
-    (p.materialen || []).map((m) => ({ ...m, paragraaf: p })));
+  // een materiaal kan meer soorten hebben, bijv. type: ["simulatie", "oefening"]
+  const typenVan = (m) => [].concat(m.type || []);
+
+  // materialen staan per hoofdstuk; oude opzet (materialen per paragraaf) blijft ook werken
+  const alleMaterialen = (hs) => [
+    ...(hs.materialen || []),
+    ...hs.paragrafen.flatMap((p) => (p.materialen || []).map((m) => ({ paragrafen: [p.nr], ...m })))
+  ];
 
   const telTypen = (materialen) => {
     const t = {};
-    materialen.forEach((m) => { t[m.type] = (t[m.type] || 0) + 1; });
+    materialen.forEach((m) => typenVan(m).forEach((x) => { t[x] = (t[x] || 0) + 1; }));
     return t;
+  };
+
+  const paragraafTekst = (h, nrs) => [].concat(nrs || []).map((nr) => `§${h.nr}.${nr}`).join(" · ");
+  const paragraafTitel = (h, nr) => (h.paragrafen.find((p) => p.nr === nr) || {}).titel || "";
+
+  // zoek een materiaal op id; ook een onderdeel-id (bijv. een oude link naar ?m=metaalbinding) werkt
+  const zoekMateriaal = (lijst, id) => {
+    for (const m of lijst) {
+      if (m.id === id) return { m, deel: null };
+      const deel = (m.onderdelen || []).find((o) => o.id === id);
+      if (deel) return { m, deel };
+    }
+    return null;
   };
 
   const urlJaar = (j) => `leerjaar.html?jaar=${encodeURIComponent(j.id)}`;
   const urlHs = (j, h) => `hoofdstuk.html?jaar=${encodeURIComponent(j.id)}&h=${h.nr}`;
   const urlMat = (j, h, m) => `materiaal.html?jaar=${encodeURIComponent(j.id)}&h=${h.nr}&m=${encodeURIComponent(m.id)}`;
+  const urlDeel = (j, h, m, d) => urlMat(j, h, m) + `&deel=${encodeURIComponent(d.id)}`;
 
   const embedUrl = (m) => {
     if (m.youtube) return `https://www.youtube-nocookie.com/embed/${encodeURIComponent(m.youtube)}?rel=0`;
@@ -141,7 +161,7 @@
       <div class="container">
         ${kruimelpad([["Home", "index.html"], [j.titel]])}
         <h1 class="paginakop">${esc(j.ondertitel || j.titel)}</h1>
-        <p class="intro">Kies een hoofdstuk om de animaties, simulaties en andere digitale materialen per paragraaf te bekijken.</p>
+        <p class="intro">Kies een hoofdstuk om de animaties, simulaties, spellen en andere digitale materialen te bekijken.</p>
         <div class="hoofdstukken">
           ${j.hoofdstukken.map((h) => {
             const mats = alleMaterialen(h);
@@ -197,9 +217,9 @@
       <div class="container hs-layout">
         <aside class="zijbalk">
           <h2>Paragrafen</h2>
-          ${h.paragrafen.map((p) => `
-            <a href="#p${p.nr}"><span class="n">§${p.nr}</span><span>${esc(p.titel)}</span>
-            ${(p.materialen || []).length ? `<span class="cnt">${p.materialen.length}</span>` : ""}</a>`).join("")}
+          <ol class="par-lijst">
+            ${h.paragrafen.map((p) => `<li><span class="n">§${h.nr}.${p.nr}</span><span>${esc(p.titel)}</span></li>`).join("")}
+          </ol>
           <div class="andere">
             <h2>Andere hoofdstukken</h2>
             ${j.hoofdstukken.filter((x) => x !== h).map((x) => `
@@ -213,25 +233,12 @@
               <button class="filter-knop" data-filter="" aria-pressed="true">Alles</button>
               ${typenAanwezig.map((t) => `<button class="filter-knop" data-filter="${esc(t)}" aria-pressed="false">${esc(type(t).label)}</button>`).join("")}
             </div>` : ""}
-          ${h.paragrafen.map((p) => `
-            <section class="paragraaf" id="p${p.nr}">
-              <h2 class="balk"><span class="num">§${h.nr}.${p.nr}</span><span>${esc(p.titel)}</span>
-                ${p.pagina ? `<span class="pag">p. ${p.pagina}</span>` : ""}</h2>
-              <div class="paragraaf-body">
-                ${(p.materialen || []).length ? `
-                  <div class="materialen">
-                    ${p.materialen.map((m) => `
-                      <a class="mat-kaart" data-type="${esc(m.type)}" style="--k:${type(m.type).kleur}" href="${urlMat(j, h, m)}">
-                        <div>${chip(m.type)}</div>
-                        <h3>${esc(m.titel)}</h3>
-                        <p>${esc(m.beschrijving)}</p>
-                        <span class="open">Openen →</span>
-                      </a>`).join("")}
-                  </div>
-                  <p class="leeg" hidden>Geen materialen van deze soort bij deze paragraaf.</p>`
-                : `<p class="leeg">Nog geen materialen bij deze paragraaf.</p>`}
-              </div>
-            </section>`).join("")}
+          ${mats.length ? `
+            <div class="materialen hs-materialen">
+              ${mats.map((m) => materiaalKaart(j, h, m)).join("")}
+            </div>
+            <p class="leeg" id="leeg-filter" hidden>Geen materialen van deze soort in dit hoofdstuk.</p>`
+          : `<p class="leeg">Nog geen materialen bij dit hoofdstuk.</p>`}
         </div>
       </div>`;
 
@@ -239,19 +246,44 @@
       knop.addEventListener("click", () => {
         const f = knop.dataset.filter;
         document.querySelectorAll(".filter-knop").forEach((k) => k.setAttribute("aria-pressed", String(k === knop)));
-        document.querySelectorAll(".paragraaf").forEach((sec) => {
-          const kaarten = sec.querySelectorAll(".mat-kaart");
-          if (!kaarten.length) return;
-          let zichtbaar = 0;
-          kaarten.forEach((k) => {
-            const toon = !f || k.dataset.type === f;
-            k.hidden = !toon;
-            if (toon) zichtbaar++;
-          });
-          sec.querySelector(".leeg").hidden = zichtbaar > 0;
+        let zichtbaar = 0;
+        document.querySelectorAll(".mat-kaart").forEach((k) => {
+          const toon = !f || k.dataset.typen.split(" ").includes(f);
+          k.hidden = !toon;
+          if (toon) zichtbaar++;
         });
+        $("#leeg-filter").hidden = zichtbaar > 0;
       });
     });
+  }
+
+  // één kaart per tool, met de onderdelen (wat je ermee kunt) erin
+  function materiaalKaart(j, h, m) {
+    const typen = typenVan(m);
+    const delen = m.onderdelen || [];
+    return `
+      <article class="mat-kaart${delen.length ? " breed" : ""}" data-typen="${esc(typen.join(" "))}" style="--k:${type(typen[0]).kleur}">
+        <div class="mat-labels">
+          ${typen.map(chip).join("")}
+          ${m.paragrafen ? `<span class="par-tag">${paragraafTekst(h, m.paragrafen)}</span>` : ""}
+        </div>
+        <h3><a class="hoofdlink" href="${urlMat(j, h, m)}">${esc(m.titel)}</a></h3>
+        <p>${esc(m.beschrijving)}</p>
+        ${delen.length ? `
+          <div class="onderdelen">
+            <div class="onderdelen-kop">Wat kun je ermee?</div>
+            <ul>
+              ${delen.map((d) => `
+                <li>
+                  <a href="${urlDeel(j, h, m, d)}">
+                    <span class="deel-titel">${esc(d.titel)}${d.paragraaf ? ` <span class="par-tag">${paragraafTekst(h, d.paragraaf)}</span>` : ""}${d.type && !typen.slice(0, 1).includes(d.type) ? ` ${chip(d.type)}` : ""}</span>
+                    <span class="deel-tekst">${esc(d.tekst)}</span>
+                  </a>
+                </li>`).join("")}
+            </ul>
+          </div>` : ""}
+        <span class="open" aria-hidden="true">Openen →</span>
+      </article>`;
   }
 
   function materiaal() {
@@ -259,22 +291,28 @@
     const h = vindHs(j, params.get("h"));
     if (!j || !h) return nietGevonden();
     const lijst = alleMaterialen(h);
-    const i = lijst.findIndex((m) => m.id === params.get("m"));
-    if (i < 0) return nietGevonden();
-    const m = lijst[i];
-    const p = m.paragraaf;
+    const gevonden = zoekMateriaal(lijst, params.get("m"));
+    if (!gevonden) return nietGevonden();
+    const m = gevonden.m;
+    const delen = m.onderdelen || [];
+    const deel = delen.find((d) => d.id === params.get("deel")) || gevonden.deel;
+    const i = lijst.indexOf(m);
     const vorige = lijst[i - 1];
     const volgende = lijst[i + 1];
-    const src = embedUrl(m);
+    const src = embedUrl({ ...m, url: (deel && deel.url) || m.url });
     const insluiten = m.embed !== false;
-    document.title = `${m.titel} – Solution`;
+    const typen = typenVan(m);
+    document.title = `${deel ? deel.titel + " – " : ""}${m.titel} – Solution`;
 
     $("#inhoud").innerHTML = `
       <div class="container">
-        ${kruimelpad([["Home", "index.html"], [j.titel, urlJaar(j)], [`Hoofdstuk ${h.nr}`, urlHs(j, h)], [`§${h.nr}.${p.nr} ${p.titel}`, `${urlHs(j, h)}#p${p.nr}`]])}
+        ${kruimelpad([["Home", "index.html"], [j.titel, urlJaar(j)], [`Hoofdstuk ${h.nr}`, urlHs(j, h)], [m.titel]])}
         <div class="viewer-kop">
           <div class="tekst">
-            ${chip(m.type)}
+            <div class="mat-labels">
+              ${typen.map(chip).join("")}
+              ${m.paragrafen ? `<span class="par-tag" title="${esc(m.paragrafen.map((nr) => paragraafTitel(h, nr)).join(", "))}">${paragraafTekst(h, m.paragrafen)}</span>` : ""}
+            </div>
             <h1>${esc(m.titel)}</h1>
             <p class="intro">${esc(m.beschrijving)}</p>
           </div>
@@ -283,6 +321,13 @@
             <a class="knop licht" href="${esc(src)}" target="_blank" rel="noopener">Openen in nieuw tabblad ↗</a>
           </div>
         </div>
+        ${delen.length ? `
+          <nav class="deel-keuze" aria-label="Onderdelen van ${esc(m.titel)}">
+            ${delen.map((d, k) => {
+              const actief = deel ? d === deel : k === 0;
+              return `<a href="${urlDeel(j, h, m, d)}" ${actief ? 'aria-current="true"' : ""}>${esc(d.titel)}${d.paragraaf ? ` <span class="par-tag">${paragraafTekst(h, d.paragraaf)}</span>` : ""}</a>`;
+            }).join("")}
+          </nav>` : ""}
         ${insluiten ? `
           <div class="frame-wrap${m.formaat === "groot" ? " groot" : ""}" id="frame">
             <iframe src="${esc(src)}" title="${esc(m.titel)}" allowfullscreen

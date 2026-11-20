@@ -12,7 +12,7 @@
     --navy: #11264a; --navy2: #163a63; --navy3: #2c5687;
     --licht: #eef4fb; --licht2: #dbe8f5; --rand: #c9d8ea;
     --tekst: #14213a; --zacht: #4a5a72;
-    --proton: #d64545; --neutron: #8a97a8; --elektron: #2f6fb5;
+    --proton: #f4c20d; --neutron: #8a97a8; --elektron: #2f6fb5;
     --goed: #1f8a4c; --fout: #c0392b;
     --nietmetaal: #f0948a; --metalloide: #5aaee0; --metaal: #f8e39b;
   }
@@ -63,7 +63,7 @@
   .atoom .schil.vol { stroke: #9fb6d3; }
   .atoom .schil-naam { font-size: 11px; fill: #7d8da5; font-weight: 600; font-family: Inter, Arial, sans-serif; }
   .atoom .kern-leeg { fill: none; stroke: #c9d8ea; stroke-width: 1.5; stroke-dasharray: 2 4; }
-  .atoom .p { fill: var(--proton); stroke: #fff; stroke-width: 1.2; }
+  .atoom .p { fill: var(--proton); stroke: #b88f00; stroke-width: 1; }
   .atoom .n { fill: var(--neutron); stroke: #fff; stroke-width: 1.2; }
   .atoom .e { fill: var(--elektron); stroke: #fff; stroke-width: 2; }
   .atoom .pop { animation: pop .35s ease-out; transform-box: fill-box; transform-origin: center; }
@@ -738,7 +738,7 @@ const HINT = {
     else if (z === u.n && u.n !== u.z) waarom = `${naam(z)} heeft atoomnummer ${z}: dat is het aantal <b>neutronen</b>. Het element hangt af van het aantal <b>protonen</b>.`;
     else if (z === u.a) waarom = `${naam(z)} heeft atoomnummer ${z}: dat is het <b>massagetal</b> (protonen + neutronen). Het element hangt alleen af van het aantal <b>protonen</b>.`;
     else waarom = `${naam(z)} heeft atoomnummer ${z}, dus ${z} protonen. Dit deeltje heeft <b>${z < u.z ? "meer" : "minder"}</b> protonen.`;
-    const tip = `Het atoomnummer is gelijk aan het aantal protonen.${tel(u, "de rode bolletjes (protonen) in de kern")} In het periodiek systeem staan de elementen op volgorde van atoomnummer: H = 1, He = 2, Li = 3, enzovoort.`;
+    const tip = `Het atoomnummer is gelijk aan het aantal protonen.${tel(u, "de gele bolletjes (protonen) in de kern")} In het periodiek systeem staan de elementen op volgorde van atoomnummer: H = 1, He = 2, Li = 3, enzovoort.`;
     return { waarom, tip };
   },
   atoomnummer(u, w) {
@@ -747,7 +747,7 @@ const HINT = {
     else if (w === u.e && u.e !== u.z) waarom = "Je hebt het aantal <b>elektronen</b> ingevuld. Bij een ion is dat niet gelijk aan het aantal protonen.";
     else if (w === u.a) waarom = "Je hebt het <b>massagetal</b> ingevuld (protonen + neutronen).";
     else waarom = `${w} is niet gelijk aan het aantal protonen: het is te ${w < u.z ? "klein" : "groot"}.`;
-    return { waarom, tip: `Het atoomnummer is het aantal <b>protonen</b>.${tel(u, "de rode bolletjes in de kern")}` };
+    return { waarom, tip: `Het atoomnummer is het aantal <b>protonen</b>.${tel(u, "de gele bolletjes in de kern")}` };
   },
   massagetal(u, w) {
     let waarom;
@@ -756,7 +756,7 @@ const HINT = {
     else if (w === u.z + u.n + u.e && u.e !== 0) waarom = "Je hebt de <b>elektronen</b> ook meegeteld. Elektronen zijn zo licht dat ze niet meetellen voor het massagetal.";
     else if (w === u.z + u.e && u.e !== u.n) waarom = "Je hebt protonen en <b>elektronen</b> opgeteld. In plaats van de elektronen moet je de neutronen optellen.";
     else waarom = `${w} is te ${w < u.a ? "klein" : "groot"}.`;
-    return { waarom, tip: `Massagetal = aantal protonen + aantal neutronen (alle deeltjes in de kern).${tel(u, "de rode én de grijze bolletjes in de kern")}` };
+    return { waarom, tip: `Massagetal = aantal protonen + aantal neutronen (alle deeltjes in de kern).${tel(u, "de gele én de grijze bolletjes in de kern")}` };
   },
   lading(u, w) {
     let waarom;
@@ -764,7 +764,7 @@ const HINT = {
     else if (u.q === 0) waarom = "Dit deeltje heeft <b>evenveel</b> protonen als elektronen.";
     else if (w === 0) waarom = "Dit deeltje heeft <b>niet</b> evenveel protonen als elektronen, dus het heeft een lading.";
     else waarom = `De lading ${w > u.q ? "is te hoog" : "is te laag"}.`;
-    return { waarom, tip: `Lading = protonen ${MIN} elektronen. Elk proton telt als +1, elk elektron als ${MIN}1. Meer protonen dan elektronen: positief (+). Meer elektronen dan protonen: negatief (${MIN}).${tel(u, "de protonen (rood) en de elektronen (blauw)")}` };
+    return { waarom, tip: `Lading = protonen ${MIN} elektronen. Elk proton telt als +1, elk elektron als ${MIN}1. Meer protonen dan elektronen: positief (+). Meer elektronen dan protonen: negatief (${MIN}).${tel(u, "de protonen (geel) en de elektronen (blauw)")}` };
   }
 };
 const VELDNAAM = { atoomnummer: "Atoomnummer", massagetal: "Massagetal", lading: "Lading" };

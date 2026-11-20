@@ -93,6 +93,14 @@ window.SOLUTION = {
                   beschrijving: "Bouw atomen en ionen uit protonen, neutronen en elektronen en ontdek wat er gebeurt met de lading. Met drie spellen; ionen staan al aan.",
                   url: "materialen/3hv/h1/bouw-een-atoom/index.html?ionen=1",
                   formaat: "groot"
+                },
+                {
+                  id: "spellen-ionen",
+                  type: "oefening",
+                  titel: "Spellen: atomen en ionen",
+                  beschrijving: "Drie spellen met atomen én ionen: welk element is het, vul het symbool aan en maak zelf het symbool met atoomnummer, massagetal en lading.",
+                  url: "materialen/3hv/h1/bouw-een-atoom/index.html?spel=1&ionen=1",
+                  formaat: "groot"
                 }
               ]
             },

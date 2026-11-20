@@ -1100,7 +1100,8 @@ const SPEL_MOL = [
   { formule: "C₂H₄O₂", atomen: [["C"], ["C", 0, 0, 1], ["H", 0, 180, 1], ["H", 0, 270, 1], ["H", 0, 90, 1],
                                 ["O", 1, 270, 2], ["O", 1, 0, 1], ["H", 6, 0, 1]] }                              // azijnzuur
 ];
-const S_AANTAL = 5, S_R = 30, S_LENGTE = 118, S_PAK = 150, S_BREEK = 190;
+// S_PAK: zo dicht (middelpunt tot middelpunt) moet je een atoom bij een ander leggen voor een binding
+const S_AANTAL = 5, S_R = 30, S_LENGTE = 118, S_PAK = 75, S_BREEK = 190, S_START = 175;
 const ssvg = document.getElementById("s-tekening");
 const sp = { ronde: [], i: 0, poging: 0, punten: [], atomen: [], bindingen: [], klaar: false, W: 800, H: 480 };
 const schud = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
@@ -1138,7 +1139,7 @@ function spelLeg() {
     let x, y, n = 0;
     do {
       x = 60 + Math.random() * (sp.W - 120); y = 60 + Math.random() * (sp.H - 120); n++;
-    } while (n < 300 && plekken.some(p => Math.hypot(p.x - x, p.y - y) < S_PAK + 25));
+    } while (n < 300 && plekken.some(p => Math.hypot(p.x - x, p.y - y) < S_START));
     plekken.push({ x, y }); a.x = x; a.y = y;
   });
   spelTeken();

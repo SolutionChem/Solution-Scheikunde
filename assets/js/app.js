@@ -282,7 +282,7 @@
           </div>
         </div>
         ${insluiten ? `
-          <div class="frame-wrap" id="frame">
+          <div class="frame-wrap${m.formaat === "groot" ? " groot" : ""}" id="frame">
             <iframe src="${esc(src)}" title="${esc(m.titel)}" allowfullscreen
               allow="fullscreen; autoplay; encrypted-media; picture-in-picture"></iframe>
           </div>` : `

@@ -40,9 +40,12 @@ materialen/<jaar>/h<nr>/<naam>/index.html   eigen animaties en bestanden
 - Scheikundig correct: controleer gegevens (atoommassa's, elektronenverdeling, formules) tegen de Binas/het boek.
 - Na het maken: voeg het materiaal toe in `data.js` bij de juiste paragraaf.
 
-## Externe materialen
-- Verzin geen URL's of YouTube-ID's. Gebruik alleen links die echt bestaan; vraag anders de docent.
-- Vermeld de bron (`bron:`) bij materiaal van derden, zoals PhET.
+## Eigen materialen, geen externe bronnen
+- Alle animaties, simulaties en oefeningen worden **zelf gemaakt** en staan in `materialen/`. Gebruik geen externe simulaties (zoals PhET).
+- YouTube-video's mogen later wel (veld `youtube` in `data.js`). Verzin nooit URL's of YouTube-ID's; vraag ze aan de docent.
+- Grote simulaties krijgen `formaat: "groot"` in `data.js` (hoger venster in de viewer).
+- Spellen/oefeningen: willekeurige uitdagingen zonder herhaling, directe feedback met uitleg, 2 pogingen (2 punten / 1 punt). Zie `materialen/3hv/h1/bouw-een-atoom/` als referentie.
+- Ionen komen later in de leerlijn dan atomen: maak ionen in oefeningen optioneel met een schakelaar.
 
 ## Controleren
 - Lokaal bekijken: `python3 -m http.server` in de root en `http://localhost:8000` openen.

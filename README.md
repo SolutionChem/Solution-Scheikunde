@@ -27,7 +27,8 @@ assets/js/app.js      Weergave (hoef je normaal niet aan te passen)
 assets/css/style.css  Huisstijl (kleuren, lettertypen, elementtegels)
 
 materialen/           Eigen animaties en bestanden, per leerjaar en hoofdstuk
-  3hv/h1/atoommodel/  Voorbeeld: zelfgemaakte animatie van het atoommodel
+  3hv/h1/atoommodel/      Animatie: het atoommodel van Bohr (§1.1)
+  3hv/h1/bouw-een-atoom/  Simulatie met drie spellen: bouw een atoom (§1.2)
 ```
 
 De pagina's worden automatisch opgebouwd uit `assets/js/data.js`. **Je past dus alleen dat bestand aan.**
@@ -66,21 +67,26 @@ Let op de komma tussen twee blokken.
 }
 ```
 
-### Een externe website / simulatie
+### Een externe website
 
 ```js
 {
-  id: "fasen",
-  type: "simulatie",
-  titel: "Fasen van stoffen (PhET)",
+  id: "voorbeeld-site",
+  type: "link",
+  titel: "Naam van de website",
   beschrijving: "…",
-  url: "https://phet.colorado.edu/sims/html/states-of-matter-basics/latest/states-of-matter-basics_nl.html",
-  bron: "PhET Interactive Simulations"     // optioneel: wordt onder het materiaal getoond
+  url: "https://…",
+  bron: "Naam van de maker"               // optioneel: wordt onder het materiaal getoond
 }
 ```
 
 Sommige websites mogen niet *in* een andere site getoond worden (je ziet dan een leeg of grijs vak).
 Zet in dat geval `embed: false` bij het materiaal; leerlingen krijgen dan een knop die de site in een nieuw tabblad opent.
+
+### Groot venster
+
+Voor uitgebreide simulaties (zoals *Bouw een atoom*) kun je `formaat: "groot"` toevoegen.
+Het venster op de materiaalpagina wordt dan bijna schermvullend.
 
 ### Een PDF of ander document
 

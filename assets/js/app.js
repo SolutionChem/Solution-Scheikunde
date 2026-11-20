@@ -321,13 +321,6 @@
             <a class="knop licht" href="${esc(src)}" target="_blank" rel="noopener">Openen in nieuw tabblad ↗</a>
           </div>
         </div>
-        ${delen.length ? `
-          <nav class="deel-keuze" aria-label="Onderdelen van ${esc(m.titel)}">
-            ${delen.map((d, k) => {
-              const actief = deel ? d === deel : k === 0;
-              return `<a href="${urlDeel(j, h, m, d)}" ${actief ? 'aria-current="true"' : ""}>${esc(d.titel)}${d.paragraaf ? ` <span class="par-tag">${paragraafTekst(h, d.paragraaf)}</span>` : ""}</a>`;
-            }).join("")}
-          </nav>` : ""}
         ${insluiten ? `
           <div class="frame-wrap${m.formaat === "groot" ? " groot" : ""}" id="frame">
             <iframe src="${esc(src)}" title="${esc(m.titel)}" allowfullscreen

@@ -23,11 +23,11 @@ materialen/<jaar>/h<nr>/<naam>/index.html   eigen animaties en bestanden
 ```
 - Inhoud toevoegen of wijzigen gebeurt **alleen in `data.js`**; `app.js` hoeft daarvoor niet aangepast te worden.
 - **Na elke aanpassing in `materialen/`: verhoog `versie` bovenaan `data.js`** (bijv. `"2026-11-20c"` → `"2026-11-20d"`). `app.js` zet `?v=<versie>` achter het adres van eigen materialen; zonder nieuwe versie zien docenten en leerlingen een oude versie uit de browsercache.
-- Eén bestand kan bij meer paragrafen staan via URL-parameters, in plaats van het te kopiëren. Bestaande parameters: `?ionen=1` en `?spel=1` (Bouw een atoom), `?tab=metaal|covalent|spel` (bindingen). Leg een nieuwe parameter vast in `README.md`.
+- Eén bestand kan bij meer paragrafen staan via URL-parameters, in plaats van het te kopiëren. Bestaande parameters: `?ionen=1` en `?spel=1` (Bouw een atoom), `?tab=metaal|covalent|spel` (bindingen), `?compact=1` (periodiek systeem zonder informatieblok, voor insluiten in een andere simulatie). Leg een nieuwe parameter vast in `README.md`.
 - Materialen staan **per hoofdstuk** (`hoofdstuk.materialen`), niet per paragraaf. De hoofdstukpagina toont één tegel per tool; de paragrafen staan alleen als overzicht in de zijbalk (en op de leerjaarpagina).
 - **Eén tool = één tegel.** Kan een tool meer dingen (bijv. zouten, metalen, moleculen én een spel), maak dan geen losse tegels maar één materiaal met `onderdelen`, die in de tegel onder "Wat kun je ermee?" staan.
 - Een materiaal heeft: `id` (uniek binnen het hoofdstuk, kebab-case), `type` (een sleutel uit `typen`, of een lijst zoals `["simulatie", "oefening"]`), `paragrafen` (bijv. `[2, 3, 4]`), `titel`, `beschrijving`, en `url` of `youtube`. Optioneel: `onderdelen`, `bron`, `embed: false` (voor sites die niet in een iframe mogen).
-- Een onderdeel heeft: `id` (uniek binnen het hoofdstuk), `titel`, `tekst` (wat kun je ermee), optioneel `url` (anders die van de tool), `paragraaf` (nummer) en `type` (bijv. `"oefening"`). De viewer opent een onderdeel via `&deel=<id>`; ook `?m=<onderdeel-id>` werkt, zodat oude links blijven werken.
+- Een onderdeel heeft: `id` (uniek binnen het hoofdstuk), `titel`, `tekst` (wat kun je ermee), optioneel `url` (anders die van de tool), `paragraaf` (nummer) en `type` (bijv. `"oefening"`). De viewer opent een onderdeel via `&deel=<id>` (er staan geen onderdeelknoppen boven het venster; de tool heeft zelf tabbladen of knoppen); ook `?m=<onderdeel-id>` werkt, zodat oude links blijven werken.
 - Nieuw leerjaar: object in `leerjaren` met eigen `id` (bijv. `4h`), `actief: true` zodra er hoofdstukken zijn. Bestanden in `materialen/<id>/`.
 - `README.md` is de handleiding voor de docent. Houd die bij als de werkwijze verandert.
 

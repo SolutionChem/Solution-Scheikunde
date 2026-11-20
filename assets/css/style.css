@@ -446,17 +446,6 @@ h1, h2, h3 { line-height: 1.2; color: var(--navy-800); }
 .deel-titel .par-tag, .deel-titel .chip { margin-left: 4px; vertical-align: 1px; }
 .deel-tekst { font-size: .85rem; color: var(--tekst-zacht); }
 
-.deel-keuze { display: flex; gap: 8px; flex-wrap: wrap; margin: 4px 0 14px; }
-.deel-keuze a {
-  display: inline-flex; gap: 6px; align-items: center;
-  font-size: .88rem; text-decoration: none; color: var(--tekst);
-  border: 1px solid var(--rand); background: var(--wit);
-  padding: 5px 12px; border-radius: 99px;
-}
-.deel-keuze a:hover { border-color: var(--navy-500); }
-.deel-keuze a[aria-current] { background: var(--navy-700); color: var(--wit); border-color: var(--navy-700); }
-.deel-keuze a[aria-current] .par-tag { background: transparent; color: var(--wit); border-color: rgba(255,255,255,.4); }
-
 .leeg {
   color: var(--tekst-zacht);
   font-size: .92rem;

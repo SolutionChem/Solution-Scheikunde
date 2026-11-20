@@ -101,7 +101,19 @@ window.SOLUTION = {
                 }
               ]
             },
-            { nr: 3, titel: "Metalen", pagina: 40, materialen: [] },
+            {
+              nr: 3, titel: "Metalen", pagina: 40,
+              materialen: [
+                {
+                  id: "metaalbinding",
+                  type: "simulatie",
+                  titel: "De metaalbinding",
+                  beschrijving: "Zie hoe de valentie-elektronen van metaalatomen vrije elektronen worden en hoe de zee van vrije elektronen de positieve metaalionen bij elkaar houdt.",
+                  url: "materialen/3hv/h2/bindingen/index.html?tab=metaal",
+                  formaat: "groot"
+                }
+              ]
+            },
             { nr: 4, titel: "Moleculaire stoffen", pagina: 44, materialen: [] },
             { nr: 5, titel: "Naamgeving van moleculaire stoffen", pagina: 51, materialen: [] }
           ]

@@ -1,0 +1,506 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Interactief periodiek systeem</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Oswald:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #11264a; --navy2: #163a63; --navy3: #2c5687;
+    --licht: #eef4fb; --licht2: #dbe8f5; --rand: #c9d8ea;
+    --tekst: #14213a; --zacht: #4a5a72;
+    /* hoofdsoorten (zoals in het boek) */
+    --metaal: #f8e39b; --nietmetaal: #f0948a; --metalloide: #5aaee0;
+    /* groepen */
+    --alkali: #f4a261; --aardalkali: #9fd07a; --transitie: #cfa0dd; --posttransitie: #86cfc8;
+    --lanthanide: #f59cc3; --actinide: #c9a27c; --halogeen: #5fc488; --edelgas: #a6b0e6;
+    --kop: "Oswald", "Arial Narrow", Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    font-family: Inter, "Helvetica Neue", Arial, sans-serif; color: var(--tekst);
+    background: var(--licht); line-height: 1.45; font-size: 15px;
+    -webkit-font-smoothing: antialiased; padding: 14px;
+  }
+  button { font: inherit; cursor: pointer; color: inherit; }
+
+  /* ---------- periodiek systeem ---------- */
+  .ps { container: ps / inline-size; background: #fff; border-radius: 10px;
+        box-shadow: 0 1px 3px rgba(0,0,0,.1); padding: 10px 12px 14px; }
+  .rooster {
+    display: grid; grid-template-columns: .55fr repeat(18, minmax(0, 1fr));
+    gap: .22cqw;
+  }
+  .gnr, .pnr { font-family: var(--kop); font-weight: 600; color: var(--navy); text-align: center; }
+  .gnr { font-size: 1.35cqw; align-self: end; padding-bottom: .3cqw; }
+  .pnr { font-size: 1.5cqw; display: flex; align-items: center; justify-content: center; }
+  .tussen { grid-column: 1 / -1; height: 1.3cqw; }
+
+  .el {
+    position: relative; aspect-ratio: 1; min-width: 0; margin: 0;
+    border: 1px solid #1d2433; border-radius: .25cqw; padding: .2cqw .32cqw .15cqw;
+    background: var(--bg); color: #111; text-align: left; line-height: 1.05;
+    display: grid; grid-template-rows: auto 1fr auto auto; overflow: hidden;
+    transition: transform .12s, box-shadow .12s, opacity .2s;
+  }
+  .el .m, .el .z { font-size: .8cqw; font-variant-numeric: tabular-nums; }
+  .el .s { font-size: 2.05cqw; font-weight: 700; text-align: center; align-self: center; }
+  .el .n { font-size: .6cqw; text-align: center; white-space: nowrap; overflow: hidden; letter-spacing: -.01em; }
+  .el:hover, .el:focus-visible { transform: scale(1.12); z-index: 2; box-shadow: 0 3px 10px rgba(0,0,0,.3); outline: none; }
+  .el.actief { z-index: 3; outline: 3px solid var(--navy); outline-offset: 1px; }
+  .el.gat { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: .2cqw; }
+  .el.gat .s { font-size: .95cqw; }
+  .el.gat .n { font-size: .6cqw; }
+  .rooster.filter .el:not(.aan) { opacity: .18; }
+
+  /* ---------- informatieblok (in het lege vak, overlapt niets) ---------- */
+  .info { grid-column: 4 / 14; grid-row: 2 / 5; position: relative; margin: 0 .7cqw 1.2cqw; }
+  .info-binnen {
+    position: absolute; inset: 0; overflow: auto; background: var(--licht);
+    border: 1px solid var(--rand); border-radius: 8px; padding: .65cqw .95cqw;
+    font-size: clamp(10px, 1.04cqw, 14px); line-height: 1.33;
+  }
+  .info-kop { display: flex; align-items: center; gap: .8em; margin-bottom: .4em; flex-wrap: wrap; }
+  .mini { width: 3.1em; height: 3.1em; flex: 0 0 auto; border: 1px solid #1d2433; border-radius: 3px; background: var(--bg);
+          display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1; color: #111; }
+  .mini b { font-size: 1.4em; }
+  .mini small { font-size: .75em; margin-top: .15em; }
+  .info h2 { margin: 0; font-family: var(--kop); font-weight: 600; font-size: 1.45em; color: var(--navy); letter-spacing: .02em; line-height: 1.1; }
+  .labels { display: flex; flex-wrap: wrap; gap: .3em; margin-top: .2em; }
+  .label { font-size: .85em; padding: .12em .55em; border-radius: 99px; background: #fff; border: 1px solid var(--rand); white-space: nowrap; }
+  .label .stip { display: inline-block; width: .75em; height: .75em; border-radius: 2px; margin-right: .35em; vertical-align: -.05em; border: 1px solid rgba(0,0,0,.4); background: var(--bg); }
+  .fase { margin-left: auto; display: flex; align-items: center; gap: .45em; background: var(--navy2); color: #fff;
+          border-radius: 8px; padding: .3em .7em; font-size: .9em; }
+  .fase svg { width: 1.5em; height: 1.5em; flex: 0 0 auto; }
+  .fase b { display: block; font-family: var(--kop); font-weight: 500; letter-spacing: .06em; text-transform: uppercase; font-size: 1.05em; }
+  .fase span { display: block; font-size: .82em; opacity: .85; }
+  .kolommen { display: grid; grid-template-columns: 1fr 1fr; gap: .4em 1.2em; }
+  .kolommen h3 { margin: 0 0 .15em; font-family: var(--kop); font-weight: 500; font-size: .85em; letter-spacing: .1em;
+                 text-transform: uppercase; color: var(--navy3); }
+  .kolommen p { margin: 0; }
+  .opm { margin: .35em 0 0; font-size: .9em; color: var(--zacht); }
+
+  @container ps (max-width: 960px) {
+    .info { grid-column: 1 / -1; grid-row: 12; margin: 12px 0 0; }
+    .info-binnen { position: static; font-size: 14px; padding: 12px 14px; }
+  }
+  @container ps (max-width: 900px) {
+    .el .n, .el.gat .n { display: none; }
+    .el .s { font-size: 2.3cqw; }
+    .el .m, .el .z { font-size: .95cqw; }
+  }
+  @container ps (max-width: 560px) {
+    .el { display: flex; align-items: center; justify-content: center; padding: 0; border-radius: 2px; }
+    .el .m, .el .z { display: none; }
+    .el .s { font-size: 2.75cqw; }
+    .el.gat .s { font-size: 1.6cqw; }
+    .gnr { font-size: 2.1cqw; }
+    .pnr { font-size: 2.4cqw; }
+  }
+  @media (max-width: 560px) {
+    body { padding: 8px; }
+    .ps { padding: 8px 6px 10px; }
+    .kolommen { grid-template-columns: 1fr; }
+    .fase { margin-left: 0; }
+  }
+
+  /* ---------- legenda ---------- */
+  .legenda { display: flex; flex-wrap: wrap; gap: 10px 26px; margin-top: 14px; }
+  .legenda-groep h3 { margin: 0 0 6px; font-family: var(--kop); font-weight: 500; font-size: .8rem; letter-spacing: .12em;
+                      text-transform: uppercase; color: var(--zacht); }
+  .legenda-groep div { display: flex; flex-wrap: wrap; gap: 6px; }
+  .leg { display: inline-flex; align-items: center; gap: 7px; padding: 4px 10px 4px 5px; border-radius: 8px;
+         border: 1px solid var(--rand); background: #fff; font-size: .88rem; }
+  .leg:hover, .leg:focus-visible { border-color: var(--navy3); }
+  .leg.hoofd { font-weight: 600; }
+  .leg.vast { background: var(--navy2); color: #fff; border-color: var(--navy2); }
+  .vlak { width: 20px; height: 20px; border: 1px solid #1d2433; border-radius: 2px; background: var(--bg); flex: 0 0 auto; }
+  .hint { font-size: .85rem; color: var(--zacht); margin: 10px 0 0; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .el { transition: none; }
+    .el:hover, .el:focus-visible { transform: none; }
+  }
+</style>
+</head>
+<body>
+<div class="ps">
+  <div class="rooster" id="rooster">
+    <div class="info" id="info" aria-live="polite"><div class="info-binnen" id="info-binnen"></div></div>
+  </div>
+  <div class="legenda" id="legenda"></div>
+  <p class="hint">Beweeg over een kleur in de legenda (of tik erop) om die groep op te lichten.</p>
+</div>
+
+<script>
+/* ---------- soorten elementen ----------
+   basis = de kleur uit het boek (metaal, niet-metaal, metalloïde);
+   eigen = de kleur van de groep (andere helft van het vakje). */
+const SOORTEN = {
+  alkali:        { naam: "Alkalimetalen",         enkel: "Alkalimetaal",         basis: "metaal",     eigen: "alkali" },
+  aardalkali:    { naam: "Aardalkalimetalen",     enkel: "Aardalkalimetaal",     basis: "metaal",     eigen: "aardalkali" },
+  transitie:     { naam: "Transitiemetalen",      enkel: "Transitiemetaal",      basis: "metaal",     eigen: "transitie" },
+  posttransitie: { naam: "Post-transitiemetalen", enkel: "Post-transitiemetaal", basis: "metaal",     eigen: "posttransitie" },
+  lanthanide:    { naam: "Lanthaniden",           enkel: "Lanthanide",           basis: "metaal",     eigen: "lanthanide" },
+  actinide:      { naam: "Actinoïden",            enkel: "Actinoïde",            basis: "metaal",     eigen: "actinide" },
+  nietmetaal:    { naam: "Overige niet-metalen",  enkel: "Niet-metaal",          basis: "nietmetaal", eigen: null },
+  halogeen:      { naam: "Halogenen",             enkel: "Halogeen",             basis: "nietmetaal", eigen: "halogeen" },
+  /* astaat en tennessine: halogeen, maar in het boek een metalloïde (niet apart in de legenda) */
+  halogeenmetalloide: { naam: "Halogenen",        enkel: "Halogeen",             basis: "metalloide", eigen: "halogeen" },
+  edelgas:       { naam: "Edelgassen",            enkel: "Edelgas",              basis: "nietmetaal", eigen: "edelgas" },
+  metalloide:    { naam: "Metalloïden",           enkel: "Metalloïde",           basis: "metalloide", eigen: null }
+};
+const BASIS_NAAM = { metaal: "Metaal", nietmetaal: "Niet-metaal", metalloide: "Metalloïde" };
+
+function soortVan(z) {
+  if ([3, 11, 19, 37, 55, 87].includes(z)) return "alkali";
+  if ([4, 12, 20, 38, 56, 88].includes(z)) return "aardalkali";
+  if (z >= 57 && z <= 71) return "lanthanide";
+  if (z >= 89 && z <= 103) return "actinide";
+  if ([85, 117].includes(z)) return "halogeenmetalloide";
+  if ([5, 14, 32, 33, 51, 52, 84].includes(z)) return "metalloide";
+  if ([9, 17, 35, 53].includes(z)) return "halogeen";
+  if ([2, 10, 18, 36, 54, 86, 118].includes(z)) return "edelgas";
+  if ([1, 6, 7, 8, 15, 16, 34].includes(z)) return "nietmetaal";
+  if ([13, 31, 49, 50, 81, 82, 83, 113, 114, 115, 116].includes(z)) return "posttransitie";
+  return "transitie";
+}
+function achtergrond(soort) {
+  const s = SOORTEN[soort];
+  if (!s.eigen) return `var(--${s.basis})`;
+  return `linear-gradient(135deg, var(--${s.basis}) 50%, var(--${s.eigen}) 50%)`;
+}
+
+/* ---------- gegevens per element ----------
+   [symbool, naam, atoommassa (zoals in de Binas), fase bij 20 °C, voorkomen/winning, toepassing, opmerking bij de fase]
+   fase: "vast", "vloeibaar", "gas" of "onbekend". */
+const KUNSTMATIG = "Komt niet in de natuur voor. Er zijn maar een paar atomen van gemaakt, in een deeltjesversneller.";
+const GEEN = "Geen: de atomen zijn radioactief en vallen snel uit elkaar. Alleen voor onderzoek.";
+const ONBEKEND = "Er zijn nooit genoeg atomen tegelijk gemaakt om dat te weten.";
+const zwaar = naar => [KUNSTMATIG + " Genoemd naar " + naar + ".", GEEN, ONBEKEND];
+
+const E = [
+  ["H","Waterstof","1,008","gas","Komt op aarde bijna niet als los element voor, maar zit gebonden in water en aardgas. Wordt vooral gemaakt uit aardgas, of door water te ontleden met elektriciteit. In het heelal het meest voorkomende element (sterren).","Grondstof voor kunstmest (via ammoniak). Ook brandstof voor waterstofauto's en -bussen."],
+  ["He","Helium","4,003","gas","Ontstaat diep in de aarde bij radioactief verval en hoopt zich op in aardgasvelden. Wordt uit aardgas gewonnen. In de lucht zit bijna niets.","Vullen van ballonnen en luchtschepen (lichter dan lucht, brandt niet). Koelen van de magneten in MRI-scanners."],
+  ["Li","Lithium","6,941","vast","Komt niet puur voor, want het reageert snel met water en lucht. Zit in gesteenten en in zoutmeren, bijvoorbeeld in Chili en Argentinië.","Oplaadbare batterijen (lithium-ionaccu's) in telefoons, laptops en elektrische auto's."],
+  ["Be","Beryllium","9,012","vast","Komt niet puur voor. Zit in het mineraal beril; smaragd is een groene vorm van beril.","Licht en stijf metaal voor onderdelen van satellieten en ruimtetelescopen. Het stof is giftig."],
+  ["B","Boor","10,81","vast","Komt niet puur voor. Zit in boraat-mineralen zoals borax, die je vindt in uitgedroogde zoutmeren (Turkije, VS).","Hittebestendig glas (borosilicaatglas), zoals ovenschalen en glaswerk in het lab."],
+  ["C","Koolstof","12,01","vast","Komt puur voor als diamant en grafiet. Verder zit koolstof in steenkool, aardolie, aardgas, koolstofdioxide en in alle levende wezens.","Grafiet in potloden, diamant in sieraden en boren. IJzer met een beetje koolstof is staal."],
+  ["N","Stikstof","14,01","gas","Komt puur voor: lucht bestaat voor 78% uit stikstof. Wordt gewonnen door lucht af te koelen tot het vloeibaar is en daarna te scheiden.","Grondstof voor kunstmest (via ammoniak). Vloeibare stikstof (−196 °C) om dingen snel te bevriezen. Vulgas in zakken chips."],
+  ["O","Zuurstof","16,00","gas","Komt puur voor: lucht bestaat voor 21% uit zuurstof, gemaakt door planten (fotosynthese). Wordt gewonnen uit vloeibare lucht. Zit ook in water en in de meeste gesteenten.","Zuurstof voor patiënten in ziekenhuizen. Bij het maken van staal en bij lassen."],
+  ["F","Fluor","19,00","gas","Komt nooit puur voor: het is het meest reactieve element. Zit in het mineraal vloeispaat (fluoriet).","Fluoride in tandpasta (tegen gaatjes). Teflon, de antiaanbaklaag in pannen."],
+  ["Ne","Neon","20,18","gas","Komt puur voor in de lucht, maar maar heel weinig. Wordt gewonnen uit vloeibare lucht.","Neonreclame: neon geeft rood-oranje licht als er stroom door gaat."],
+  ["Na","Natrium","22,99","vast","Komt niet puur voor, want het reageert heftig met water. Zit in keukenzout (natriumchloride) in zeewater en in zoutlagen in de bodem. Wordt gemaakt met elektrolyse van gesmolten zout.","Natriumlampen (oranje straatverlichting). Natriumverbindingen zoals keukenzout, soda en bakpoeder."],
+  ["Mg","Magnesium","24,31","vast","Komt niet puur voor. Zit opgelost in zeewater en in gesteenten zoals dolomiet.","Lichte legeringen voor fietsen, auto-onderdelen en laptops. Fel wit licht in vuurwerk en sterretjes."],
+  ["Al","Aluminium","26,98","vast","Komt niet puur voor. Het meest voorkomende metaal in de aardkorst. Wordt met elektrolyse gewonnen uit het erts bauxiet; dat kost veel elektriciteit.","Blikjes, aluminiumfolie, vliegtuigen, fietsen en raamkozijnen: licht en roest niet."],
+  ["Si","Silicium","28,09","vast","Komt niet puur voor. Zit in zand (siliciumdioxide) en in bijna alle gesteenten: na zuurstof het meest voorkomende element in de aardkorst.","Computerchips en zonnepanelen. Van zand (siliciumdioxide) wordt glas gemaakt."],
+  ["P","Fosfor","30,97","vast","Komt niet puur voor. Zit in fosfaaterts (Marokko, China) en ook in je botten, tanden en DNA.","Fosfaat in kunstmest. Rode fosfor in het strijkvlak van luciferdoosjes."],
+  ["S","Zwavel","32,06","vast","Komt puur voor bij vulkanen. Zit ook in aardolie en aardgas; daar wordt het uitgehaald, zodat er bij verbranden minder zure regen ontstaat.","Grondstof voor zwavelzuur, de meest gemaakte chemische stof. Ook om rubber van autobanden sterk te maken."],
+  ["Cl","Chloor","35,45","gas","Komt niet puur voor. Zit in keukenzout (natriumchloride) in zeewater. Wordt gemaakt met elektrolyse van zout water.","Desinfecteren van zwemwater en drinkwater. Grondstof voor de kunststof pvc (buizen)."],
+  ["Ar","Argon","39,95","gas","Komt puur voor in de lucht (bijna 1%). Wordt gewonnen uit vloeibare lucht.","Beschermgas bij lassen. Vulgas tussen de ruiten van dubbel glas en in gloeilampen."],
+  ["K","Kalium","39,10","vast","Komt niet puur voor, want het reageert heftig met water. Zit in kaliumzouten in de bodem (Canada, Rusland) en in planten.","Kaliumzouten in kunstmest. Kalium is nodig voor je zenuwen en spieren (zit veel in bananen)."],
+  ["Ca","Calcium","40,08","vast","Komt niet puur voor. Zit in kalksteen, krijt, marmer en gips, en in schelpen, botten en tanden.","Calciumverbindingen in cement, kalk en schoolbordkrijt. Calcium in je voeding voor sterke botten."],
+  ["Sc","Scandium","44,96","vast","Komt niet puur voor. Zit in kleine beetjes verspreid in veel mineralen en is daardoor moeilijk te winnen.","Lichte, sterke aluminium-scandiumlegeringen, bijvoorbeeld voor fietsframes. Felle lampen in stadions."],
+  ["Ti","Titaan","47,87","vast","Komt niet puur voor. Zit in de mineralen rutiel en ilmeniet (titaanoxiden).","Sterk, licht en roest niet: kunstheupen, vliegtuigen en brillenmonturen. Titaandioxide is de witte kleurstof in verf en zonnebrand."],
+  ["V","Vanadium","50,94","vast","Komt niet puur voor. Zit in ertsen, vooral in China, Rusland en Zuid-Afrika.","Maakt staal sterker, bijvoorbeeld voor gereedschap (chroom-vanadium op steeksleutels)."],
+  ["Cr","Chroom","52,00","vast","Komt niet puur voor. Wordt gewonnen uit het erts chromiet.","Roestvrij staal (rvs). Glanzende chroomlaag op kranen en fietsonderdelen."],
+  ["Mn","Mangaan","54,94","vast","Komt niet puur voor. Zit in ertsen zoals bruinsteen (mangaandioxide).","Maakt staal harder en sterker. Mangaandioxide zit in gewone batterijen."],
+  ["Fe","IJzer","55,85","vast","Komt bijna niet puur voor (alleen in meteorieten). Wordt in een hoogoven gewonnen uit ijzererts, zoals bij Tata Steel in IJmuiden.","Staal voor gebouwen, bruggen, auto's en schepen. Het meest gebruikte metaal ter wereld."],
+  ["Co","Kobalt","58,93","vast","Komt niet puur voor. Zit in ertsen samen met koper en nikkel, vooral in Congo.","Lithium-ionaccu's. Kobaltblauw: blauwe kleur in glas, verf en aardewerk."],
+  ["Ni","Nikkel","58,69","vast","Komt niet puur voor (behalve in meteorieten). Wordt gewonnen uit ertsen, bijvoorbeeld in Indonesië en Canada.","Roestvrij staal en accu's. De munten van 1 en 2 euro bevatten nikkel."],
+  ["Cu","Koper","63,55","vast","Komt soms puur voor als klompjes in gesteente. Meestal wordt het gewonnen uit kopererts (Chili, Peru).","Elektriciteitsdraden en waterleidingen: koper geleidt stroom en warmte heel goed."],
+  ["Zn","Zink","65,38","vast","Komt niet puur voor. Wordt gewonnen uit het erts zinkblende.","Verzinken: een laagje zink beschermt staal tegen roest (dakgoten, vangrails). Messing is koper met zink."],
+  ["Ga","Gallium","69,72","vast","Komt niet puur voor. Wordt gewonnen als bijproduct bij het maken van aluminium en zink.","Leds en chips (galliumnitride en galliumarsenide), bijvoorbeeld in snelladers.","Smelt al bij 30 °C: in je hand wordt het vloeibaar."],
+  ["Ge","Germanium","72,64","vast","Komt niet puur voor. Wordt gewonnen als bijproduct bij het maken van zink en uit steenkoolas.","Glasvezelkabels voor internet. Lenzen voor warmtecamera's."],
+  ["As","Arseen","74,92","vast","Komt soms puur voor, maar meestal in ertsen samen met koper, lood en goud. Wordt gewonnen als bijproduct.","Vroeger bekend als gif. Nu in chips (galliumarsenide) en in sommige soorten glas. Zeer giftig."],
+  ["Se","Seleen","78,96","vast","Komt niet puur voor. Wordt gewonnen als bijproduct bij het maken van koper.","Kleurt glas rood, of maakt groenig glas juist kleurloos. Je lichaam heeft een heel klein beetje seleen nodig."],
+  ["Br","Broom","79,90","vloeibaar","Komt niet puur voor. Zit als bromide in zeewater en in zoutmeren, zoals de Dode Zee.","Brandvertragers in kunststof (bijvoorbeeld in elektronica). Desinfecteren van bubbelbaden.","Eén van de twee elementen die vloeibaar zijn bij kamertemperatuur (de andere is kwik)."],
+  ["Kr","Krypton","83,80","gas","Komt puur voor in de lucht, maar heel weinig. Wordt gewonnen uit vloeibare lucht.","Vulgas in dubbel glas (isoleert goed) en in sommige lampen en flitsers."],
+  ["Rb","Rubidium","85,47","vast","Komt niet puur voor. Zit in kleine hoeveelheden in mineralen; wordt gewonnen als bijproduct van lithium.","Weinig toepassingen: vooral in atoomklokken en wetenschappelijk onderzoek."],
+  ["Sr","Strontium","87,62","vast","Komt niet puur voor. Zit in de mineralen celestien en strontianiet.","Strontiumzouten geven de felrode kleur in vuurwerk en noodfakkels."],
+  ["Y","Yttrium","88,91","vast","Komt niet puur voor. Zit samen met de lanthaniden in dezelfde mineralen. Genoemd naar het Zweedse dorp Ytterby.","Leds en lasers (YAG-laser), bijvoorbeeld bij ooglaseren en bij de tandarts."],
+  ["Zr","Zirkonium","91,22","vast","Komt niet puur voor. Zit in het mineraal zirkoon, dat je in zand vindt.","Buizen om de splijtstof in kerncentrales. Zirkonia: nepdiamant en witte tandkronen."],
+  ["Nb","Niobium","92,91","vast","Komt niet puur voor. Wordt gewonnen uit het erts pyrochloor, vooral in Brazilië.","Sterk staal voor pijpleidingen. Supergeleidende magneten in MRI-scanners."],
+  ["Mo","Molybdeen","95,94","vast","Komt niet puur voor. Wordt gewonnen uit het erts molybdeniet.","Maakt staal heel sterk en hittebestendig, bijvoorbeeld voor boren en motoronderdelen."],
+  ["Tc","Technetium","(98)","vast","Komt in de natuur bijna niet voor, want het is radioactief en vervalt. Wordt gemaakt in kernreactoren; de grondstof komt onder andere uit Petten.","Ziekenhuizen gebruiken technetium als 'verklikker' om botten en organen in beeld te brengen."],
+  ["Ru","Ruthenium","101,1","vast","Komt in kleine beetjes puur voor in platinaerts. Wordt gewonnen als bijproduct van platina en nikkel.","Slijtvaste elektrische contacten en harde schijven. Ook als katalysator."],
+  ["Rh","Rhodium","102,9","vast","Zeer zeldzaam. Komt puur voor samen met platina en wordt als bijproduct gewonnen (Zuid-Afrika).","Katalysator in de uitlaat van auto's: maakt schadelijke gassen onschadelijk."],
+  ["Pd","Palladium","106,4","vast","Komt soms puur voor, samen met platina. Wordt gewonnen als bijproduct van platina en nikkel (Rusland, Zuid-Afrika).","Katalysator in de uitlaat van auto's. Witgoud voor sieraden."],
+  ["Ag","Zilver","107,9","vast","Komt soms puur voor. Meestal wordt het gewonnen uit ertsen van lood, zink en koper (Mexico, Peru).","Sieraden en bestek. Elektronica en zonnepanelen: zilver geleidt stroom het best van alle metalen."],
+  ["Cd","Cadmium","112,4","vast","Komt niet puur voor. Wordt gewonnen als bijproduct bij het maken van zink.","Vroeger in oplaadbare batterijen en gele verf. Nu nog maar weinig, omdat het giftig is."],
+  ["In","Indium","114,8","vast","Komt niet puur voor. Wordt gewonnen als bijproduct bij het maken van zink.","Indiumtinoxide: een doorzichtige laag die stroom geleidt, in touchscreens en beeldschermen."],
+  ["Sn","Tin","118,7","vast","Komt niet puur voor. Wordt gewonnen uit het erts tinsteen (cassiteriet).","Soldeer om elektronica te verbinden. Blik is staal met een laagje tin. Brons is koper met tin."],
+  ["Sb","Antimoon","121,8","vast","Komt soms puur voor, maar meestal in het erts stibniet (vooral China).","Brandvertragers in kunststof en textiel. Maakt lood harder, bijvoorbeeld in accu's."],
+  ["Te","Telluur","127,6","vast","Zeer zeldzaam. Wordt gewonnen als bijproduct bij het maken van koper.","Dunne zonnepanelen (cadmiumtelluride)."],
+  ["I","Jood","126,9","vast","Komt niet puur voor. Zit in zeewater en zeewier, en in zoutlagen in Chili.","Jodiumtinctuur om wondjes te ontsmetten. Jodium in brood en zout, nodig voor je schildklier."],
+  ["Xe","Xenon","131,3","gas","Komt puur voor in de lucht, maar heel weinig. Wordt gewonnen uit vloeibare lucht.","Felle koplampen van auto's (xenonlampen). Brandstof voor de ionenmotor van ruimtesondes."],
+  ["Cs","Cesium","132,9","vast","Komt niet puur voor. Zit in het zeldzame mineraal polluciet (Canada).","Atoomklokken: de seconde is vastgelegd met trillingen van het cesiumatoom.","Smelt al bij 28 °C."],
+  ["Ba","Barium","137,3","vast","Komt niet puur voor. Zit in het mineraal bariet (zwaarspaat).","Bariumpap om de darmen zichtbaar te maken op een röntgenfoto. Groene kleur in vuurwerk."],
+  ["La","Lanthaan","138,9","vast","Komt niet puur voor. Zit samen met de andere lanthaniden in mineralen zoals monaziet en bastnasiet, vooral in China.","Lenzen van camera's en telescopen. Accu's van hybride auto's."],
+  ["Ce","Cerium","140,1","vast","Komt niet puur voor. De meest voorkomende lanthanide; zit in monaziet en bastnasiet.","Vuursteentjes in aanstekers. Poeder om glas en lenzen te polijsten."],
+  ["Pr","Praseodymium","140,9","vast","Komt niet puur voor. Zit samen met de andere lanthaniden in monaziet en bastnasiet.","Sterke magneten (samen met neodymium). Geelgroene kleur in glas en lasbrillen."],
+  ["Nd","Neodymium","144,2","vast","Komt niet puur voor. Zit samen met de andere lanthaniden in monaziet en bastnasiet.","De sterkste magneten: in windmolens, elektromotoren, oordopjes en luidsprekers."],
+  ["Pm","Promethium","(145)","vast","Komt in de natuur bijna niet voor, want het is radioactief en vervalt. Wordt gemaakt in kernreactoren.","Weinig toepassingen: vroeger in lichtgevende verf en kleine kernbatterijen."],
+  ["Sm","Samarium","150,4","vast","Komt niet puur voor. Zit samen met de andere lanthaniden in monaziet en bastnasiet.","Hittebestendige magneten (samarium-kobalt), bijvoorbeeld in elektrische gitaren en motoren."],
+  ["Eu","Europium","152,0","vast","Komt niet puur voor. Een van de zeldzaamste lanthaniden.","Kleuren in ledlampen en beeldschermen. Zit in eurobiljetten: die lichten op onder uv-licht (echtheidskenmerk)."],
+  ["Gd","Gadolinium","157,3","vast","Komt niet puur voor. Zit samen met de andere lanthaniden in monaziet en bastnasiet.","Contrastvloeistof bij MRI-scans, zodat organen beter te zien zijn."],
+  ["Tb","Terbium","158,9","vast","Komt niet puur voor. Zeldzaam; zit samen met de andere lanthaniden in mineralen.","Groene kleur in beeldschermen en spaarlampen. Sterke magneten."],
+  ["Dy","Dysprosium","162,5","vast","Komt niet puur voor. Zit samen met de andere lanthaniden in mineralen, vooral in China.","Maakt neodymiummagneten bestand tegen hitte, bijvoorbeeld in motoren van elektrische auto's."],
+  ["Ho","Holmium","164,9","vast","Komt niet puur voor. Zeldzaam; zit samen met de andere lanthaniden in mineralen.","Holmiumlaser in ziekenhuizen, bijvoorbeeld om nierstenen kapot te maken."],
+  ["Er","Erbium","167,3","vast","Komt niet puur voor. Zit samen met de andere lanthaniden in mineralen. Genoemd naar het Zweedse dorp Ytterby.","Versterkt het lichtsignaal in glasvezelkabels voor internet. Roze kleur in glas."],
+  ["Tm","Thulium","168,9","vast","Komt niet puur voor. Een van de zeldzaamste lanthaniden.","Weinig toepassingen: draagbare röntgenapparaten en medische lasers."],
+  ["Yb","Ytterbium","173,0","vast","Komt niet puur voor. Zit samen met de andere lanthaniden in mineralen. Genoemd naar het Zweedse dorp Ytterby.","Lasers en extreem nauwkeurige atoomklokken (vooral onderzoek)."],
+  ["Lu","Lutetium","175,0","vast","Komt niet puur voor. Zeldzaam en duur om te winnen. De radioactieve vorm voor ziekenhuizen wordt onder andere in Petten gemaakt.","Medicijn tegen sommige vormen van kanker (radioactief lutetium). Detectoren in PET-scanners."],
+  ["Hf","Hafnium","178,5","vast","Komt niet puur voor. Zit altijd samen met zirkonium in het mineraal zirkoon en wordt als bijproduct gewonnen.","Regelstaven in kerncentrales (vangen neutronen op). Onderdelen van computerchips."],
+  ["Ta","Tantaal","180,9","vast","Komt niet puur voor. Wordt gewonnen uit het erts coltan, onder andere in Congo en Rwanda.","Kleine condensatoren in telefoons en laptops. Implantaten, omdat het lichaam het goed verdraagt."],
+  ["W","Wolfraam","183,8","vast","Komt niet puur voor. Wordt gewonnen uit de ertsen wolframiet en scheeliet, vooral in China.","Het metaal met het hoogste smeltpunt (3422 °C): gloeidraad in gloeilampen. Wolfraamcarbide in boren en zaagbladen."],
+  ["Re","Renium","186,2","vast","Een van de zeldzaamste elementen. Wordt gewonnen als bijproduct bij het maken van molybdeen en koper.","Hittebestendige onderdelen in straalmotoren van vliegtuigen."],
+  ["Os","Osmium","190,2","vast","Zeer zeldzaam. Komt puur voor samen met platina en wordt als bijproduct gewonnen. Het element met de grootste dichtheid.","Weinig toepassingen: zeer harde punten van vulpennen en elektrische contacten."],
+  ["Ir","Iridium","192,2","vast","Zeer zeldzaam. Komt puur voor samen met platina. Zit ook veel in meteorieten.","Bougies van auto's. De oude standaardmeter en standaardkilogram waren van platina-iridium."],
+  ["Pt","Platina","195,1","vast","Komt puur voor, als korrels in gesteente en rivierzand. Vooral gewonnen in Zuid-Afrika.","Katalysator in de uitlaat van auto's. Sieraden. Brandstofcellen."],
+  ["Au","Goud","197,0","vast","Komt puur voor, als klompjes en korrels in gesteente en in rivierzand. Gewonnen in onder andere China, Australië en Rusland.","Sieraden en goudstaven. Contacten in elektronica, omdat goud niet roest."],
+  ["Hg","Kwik","200,6","vloeibaar","Komt soms als druppeltjes puur voor, maar meestal in het rode erts cinnaber.","Vroeger in thermometers en tandvullingen. Nu bijna overal verboden, omdat kwikdamp giftig is.","Het enige metaal dat vloeibaar is bij kamertemperatuur."],
+  ["Tl","Thallium","204,4","vast","Komt niet puur voor. Wordt gewonnen als bijproduct bij het maken van zink, lood en koper.","Weinig toepassingen, want het is zeer giftig (vroeger rattengif). Soms bij medische hartscans."],
+  ["Pb","Lood","207,2","vast","Komt niet puur voor. Wordt gewonnen uit het erts loodglans (galeniet).","Accu's van auto's. Loodschorten tegen röntgenstraling. Niet meer in waterleidingen en verf, want het is giftig."],
+  ["Bi","Bismut","209,0","vast","Komt soms puur voor. Wordt gewonnen als bijproduct bij het maken van lood en koper.","Maagmiddelen. Vervanger van het giftige lood, bijvoorbeeld in soldeer."],
+  ["Po","Polonium","(209)","vast","Komt in heel kleine hoeveelheden voor in uraanerts. Ontdekt door Marie Curie en genoemd naar haar land Polen. Wordt gemaakt in kernreactoren.","Bijna geen: het is sterk radioactief en zeer giftig. Soms in borstels die statische elektriciteit wegnemen."],
+  ["At","Astaat","(210)","vast","Een van de zeldzaamste elementen: het ontstaat steeds even bij radioactief verval van uraan en is dan snel weer weg. Wordt gemaakt in een deeltjesversneller.","Geen gewone toepassing. Wordt onderzocht als medicijn tegen kanker.","Verwacht. Er is nooit genoeg astaat bij elkaar geweest om het te zien."],
+  ["Rn","Radon","(222)","gas","Ontstaat bij radioactief verval van uraan in de bodem en komt als gas uit de grond, bijvoorbeeld in kelders.","Geen echte toepassing. Radon is radioactief en kan longkanker veroorzaken; daarom wordt het in huizen gemeten."],
+  ["Fr","Francium","(223)","vast","Extreem zeldzaam: ontstaat heel even bij radioactief verval en is dan weer weg. Genoemd naar Frankrijk.","Geen toepassing: alleen wetenschappelijk onderzoek.","Verwacht. Er is nooit genoeg francium bij elkaar geweest om het te zien."],
+  ["Ra","Radium","(226)","vast","Komt in kleine hoeveelheden voor in uraanerts. Ontdekt door Marie en Pierre Curie.","Vroeger in lichtgevende wijzerplaten van horloges (gevaarlijk!). Nu als medicijn tegen botkanker."],
+  ["Ac","Actinium","(227)","vast","Komt in heel kleine hoeveelheden voor in uraanerts. Wordt gemaakt in kernreactoren.","Wordt onderzocht als medicijn tegen kanker. Verder geen toepassingen."],
+  ["Th","Thorium","232,0","vast","Komt niet puur voor. Zit in het mineraal monaziet; komt meer voor dan uraan.","Mogelijke brandstof voor kerncentrales in de toekomst. Vroeger in gloeikousjes van gaslampen."],
+  ["Pa","Protactinium","(231)","vast","Zeer zeldzaam. Komt in heel kleine hoeveelheden voor in uraanerts.","Geen toepassing: alleen wetenschappelijk onderzoek."],
+  ["U","Uraan","238,0","vast","Komt niet puur voor. Wordt gewonnen uit uraanerts (pekblende), vooral in Kazachstan, Canada en Australië.","Brandstof voor kerncentrales, zoals de kerncentrale in Borssele."],
+  ["Np","Neptunium","(237)","vast","Komt in de natuur bijna niet voor. Ontstaat als restproduct in kernreactoren.","Vrijwel geen toepassing: vooral wetenschappelijk onderzoek."],
+  ["Pu","Plutonium","(244)","vast","Komt in de natuur bijna niet voor. Wordt in kernreactoren gemaakt uit uraan.","Brandstof voor kerncentrales. Energiebron voor ruimtesondes en Mars-robots, ver van de zon."],
+  ["Am","Americium","(243)","vast","Komt niet in de natuur voor. Wordt gemaakt in kernreactoren. Genoemd naar Amerika.","In veel rookmelders zit een heel klein beetje americium."],
+  ["Cm","Curium","(247)","vast","Komt niet in de natuur voor. Wordt gemaakt in kernreactoren. Genoemd naar Marie en Pierre Curie.","Meetinstrumenten op Mars-robots, om te onderzoeken uit welke stoffen gesteenten bestaan."],
+  ["Bk","Berkelium","(247)","vast","Komt niet in de natuur voor. Wordt in heel kleine hoeveelheden gemaakt in kernreactoren. Genoemd naar de stad Berkeley (VS).","Geen gewone toepassing. Wordt gebruikt om nieuwe, nog zwaardere elementen te maken."],
+  ["Cf","Californium","(251)","vast","Komt niet in de natuur voor. Wordt in heel kleine hoeveelheden gemaakt in kernreactoren. Genoemd naar Californië.","Bron van neutronen, bijvoorbeeld om kerncentrales op te starten en om naar olie in de bodem te zoeken."],
+  ["Es","Einsteinium","(252)","vast","Komt niet in de natuur voor. Voor het eerst gevonden in de resten van een waterstofbomtest. Genoemd naar Albert Einstein.","Geen toepassing: alleen wetenschappelijk onderzoek."],
+  ["Fm","Fermium","(257)","vast","Komt niet in de natuur voor. Voor het eerst gevonden in de resten van een waterstofbomtest. Genoemd naar Enrico Fermi.","Geen toepassing: alleen wetenschappelijk onderzoek.","Verwacht. Er is nooit genoeg fermium bij elkaar geweest om het te zien."],
+  ["Md","Mendelevium","(258)","vast","Komt niet in de natuur voor. Wordt in een deeltjesversneller gemaakt. Genoemd naar Dmitri Mendelejev, de bedenker van het periodiek systeem.","Geen toepassing: alleen wetenschappelijk onderzoek.","Verwacht. Er zijn maar heel weinig atomen tegelijk gemaakt."],
+  ["No","Nobelium","(259)","vast","Komt niet in de natuur voor. Wordt in een deeltjesversneller gemaakt. Genoemd naar Alfred Nobel (van de Nobelprijs).","Geen toepassing: alleen wetenschappelijk onderzoek.","Verwacht. Er zijn maar heel weinig atomen tegelijk gemaakt."],
+  ["Lr","Lawrencium","(262)","vast","Komt niet in de natuur voor. Wordt in een deeltjesversneller gemaakt. Genoemd naar Ernest Lawrence, de uitvinder van een deeltjesversneller.","Geen toepassing: alleen wetenschappelijk onderzoek.","Verwacht. Er zijn maar heel weinig atomen tegelijk gemaakt."],
+  ["Rf","Rutherfordium","(267)","onbekend", ...zwaar("Ernest Rutherford, die ontdekte dat een atoom een kern heeft")],
+  ["Db","Dubnium","(268)","onbekend", ...zwaar("de Russische stad Dubna, waar het onderzoekslab staat")],
+  ["Sg","Seaborgium","(269)","onbekend", ...zwaar("Glenn Seaborg, die veel actinoïden ontdekte")],
+  ["Bh","Bohrium","(270)","onbekend", ...zwaar("Niels Bohr, van het atoommodel van Bohr")],
+  ["Hs","Hassium","(269)","onbekend", ...zwaar("de Duitse deelstaat Hessen")],
+  ["Mt","Meitnerium","(278)","onbekend", ...zwaar("natuurkundige Lise Meitner")],
+  ["Ds","Darmstadtium","(281)","onbekend", ...zwaar("de Duitse stad Darmstadt")],
+  ["Rg","Roentgenium","(281)","onbekend", ...zwaar("Wilhelm Röntgen, de ontdekker van röntgenstraling")],
+  ["Cn","Copernicium","(285)","onbekend", ...zwaar("sterrenkundige Copernicus")],
+  ["Nh","Nihonium","(286)","onbekend", ...zwaar("Japan ('Nihon' in het Japans)")],
+  ["Fl","Flerovium","(289)","onbekend", ...zwaar("natuurkundige Georgi Fljorov")],
+  ["Mc","Moscovium","(288)","onbekend", ...zwaar("de regio rond Moskou")],
+  ["Lv","Livermorium","(293)","onbekend", ...zwaar("het Amerikaanse onderzoekslab in Livermore")],
+  ["Ts","Tennessine","(294)","onbekend", ...zwaar("de Amerikaanse staat Tennessee")],
+  ["Og","Oganesson","(294)","onbekend", ...zwaar("natuurkundige Joeri Oganesjan")]
+];
+
+/* ---------- plek in het rooster ---------- */
+function plek(z) {
+  const starts = [1, 3, 11, 19, 37, 55, 87, 119];
+  let p = 1; while (z >= starts[p]) p++;
+  const i = z - starts[p - 1];
+  let g;
+  if (p === 1) g = z === 1 ? 1 : 18;
+  else if (p <= 3) g = i < 2 ? i + 1 : i + 11;
+  else if (p <= 5) g = i + 1;
+  else if (i < 2) g = i + 1;
+  else if (i < 17) return { periode: p, groep: null, rij: p === 6 ? 10 : 11, kol: i + 2 }; // lanthaniden/actinoïden
+  else g = i - 13;
+  return { periode: p, groep: g, rij: p + 1, kol: g + 1 };
+}
+
+const rooster = document.getElementById("rooster");
+const infoBinnen = document.getElementById("info-binnen");
+let actiefKnop = null;
+
+function maak(tag, cls, ouder, html) {
+  const el = document.createElement(tag);
+  if (cls) el.className = cls;
+  if (html != null) el.innerHTML = html;
+  (ouder || rooster).appendChild(el);
+  return el;
+}
+
+// groep- en periodenummers
+for (let g = 1; g <= 18; g++) {
+  const d = maak("div", "gnr", null, g); d.style.gridColumn = g + 1; d.style.gridRow = 1;
+}
+for (let p = 1; p <= 7; p++) {
+  const d = maak("div", "pnr", null, p); d.style.gridColumn = 1; d.style.gridRow = p + 1;
+}
+maak("div", "tussen").style.gridRow = 9;
+
+// elementen
+E.forEach((d, idx) => {
+  const z = idx + 1, [sym, naam, massa] = d, soort = soortVan(z), pos = plek(z);
+  const b = maak("button", "el");
+  b.type = "button";
+  b.dataset.soort = soort;
+  b.style.setProperty("--bg", achtergrond(soort));
+  b.style.gridRow = pos.rij; b.style.gridColumn = pos.kol;
+  b.setAttribute("aria-label", `${naam}, atoomnummer ${z}`);
+  b.innerHTML = `<span class="m">${massa}</span><span class="s">${sym}</span><span class="z">${z}</span><span class="n">${naam}</span>`;
+  koppel(b, () => toonElement(z, b));
+});
+
+// lege plekken in groep 3 (periode 6 en 7) krijgen de kleur van de lanthaniden/actinoïden
+[["lanthanide", 7, "57–71"], ["actinide", 8, "89–103"]].forEach(([soort, rij, bereik]) => {
+  const b = maak("button", "el gat");
+  b.type = "button";
+  b.dataset.soort = soort;
+  b.style.setProperty("--bg", achtergrond(soort));
+  b.style.gridRow = rij; b.style.gridColumn = 4;
+  b.setAttribute("aria-label", `${SOORTEN[soort].naam}, atoomnummer ${bereik}`);
+  b.innerHTML = `<span class="s">${bereik}</span><span class="n">${SOORTEN[soort].naam}</span>`;
+  koppel(b, () => toonGat(soort, b), () => licht(soort), () => licht(null));
+});
+
+function koppel(b, toon, aan, uit) {
+  b.addEventListener("mouseenter", () => { toon(); if (aan) aan(); });
+  b.addEventListener("focus", () => { toon(); if (aan) aan(); });
+  b.addEventListener("click", () => { toon(); if (aan) aan(); });
+  if (uit) { b.addEventListener("mouseleave", uit); b.addEventListener("blur", uit); }
+}
+
+function zetActief(b) {
+  if (actiefKnop) actiefKnop.classList.remove("actief");
+  actiefKnop = b; b.classList.add("actief");
+}
+
+/* ---------- informatieblok ---------- */
+const FASE_ICOON = {
+  vast: '<svg viewBox="0 0 24 24" fill="#fff"><circle cx="6" cy="6" r="3"/><circle cx="12" cy="6" r="3"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="12" cy="12" r="3"/><circle cx="18" cy="12" r="3"/><circle cx="6" cy="18" r="3"/><circle cx="12" cy="18" r="3"/><circle cx="18" cy="18" r="3"/></svg>',
+  vloeibaar: '<svg viewBox="0 0 24 24" fill="#fff"><circle cx="5" cy="15" r="3"/><circle cx="11" cy="17" r="3"/><circle cx="17" cy="15" r="3"/><circle cx="8" cy="10" r="3"/><circle cx="15" cy="9" r="3"/><circle cx="20" cy="20" r="2.4"/><path d="M1 21h22v2H1z" opacity=".6"/></svg>',
+  gas: '<svg viewBox="0 0 24 24" fill="#fff"><circle cx="5" cy="5" r="2.6"/><circle cx="18" cy="7" r="2.6"/><circle cx="10" cy="14" r="2.6"/><circle cx="20" cy="19" r="2.6"/><circle cx="4" cy="20" r="2.6"/></svg>',
+  onbekend: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="#fff" stroke-width="2"/><text x="12" y="17" text-anchor="middle" font-size="14" font-weight="700" fill="#fff" font-family="Arial">?</text></svg>'
+};
+const FASE_NAAM = { vast: "Vast", vloeibaar: "Vloeibaar", gas: "Gas", onbekend: "Onbekend" };
+
+function toonElement(z, b) {
+  zetActief(b);
+  const [sym, naam, massa, fase, voorkomen, toepassing, opm] = E[z - 1];
+  const soort = soortVan(z), s = SOORTEN[soort], pos = plek(z);
+  const waar = pos.groep ? `Groep ${pos.groep} · periode ${pos.periode}` : `Periode ${pos.periode} · ${s.naam.toLowerCase()}`;
+  const soortLabel = s.eigen ? `${BASIS_NAAM[s.basis]} · ${s.enkel.toLowerCase()}` : s.enkel;
+  infoBinnen.innerHTML = `
+    <div class="info-kop">
+      <div class="mini" style="--bg:${achtergrond(soort)}"><b>${sym}</b><small>${z}</small></div>
+      <div>
+        <h2>${naam}</h2>
+        <div class="labels">
+          <span class="label" style="--bg:${achtergrond(soort)}"><span class="stip"></span>${soortLabel}</span>
+          <span class="label">${waar}</span>
+          <span class="label">Atoommassa ${massa} u</span>
+        </div>
+      </div>
+      <div class="fase" title="Fase bij kamertemperatuur (20 °C)">${FASE_ICOON[fase]}
+        <div><b>${FASE_NAAM[fase]}</b><span>bij kamertemperatuur</span></div>
+      </div>
+    </div>
+    <div class="kolommen">
+      <section><h3>Voorkomen en winning</h3><p>${voorkomen}</p></section>
+      <section><h3>Toepassing</h3><p>${toepassing}</p></section>
+    </div>
+    ${opm ? `<p class="opm"><b>Fase:</b> ${opm}</p>` : ""}`;
+}
+
+const GAT_TEKST = {
+  lanthanide: {
+    titel: "Lanthaniden (57 t/m 71)",
+    a: ["Waarom staan ze onderaan?", "De lanthaniden horen eigenlijk op deze plek in periode 6. Als je ze ertussen zet, wordt het periodiek systeem heel breed. Daarom staan ze in een losse rij onderaan."],
+    b: ["Wat zijn het?", "Metalen die scheikundig sterk op elkaar lijken en samen in dezelfde ertsen voorkomen, vooral in China. Ze heten ook wel zeldzame aardmetalen. Je vindt ze in magneten, leds en accu's."]
+  },
+  actinide: {
+    titel: "Actinoïden (89 t/m 103)",
+    a: ["Waarom staan ze onderaan?", "De actinoïden horen eigenlijk op deze plek in periode 7. Net als de lanthaniden staan ze in een losse rij onderaan, zodat het periodiek systeem niet te breed wordt."],
+    b: ["Wat zijn het?", "Metalen die allemaal radioactief zijn. Alleen thorium en uraan komen veel in de natuur voor. De meeste andere worden in kernreactoren of deeltjesversnellers gemaakt."]
+  }
+};
+function toonGat(soort, b) {
+  zetActief(b);
+  const t = GAT_TEKST[soort];
+  infoBinnen.innerHTML = `
+    <div class="info-kop">
+      <div class="mini" style="--bg:${achtergrond(soort)}"><b style="font-size:.95em">${soort === "lanthanide" ? "57–71" : "89–103"}</b></div>
+      <div><h2>${t.titel}</h2>
+        <div class="labels"><span class="label" style="--bg:${achtergrond(soort)}"><span class="stip"></span>Metaal · ${SOORTEN[soort].enkel.toLowerCase()}</span></div>
+      </div>
+    </div>
+    <div class="kolommen">
+      <section><h3>${t.a[0]}</h3><p>${t.a[1]}</p></section>
+      <section><h3>${t.b[0]}</h3><p>${t.b[1]}</p></section>
+    </div>`;
+}
+
+function toonStart() {
+  infoBinnen.innerHTML = `
+    <div class="info-kop"><div><h2>Het periodiek systeem</h2></div></div>
+    <div class="kolommen">
+      <section><h3>Zo werkt het</h3><p>Beweeg met de muis over een element, of tik erop. Hier verschijnt dan de fase bij kamertemperatuur, waar het element voorkomt en waarvoor het wordt gebruikt.</p></section>
+      <section><h3>In elk vakje</h3><p>Linksboven de atoommassa, in het midden het symbool, daaronder het atoomnummer en de naam. De kleuren vind je in de legenda onder het periodiek systeem.</p></section>
+    </div>`;
+}
+toonStart();
+
+/* ---------- legenda: groepen oplichten ---------- */
+const LEGENDA = [
+  ["Metalen", [["metaal", "Metalen (alle)", true], "alkali", "aardalkali", "transitie", "posttransitie", "lanthanide", "actinide"]],
+  ["Niet-metalen", [["nietmetaal-alle", "Niet-metalen (alle)", true], "nietmetaal", "halogeen", "edelgas"]],
+  ["Metalloïden", ["metalloide"]]
+];
+const legenda = document.getElementById("legenda");
+let vastFilter = null;
+
+function past(soort, filter) {
+  if (filter === "metaal") return SOORTEN[soort].basis === "metaal";
+  if (filter === "nietmetaal-alle") return SOORTEN[soort].basis === "nietmetaal";
+  if (filter === "metalloide") return SOORTEN[soort].basis === "metalloide";
+  if (filter === "halogeen") return SOORTEN[soort].eigen === "halogeen";
+  return soort === filter;
+}
+function licht(filter) {
+  const f = filter || vastFilter;
+  rooster.classList.toggle("filter", !!f);
+  rooster.querySelectorAll(".el").forEach(el => el.classList.toggle("aan", !!f && past(el.dataset.soort, f)));
+}
+
+LEGENDA.forEach(([titel, items]) => {
+  const groep = maak("div", "legenda-groep", legenda, `<h3>${titel}</h3>`);
+  const rij = maak("div", "", groep);
+  items.forEach(item => {
+    let sleutel, tekst, hoofd = false, bg;
+    if (Array.isArray(item)) {
+      [sleutel, tekst, hoofd] = item;
+      bg = sleutel === "metaal" ? "var(--metaal)" : "var(--nietmetaal)";
+    } else {
+      sleutel = item; tekst = SOORTEN[item].naam; bg = achtergrond(item);
+    }
+    const b = maak("button", "leg" + (hoofd ? " hoofd" : ""), rij, `<span class="vlak" style="--bg:${bg}"></span>${tekst}`);
+    b.type = "button";
+    b.setAttribute("aria-pressed", "false");
+    b.addEventListener("mouseenter", () => licht(sleutel));
+    b.addEventListener("focus", () => licht(sleutel));
+    b.addEventListener("mouseleave", () => licht(null));
+    b.addEventListener("blur", () => licht(null));
+    b.addEventListener("click", () => {
+      const aan = vastFilter !== sleutel;
+      vastFilter = aan ? sleutel : null;
+      legenda.querySelectorAll(".leg").forEach(l => { l.classList.remove("vast"); l.setAttribute("aria-pressed", "false"); });
+      if (aan) { b.classList.add("vast"); b.setAttribute("aria-pressed", "true"); }
+      licht(aan ? sleutel : null);
+    });
+  });
+});
+</script>
+</body>
+</html>

@@ -38,6 +38,8 @@
 
   const embedUrl = (m) => {
     if (m.youtube) return `https://www.youtube-nocookie.com/embed/${encodeURIComponent(m.youtube)}?rel=0`;
+    // eigen materialen krijgen ?v=<versie>, zodat de browser na een update niet een oude versie uit de cache toont
+    if (D.versie && !/^[a-z]+:/i.test(m.url)) return m.url + (m.url.includes("?") ? "&" : "?") + "v=" + encodeURIComponent(D.versie);
     return m.url;
   };
 

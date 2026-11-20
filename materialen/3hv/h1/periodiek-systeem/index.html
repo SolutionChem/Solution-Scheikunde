@@ -16,7 +16,7 @@
     --metaal: #f8e39b; --nietmetaal: #f0948a; --metalloide: #5aaee0;
     /* groepen */
     --alkali: #f4a261; --aardalkali: #9fd07a; --transitie: #cfa0dd; --posttransitie: #86cfc8;
-    --lanthanide: #f59cc3; --actinide: #c9a27c; --halogeen: #dde86a; --edelgas: #a6b0e6;
+    --lanthanide: #f59cc3; --actinide: #c9a27c; --halogeen: #5fc488; --edelgas: #a6b0e6;
     --kop: "Oswald", "Arial Narrow", Arial, sans-serif;
   }
   * { box-sizing: border-box; }
@@ -149,6 +149,8 @@ const SOORTEN = {
   actinide:      { naam: "Actinoïden",            enkel: "Actinoïde",            basis: "metaal",     eigen: "actinide" },
   nietmetaal:    { naam: "Overige niet-metalen",  enkel: "Niet-metaal",          basis: "nietmetaal", eigen: null },
   halogeen:      { naam: "Halogenen",             enkel: "Halogeen",             basis: "nietmetaal", eigen: "halogeen" },
+  /* astaat en tennessine: halogeen, maar in het boek een metalloïde (niet apart in de legenda) */
+  halogeenmetalloide: { naam: "Halogenen",        enkel: "Halogeen",             basis: "metalloide", eigen: "halogeen" },
   edelgas:       { naam: "Edelgassen",            enkel: "Edelgas",              basis: "nietmetaal", eigen: "edelgas" },
   metalloide:    { naam: "Metalloïden",           enkel: "Metalloïde",           basis: "metalloide", eigen: null }
 };
@@ -159,7 +161,8 @@ function soortVan(z) {
   if ([4, 12, 20, 38, 56, 88].includes(z)) return "aardalkali";
   if (z >= 57 && z <= 71) return "lanthanide";
   if (z >= 89 && z <= 103) return "actinide";
-  if ([5, 14, 32, 33, 51, 52, 84, 85, 117].includes(z)) return "metalloide";
+  if ([85, 117].includes(z)) return "halogeenmetalloide";
+  if ([5, 14, 32, 33, 51, 52, 84].includes(z)) return "metalloide";
   if ([9, 17, 35, 53].includes(z)) return "halogeen";
   if ([2, 10, 18, 36, 54, 86, 118].includes(z)) return "edelgas";
   if ([1, 6, 7, 8, 15, 16, 34].includes(z)) return "nietmetaal";
@@ -461,6 +464,8 @@ let vastFilter = null;
 function past(soort, filter) {
   if (filter === "metaal") return SOORTEN[soort].basis === "metaal";
   if (filter === "nietmetaal-alle") return SOORTEN[soort].basis === "nietmetaal";
+  if (filter === "metalloide") return SOORTEN[soort].basis === "metalloide";
+  if (filter === "halogeen") return SOORTEN[soort].eigen === "halogeen";
   return soort === filter;
 }
 function licht(filter) {

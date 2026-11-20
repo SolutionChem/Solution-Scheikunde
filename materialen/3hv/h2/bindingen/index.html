@@ -46,7 +46,7 @@
   .paneel { display: flex; flex-direction: column; gap: 12px; }
 
   .podium { padding: 8px; }
-  #tekening { width: 100%; height: min(64vh, 560px); display: block; }
+  .tekening { width: 100%; height: min(64vh, 560px); display: block; }
   .onderschrift {
     margin: 6px 4px 2px; padding: 10px 14px; border-radius: 8px; background: var(--licht);
     border-left: 4px solid var(--navy3); min-height: 3.2em; font-size: 1rem;
@@ -83,6 +83,12 @@
   .lading { font-size: 26px; font-weight: 700; fill: var(--navy); text-anchor: middle; }
   .ion-bol.m { fill: var(--metaal); stroke: #a88d2c; stroke-width: 2; }
   .ion-bol.x { fill: var(--nietmetaal); stroke: #a8524a; stroke-width: 2; }
+  /* metaalbinding */
+  .zee { fill: #cfe3f6; stroke: #9fc0e3; stroke-width: 2; }
+  .zee-tekst { font-size: 20px; font-weight: 600; fill: var(--navy3); }
+  .m-bol { fill: var(--metaal); stroke: #a88d2c; stroke-width: 2; }
+  .m-tekst { font-size: 22px; font-weight: 700; fill: #1b1b1b; text-anchor: middle; dominant-baseline: central; }
+  .vrij { fill: var(--valentie); stroke: #fff; stroke-width: 2; }
   .ion-tekst { font-size: 26px; font-weight: 700; fill: #1b1b1b; text-anchor: middle; dominant-baseline: central; }
 
   @media (max-width: 760px) {
@@ -92,7 +98,7 @@
     .podium { order: 2; }
     .kaart.uitleg { order: 3; }
     .kaart.leg { order: 4; }
-    #tekening { height: auto; max-height: 60vh; aspect-ratio: var(--verhouding, 1); }
+    .tekening { height: auto; max-height: 60vh; aspect-ratio: var(--verhouding, 1); }
     .scherm { padding: 8px; }
   }
 </style>
@@ -100,15 +106,15 @@
 <body>
 <nav class="tabs" role="tablist" aria-label="Soort binding">
   <button role="tab" data-tab="ion" aria-selected="true">Ionbinding</button>
+  <button role="tab" data-tab="metaal" aria-selected="false">Metaalbinding</button>
   <button role="tab" data-tab="covalent" aria-selected="false">Covalente binding<span class="binnenkort">(binnenkort)</span></button>
-  <button role="tab" data-tab="metaal" aria-selected="false">Metaalbinding<span class="binnenkort">(binnenkort)</span></button>
 </nav>
 
 <main class="scherm">
   <!-- ===== Ionbinding ===== -->
   <section data-paneel="ion" class="app">
     <div class="kaart podium">
-      <svg id="tekening" role="img" aria-label="Atoommodellen van het metaal en het niet-metaal"></svg>
+      <svg id="tekening" class="tekening" role="img" aria-label="Atoommodellen van het metaal en het niet-metaal"></svg>
       <div class="onderschrift" id="onderschrift" aria-live="polite"></div>
     </div>
     <div class="paneel">
@@ -138,13 +144,40 @@
     </div>
   </section>
 
-  <!-- ===== later: covalente binding en metaalbinding ===== -->
+  <!-- ===== Metaalbinding ===== -->
+  <section data-paneel="metaal" class="app" hidden>
+    <div class="kaart podium">
+      <svg id="m-tekening" class="tekening" role="img" aria-label="Schematisch stukje metaal"></svg>
+      <div class="onderschrift" id="m-onderschrift" aria-live="polite"></div>
+    </div>
+    <div class="paneel">
+      <div class="kaart kies">
+        <h2>Kies een metaal</h2>
+        <select id="m-keuze" aria-label="Metaal"></select>
+        <div class="knoppen">
+          <button class="hoofd" id="m-start">▶ Start</button>
+          <button id="m-opnieuw">↺ Opnieuw</button>
+        </div>
+      </div>
+      <div class="kaart uitleg">
+        <h2>Wat gebeurt er?</h2>
+        <p class="stap" id="m-stap"></p>
+      </div>
+      <div class="kaart leg">
+        <h2>Legenda</h2>
+        <div class="legenda">
+          <div><span class="bol" style="background:var(--metaal)"></span>Metaalatoom</div>
+          <div><span class="bol" style="background:var(--metaal);width:13px;height:13px;margin:0 2.5px"></span>Positief metaalion</div>
+          <div><span class="stip" style="background:var(--valentie)"></span>Valentie-elektron / vrij elektron</div>
+          <div><span class="bol" style="background:#cfe3f6;border-radius:4px;border-color:#9fc0e3"></span>Elektronenzee</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== later: covalente binding ===== -->
   <section data-paneel="covalent" class="kaart leeg" hidden>
     <h2>Covalente binding</h2>
-    <p>Deze simulatie komt binnenkort.</p>
-  </section>
-  <section data-paneel="metaal" class="kaart leeg" hidden>
-    <h2>Metaalbinding</h2>
     <p>Deze simulatie komt binnenkort.</p>
   </section>
 </main>
@@ -155,7 +188,13 @@ document.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click
   document.querySelectorAll(".tabs button").forEach(x => x.setAttribute("aria-selected", x === b ? "true" : "false"));
   document.querySelectorAll("[data-paneel]").forEach(p => p.hidden = p.dataset.paneel !== b.dataset.tab);
   if (b.dataset.tab !== "ion") pauzeer();
+  if (b.dataset.tab !== "metaal") metaalPauze();
 }));
+// ?tab=metaal (of covalent) opent meteen dat tabblad; zo kan dezelfde simulatie bij meer paragrafen staan
+window.addEventListener("DOMContentLoaded", () => {
+  const tab = new URLSearchParams(location.search).get("tab");
+  document.querySelector(`.tabs button[data-tab="${tab}"]`)?.click();
+});
 
 /* ===================== gegevens ===================== */
 // atoomnummer, neutronen (meest voorkomende isotoop), naam, naam van het negatieve ion
@@ -428,7 +467,9 @@ function teksten() {
   const vm = I.qm, vx = 8 - I.qx;
   let s, o;
   if (t === 0) {
+    const vol = verdeling(Em.z).at(-2); // de schil onder de buitenste: 8, of 2 bij lithium
     s = `${hoofdletter(Em.naam)} is een metaal met ${vm} ${meervoud(vm, "valentie-elektron", "valentie-elektronen")}. ` +
+        `Als het ${vm === 1 ? "dat elektron" : "die elektronen"} afstaat, wordt de schil eronder de buitenste schil, en die is al vol (${vol}). ` +
         `${hoofdletter(Ex.naam)} is een niet-metaal met ${vx} valentie-elektronen; het heeft er nog ${I.qx} nodig voor een volle buitenste schil (8). ` +
         `Klik op <b>Start</b>.`;
     o = `<b>${I.formule}</b> · ${I.naam}${I.extra ? " (" + I.extra + ")" : ""}`;
@@ -493,6 +534,157 @@ const keuze = document.getElementById("keuze");
 keuze.addEventListener("change", () => { Z = zoutInfo(ZOUTEN[keuze.value]); bouw(); });
 Z = zoutInfo(ZOUTEN[0]);
 bouw();
+
+/* ===================== METAALBINDING ===================== */
+// Schematisch stukje metaal: atomen als massieve bollen. Bij Start worden de
+// valentie-elektronen vrije elektronen en worden de atomen positieve ionen.
+const METALEN = [
+  { sym: "Na", naam: "natrium",   z: 11 },
+  { sym: "Ca", naam: "calcium",   z: 20 },
+  { sym: "Al", naam: "aluminium", z: 13 }
+];
+const MR_ATOOM = 40, MR_ION = 27, M_AFSTAND = 100, M_KOL = 6, M_RIJ = 4;
+const ms = { metaal: METALEN[0], t: 0, speelt: false, vorige: null, atomen: [], elektronen: [] };
+const msvg = document.getElementById("m-tekening");
+// tijdlijn (s): valentie-elektronen zichtbaar, loslaten, ionen, elektronenzee, metaalbinding
+const MT = { val: 0.6, los: 5, ion: 9, zee: 14, binding: 19.5, eind: 24 };
+
+function mBouw() {
+  msvg.innerHTML = "";
+  const M = ms.metaal, v = verdeling(M.z).at(-1);
+  ms.v = v;
+  const breed = (M_KOL - 0.5) * M_AFSTAND, hoog = (M_RIJ - 1) * M_AFSTAND * 0.88;
+  const rand = 62;
+  ms.grens = { x0: -breed / 2 - rand + 10, x1: breed / 2 + rand - 10, y0: -hoog / 2 - rand + 10, y1: hoog / 2 + rand - 10 };
+  const zeeG = maak("g", { opacity: 0 }, msvg);
+  maak("rect", { class: "zee", x: -breed / 2 - rand, y: -hoog / 2 - rand, width: breed + 2 * rand, height: hoog + 2 * rand, rx: 40 }, zeeG);
+  maak("text", { class: "zee-tekst", x: -breed / 2 - rand + 14, y: -hoog / 2 - rand - 12 }, zeeG, "zee van vrije elektronen");
+  ms.zee = zeeG;
+  const atoomLaag = maak("g", {}, msvg), eLaag = maak("g", {}, msvg);
+  ms.atoomLaag = atoomLaag; ms.eLaag = eLaag;
+  ms.atomen = []; ms.elektronen = [];
+  for (let r = 0; r < M_RIJ; r++) for (let k = 0; k < M_KOL; k++) {
+    const x = -breed / 2 + k * M_AFSTAND + (r % 2 ? M_AFSTAND / 2 : 0), y = -hoog / 2 + r * M_AFSTAND * 0.88;
+    const g = maak("g", {}, atoomLaag);
+    const c = maak("circle", { class: "m-bol", cx: x, cy: y, r: MR_ATOOM }, g);
+    const tx = maak("text", { class: "m-tekst", x, y }, g, M.sym);
+    const a = { x, y, c, tx, fase: (r * M_KOL + k) * 0.7 };
+    ms.atomen.push(a);
+    for (let i = 0; i < v; i++) {
+      const h = -Math.PI / 4 + (i - (v - 1) / 2) * 0.9;
+      const p = pol(x, y, MR_ATOOM, h);
+      const el = maak("circle", { class: "vrij", cx: p.x, cy: p.y, r: 7.5, opacity: 0 }, eLaag);
+      const hoekV = Math.random() * 2 * Math.PI;
+      ms.elektronen.push({ el, x: p.x, y: p.y, vx: Math.cos(hoekV), vy: Math.sin(hoekV), los: MT.los + Math.random() * 1.8, vast: true });
+    }
+  }
+  const b = ms.grens;
+  msvg.setAttribute("viewBox", `${b.x0 - 25} ${b.y0 - 60} ${b.x1 - b.x0 + 50} ${b.y1 - b.y0 + 85}`);
+  msvg.style.setProperty("--verhouding", `${b.x1 - b.x0 + 50} / ${b.y1 - b.y0 + 85}`);
+  ms.t = 0; ms.speelt = false;
+  mKnoppen(); mRender();
+}
+
+function mBeweeg(dt) {
+  const b = ms.grens, SNEL = 80;
+  ms.elektronen.forEach(e => {
+    if (ms.t < e.los) return;
+    e.vast = false;
+    // willekeurig bijsturen, met vaste snelheid; terugkaatsen aan de rand van het metaal
+    const h = Math.atan2(e.vy, e.vx) + (Math.random() - 0.5) * 3 * dt;
+    e.vx = Math.cos(h); e.vy = Math.sin(h);
+    const op = Math.min(1, (ms.t - e.los) / 1.5); // rustig op gang komen
+    e.x += e.vx * SNEL * op * dt; e.y += e.vy * SNEL * op * dt;
+    if (e.x < b.x0) { e.x = b.x0; e.vx = Math.abs(e.vx); }
+    if (e.x > b.x1) { e.x = b.x1; e.vx = -Math.abs(e.vx); }
+    if (e.y < b.y0) { e.y = b.y0; e.vy = Math.abs(e.vy); }
+    if (e.y > b.y1) { e.y = b.y1; e.vy = -Math.abs(e.vy); }
+  });
+}
+
+function mRender() {
+  const t = ms.t, M = ms.metaal;
+  ms.elektronen.forEach(e => {
+    e.el.setAttribute("cx", e.x); e.el.setAttribute("cy", e.y);
+    e.el.setAttribute("opacity", voortgang(t, MT.val, MT.val + 0.8));
+  });
+  const krimp = voortgang(t, MT.ion, MT.ion + 1.2);
+  // als de atomen ionen zijn, bewegen de vrije elektronen achter de ionen langs (tussen de ionen door)
+  const achter = t >= MT.ion;
+  if (achter !== (ms.eLaag.nextSibling === ms.atoomLaag)) {
+    if (achter) msvg.insertBefore(ms.eLaag, ms.atoomLaag); else msvg.appendChild(ms.eLaag);
+  }
+  const ion = t >= MT.ion + 0.6;
+  ms.atomen.forEach(a => {
+    // ionen trillen een beetje op hun plek; zonder rust-instelling
+    const tril = t >= MT.los && !rustig ? 2.2 : 0;
+    const x = a.x + tril * Math.sin(t * 5 + a.fase), y = a.y + tril * Math.cos(t * 4.3 + a.fase);
+    a.c.setAttribute("cx", x); a.c.setAttribute("cy", y);
+    a.c.setAttribute("r", MR_ATOOM + (MR_ION - MR_ATOOM) * krimp);
+    a.tx.setAttribute("x", x); a.tx.setAttribute("y", y);
+    a.tx.textContent = ion ? ionSym(M.sym, ms.v) : M.sym;
+    a.tx.setAttribute("font-size", ion ? 19 : 22);
+  });
+  ms.zee.setAttribute("opacity", voortgang(t, MT.zee, MT.zee + 1.5));
+  mTeksten();
+}
+
+function mTeksten() {
+  const t = ms.t, M = ms.metaal, v = ms.v, n = ms.atomen.length, ne = ms.elektronen.length;
+  const Naam = hoofdletter(M.naam), ion = ionSym(M.sym, v), ve = meervoud(v, "valentie-elektron", "valentie-elektronen");
+  let s, o;
+  if (t === 0) {
+    s = `Een stukje ${M.naam}, schematisch getekend. Elk bolletje is een ${M.naam}atoom. ` +
+        `${Naam} heeft elektronenverdeling ${verdeling(M.z).join(", ")}, dus ${v} ${ve}. Klik op <b>Start</b>.`;
+    o = `<b>${n} ${M.naam}atomen</b> (${M.sym})`;
+  } else if (t < MT.los) {
+    s = `Elk ${M.naam}atoom heeft ${v} ${ve} (oranje) in zijn buitenste schil.`;
+    o = `${n} atomen · elk ${v} ${ve} · samen <b>${ne} valentie-elektronen</b>`;
+  } else if (t < MT.ion) {
+    s = `De valentie-elektronen laten los van hun atoom. Ze worden <b>vrije elektronen</b>: ` +
+        `ze horen niet meer bij één bepaald atoom, maar bewegen vrij tussen alle atomen door.`;
+    o = `<b>${ne} vrije elektronen</b> bewegen door het hele metaal`;
+  } else if (t < MT.zee) {
+    s = `Elk atoom is nu ${v} ${meervoud(v, "elektron", "elektronen")} kwijt. Een ${M.naam}atoom heeft ${M.z} protonen, ` +
+        `maar nog maar ${M.z - v} elektronen. Het is een <b>positief ion: ${ion}</b>. ` +
+        `Zonder de buitenste schil is het ion ook kleiner.`;
+    o = `${n} × <b>${ion}</b> (lading ${lading(v)}) en ${ne} vrije elektronen`;
+  } else if (t < MT.binding) {
+    s = `De vrije elektronen vormen samen een <b>zee van negatieve lading</b> (lichtblauw) rondom alle positieve ionen.`;
+    o = `${n} × <b>${ion}</b> in een <b>zee van ${ne} vrije elektronen</b>`;
+  } else {
+    s = `De negatieve elektronenzee trekt alle positieve ${ion}-ionen aan en houdt ze zo bij elkaar. ` +
+        `Deze aantrekking tussen de positieve metaalionen en de vrije elektronen heet de <b>metaalbinding</b>.`;
+    o = `<b>Metaalbinding</b>: positieve ${ion}-ionen worden bij elkaar gehouden door de zee van vrije elektronen`;
+  }
+  document.getElementById("m-stap").innerHTML = s;
+  document.getElementById("m-onderschrift").innerHTML = o;
+}
+
+const rustig = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const mStartKnop = document.getElementById("m-start");
+function mKnoppen() { mStartKnop.textContent = ms.speelt ? "⏸ Pauzeer" : (ms.t === 0 ? "▶ Start" : "▶ Verder"); }
+function metaalPauze() { ms.speelt = false; mKnoppen(); }
+function mStap(nu) {
+  if (!ms.speelt) return;
+  if (ms.vorige != null) {
+    const dt = Math.min(0.05, (nu - ms.vorige) / 1000);
+    ms.t += dt; mBeweeg(dt);
+  }
+  ms.vorige = nu;
+  mRender();
+  requestAnimationFrame(mStap); // de elektronen blijven bewegen tot je pauzeert
+}
+mStartKnop.addEventListener("click", () => {
+  ms.speelt = !ms.speelt;
+  if (ms.speelt) { ms.vorige = null; requestAnimationFrame(mStap); }
+  mKnoppen();
+});
+document.getElementById("m-opnieuw").addEventListener("click", mBouw);
+const mKeuze = document.getElementById("m-keuze");
+METALEN.forEach((m, i) => mKeuze.add(new Option(`${hoofdletter(m.naam)} (${m.sym})`, i)));
+mKeuze.addEventListener("change", () => { ms.metaal = METALEN[mKeuze.value]; mBouw(); });
+mBouw();
 </script>
 </body>
 </html>

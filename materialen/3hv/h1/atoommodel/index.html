@@ -143,9 +143,9 @@
       if ((wilP && pi < z) || ni >= neutronen) { gemengd.push("p"); pi++; } else { gemengd.push("n"); ni++; }
     }
     const kern = maak("g", {});
-    const straal = 7.5;
+    const straal = gemengd.length > 30 ? 6.8 : 7.5;
     gemengd.map((soort, i) => {
-      const r = i === 0 ? 0 : straal * 1.15 * Math.sqrt(i);
+      const r = straal * 1.35 * Math.sqrt(i + .5);   // zonder overlap, zodat je de deeltjes kunt tellen
       const a = i * 2.39996; // gulden hoek
       return { soort, x: r * Math.cos(a), y: r * Math.sin(a) };
     }).reverse().forEach(({ soort, x, y }) => {

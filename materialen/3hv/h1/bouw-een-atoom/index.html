@@ -714,6 +714,47 @@ const UITLEG = {
     (u.q !== 0 ? " Het aantal elektronen bepaalt alleen de lading, niet het element." : "")
 };
 
+/* Hints bij een fout antwoord: WAAROM het fout is (op basis van wat de leerling invulde)
+   en een TIP hoe je verder kunt. Geeft { waarom, tip }. */
+const tel = (u, wat) => u.vorm === "model" ? ` Tel in het atoommodel ${wat}.` : "";
+const HINT = {
+  element(u, z) {
+    let waarom;
+    if (z === u.e && u.e !== u.z) waarom = `${naam(z)} heeft atoomnummer ${z}: dat is het aantal <b>elektronen</b>. Het element hangt af van het aantal <b>protonen</b>, niet van de elektronen.`;
+    else if (z === u.n && u.n !== u.z) waarom = `${naam(z)} heeft atoomnummer ${z}: dat is het aantal <b>neutronen</b>. Het element hangt af van het aantal <b>protonen</b>.`;
+    else if (z === u.a) waarom = `${naam(z)} heeft atoomnummer ${z}: dat is het <b>massagetal</b> (protonen + neutronen). Het element hangt alleen af van het aantal <b>protonen</b>.`;
+    else waarom = `${naam(z)} heeft atoomnummer ${z}, dus ${z} protonen. Dit deeltje heeft <b>${z < u.z ? "meer" : "minder"}</b> protonen.`;
+    const tip = `Het atoomnummer is gelijk aan het aantal protonen.${tel(u, "de rode bolletjes (protonen) in de kern")} In het periodiek systeem staan de elementen op volgorde van atoomnummer: H = 1, He = 2, Li = 3, enzovoort.`;
+    return { waarom, tip };
+  },
+  atoomnummer(u, w) {
+    let waarom;
+    if (w === u.n && u.n !== u.z) waarom = "Je hebt het aantal <b>neutronen</b> ingevuld.";
+    else if (w === u.e && u.e !== u.z) waarom = "Je hebt het aantal <b>elektronen</b> ingevuld. Bij een ion is dat niet gelijk aan het aantal protonen.";
+    else if (w === u.a) waarom = "Je hebt het <b>massagetal</b> ingevuld (protonen + neutronen).";
+    else waarom = `${w} is niet gelijk aan het aantal protonen: het is te ${w < u.z ? "klein" : "groot"}.`;
+    return { waarom, tip: `Het atoomnummer is het aantal <b>protonen</b>.${tel(u, "de rode bolletjes in de kern")}` };
+  },
+  massagetal(u, w) {
+    let waarom;
+    if (w === u.z && u.n !== 0) waarom = "Je hebt alleen de <b>protonen</b> geteld; de neutronen ontbreken.";
+    else if (w === u.n && u.z !== 0) waarom = "Je hebt alleen de <b>neutronen</b> geteld; de protonen ontbreken.";
+    else if (w === u.z + u.n + u.e && u.e !== 0) waarom = "Je hebt de <b>elektronen</b> ook meegeteld. Elektronen zijn zo licht dat ze niet meetellen voor het massagetal.";
+    else if (w === u.z + u.e && u.e !== u.n) waarom = "Je hebt protonen en <b>elektronen</b> opgeteld. In plaats van de elektronen moet je de neutronen optellen.";
+    else waarom = `${w} is te ${w < u.a ? "klein" : "groot"}.`;
+    return { waarom, tip: `Massagetal = aantal protonen + aantal neutronen (alle deeltjes in de kern).${tel(u, "de rode én de grijze bolletjes in de kern")}` };
+  },
+  lading(u, w) {
+    let waarom;
+    if (u.q !== 0 && w === -u.q) waarom = "Het getal klopt, maar het <b>teken</b> (+ of −) is omgedraaid.";
+    else if (u.q === 0) waarom = "Dit deeltje heeft <b>evenveel</b> protonen als elektronen.";
+    else if (w === 0) waarom = "Dit deeltje heeft <b>niet</b> evenveel protonen als elektronen, dus het heeft een lading.";
+    else waarom = `De lading ${w > u.q ? "is te hoog" : "is te laag"}.`;
+    return { waarom, tip: `Lading = protonen ${MIN} elektronen. Elk proton telt als +1, elk elektron als ${MIN}1. Meer protonen dan elektronen: positief (+). Meer elektronen dan protonen: negatief (${MIN}).${tel(u, "de protonen (rood) en de elektronen (blauw)")}` };
+  }
+};
+const VELDNAAM = { atoomnummer: "Atoomnummer", massagetal: "Massagetal", lading: "Lading" };
+
 function renderVraag() {
   const s = st.spel;
   const u = s.uitdagingen[s.i];
@@ -843,13 +884,15 @@ function antwoordElement(z, knop) {
     vergrendelPSE();
   } else if (s.poging === 1) {
     knop.classList.add("fout");
-    toonFeedback("fout", `Helaas, dat is ${naam(z)} (${symbool(z)}).`,
-      `Kijk nog eens naar het aantal <b>protonen</b>. Probeer het nog een keer.`, false);
+    const h = HINT.element(u, z);
+    toonFeedback("fout", `Nog niet goed: dat is ${naam(z)} (${symbool(z)}).`,
+      `${h.waarom}<br><b>Hint:</b> ${h.tip}<br>Probeer het nog een keer.`, false);
   } else {
     knop.classList.add("fout");
     $(`.pse [data-z="${u.z}"]`, scherm).classList.add("goed");
     afronden(0);
-    toonFeedback("fout", `Helaas, dat is ${naam(z)} (${symbool(z)}). Het juiste antwoord is ${naam(u.z)}.`, UITLEG.element(u), true);
+    toonFeedback("fout", `Helaas, dat is ${naam(z)} (${symbool(z)}). Het juiste antwoord is ${naam(u.z)}.`,
+      `${HINT.element(u, z).waarom}<br>${UITLEG.element(u)}`, true);
     vergrendelPSE();
   }
 }
@@ -873,7 +916,7 @@ function controleer() {
     if (waarde === null) { leeg.push(inp); return; }
     if (Number.isNaN(waarde)) { ongeldig.push({ inp, soort }); return; }
     const juist = soort === "atoomnummer" ? u.z : soort === "massagetal" ? u.a : u.q;
-    velden.push({ inp, soort, goed: waarde === juist });
+    velden.push({ inp, soort, waarde, goed: waarde === juist });
   };
   lees("in-z", "atoomnummer");
   lees("in-a", "massagetal");
@@ -901,12 +944,14 @@ function controleer() {
   }
 
   if (s.poging === 1) {
-    const LIDW = { atoomnummer: "het atoomnummer", massagetal: "het massagetal", lading: "de lading" };
-    const delen = fout.map((v) => LIDW[v.soort]);
-    let tekst = delen.length === 1 ? delen[0] : delen.slice(0, -1).join(", ") + " en " + delen[delen.length - 1];
-    tekst = tekst[0].toUpperCase() + tekst.slice(1) + (delen.length === 1 ? " klopt nog niet." : " kloppen nog niet.");
+    const regels = fout.map((v) => {
+      const h = HINT[v.soort](u, v.waarde);
+      return `<b>${VELDNAAM[v.soort]}:</b> ${h.waarom}<br><b>Hint:</b> ${h.tip}`;
+    });
+    const goedTekst = velden.length > fout.length
+      ? "<br>" + velden.filter((v) => v.goed).map((v) => `${VELDNAAM[v.soort]} is goed.`).join(" ") : "";
     if (fout[0].inp.select) { fout[0].inp.focus(); fout[0].inp.select(); }
-    return toonFeedback("fout", "Nog niet helemaal goed.", tekst + " Probeer het nog een keer.", false);
+    return toonFeedback("fout", "Nog niet helemaal goed.", regels.join("<br><br>") + goedTekst + "<br><br>Probeer het nog een keer.", false);
   }
 
   // tweede poging fout: juiste antwoord tonen
@@ -919,7 +964,7 @@ function controleer() {
   });
   onthulSymbool(u);
   afronden(0);
-  const uitleg = fout.map((v) => UITLEG[v.soort](u)).join("<br>");
+  const uitleg = fout.map((v) => `<b>${VELDNAAM[v.soort]}:</b> ${HINT[v.soort](u, v.waarde).waarom} ${UITLEG[v.soort](u)}`).join("<br><br>");
   toonFeedback("fout", "Helaas, het goede antwoord staat nu in het symbool.", uitleg, true);
 }
 

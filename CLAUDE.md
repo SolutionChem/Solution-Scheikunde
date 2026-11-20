@@ -45,6 +45,10 @@ materialen/<jaar>/h<nr>/<naam>/index.html   eigen animaties en bestanden
 - YouTube-video's mogen later wel (veld `youtube` in `data.js`). Verzin nooit URL's of YouTube-ID's; vraag ze aan de docent.
 - Grote simulaties krijgen `formaat: "groot"` in `data.js` (hoger venster in de viewer).
 - Spellen/oefeningen: willekeurige uitdagingen zonder herhaling, directe feedback met uitleg, 2 pogingen (2 punten / 1 punt). Zie `materialen/3hv/h1/bouw-een-atoom/` als referentie.
+- **Leerlingen moeten altijd weten WAAROM iets goed of fout is.** Dus nooit alleen "fout" of "goed":
+  - Bij een goed antwoord: korte uitleg waarom het klopt (bijv. "Massagetal = protonen + neutronen = 6 + 6 = 12").
+  - Bij een fout antwoord: zeg waarom het fout is, liefst op basis van de waarschijnlijke denkfout (bijv. "Je hebt de elektronen meegeteld") en geef een hint hoe ze verder kunnen, zonder het antwoord voor te zeggen.
+  - Na de laatste poging: het goede antwoord met de uitleg erbij.
 - Ionen komen later in de leerlijn dan atomen: maak ionen in oefeningen optioneel met een schakelaar.
 - Lading laten invoeren met ▲/▼-knoppen (niet typen), zodat er geen verwarring is over de notatie.
 

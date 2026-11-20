@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Het atoommodel van Bohr</title>
+<style>
+  :root { --navy:#11264a; --navy2:#163a63; --licht:#eef4fb; --rand:#c9d8ea;
+          --proton:#d64545; --neutron:#8a97a8; --elektron:#2f6fb5; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: Inter, "Helvetica Neue", Arial, sans-serif; color:#14213a;
+         background: var(--licht); min-height:100vh; }
+  .app { display:grid; grid-template-columns: minmax(0,1fr) 300px; gap:18px; padding:18px; height:100vh; }
+  .podium { background:#fff; border-radius:10px; box-shadow:0 1px 3px rgba(0,0,0,.1);
+            position:relative; min-height:320px; }
+  svg { width:100%; height:100%; display:block; }
+  .paneel { display:flex; flex-direction:column; gap:14px; overflow:auto; }
+  .kaart { background:#fff; border-radius:10px; padding:14px 16px; box-shadow:0 1px 3px rgba(0,0,0,.1); }
+  .kaart h2 { margin:0 0 8px; font-size:.78rem; letter-spacing:.12em; text-transform:uppercase; color:#4a5a72; font-weight:600; }
+  .tegel { position:relative; width:120px; height:150px; margin:0 auto; color:#fff; border-radius:3px;
+           background: radial-gradient(circle at 20% 15%, rgba(80,120,190,.4), transparent 50%), linear-gradient(160deg,#13284d,#0c1c39);
+           display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .tegel::after { content:""; position:absolute; inset:4px; border:1.5px solid rgba(255,255,255,.85); }
+  .tegel .z { position:absolute; top:10px; left:12px; font-size:.85rem; }
+  .tegel .sym { font-size:3.2rem; font-weight:700; line-height:1; margin-top:8px; }
+  .tegel .naam { font-size:.85rem; margin-top:8px; }
+  .tegel .m { font-size:.85rem; }
+  .bediening { display:flex; gap:6px; align-items:center; }
+  select, button { font:inherit; font-size:.9rem; padding:7px 10px; border-radius:7px; border:1px solid var(--rand); background:#fff; color:#14213a; }
+  select { flex:1; min-width:0; }
+  button { cursor:pointer; }
+  button.hoofd { background:var(--navy2); color:#fff; border-color:var(--navy2); width:100%; margin-top:8px; }
+  table { width:100%; border-collapse:collapse; font-size:.92rem; }
+  td { padding:4px 0; border-bottom:1px dashed #e1e9f3; }
+  td:last-child { text-align:right; font-weight:600; font-variant-numeric:tabular-nums; }
+  tr:last-child td { border-bottom:0; }
+  .stip { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:8px; vertical-align:-1px; }
+  .verdeling { font-size:1.4rem; font-weight:700; text-align:center; letter-spacing:.05em; color:var(--navy); }
+  .uitleg { font-size:.85rem; color:#4a5a72; margin:6px 0 0; }
+  label.optie { display:flex; gap:8px; align-items:center; font-size:.9rem; margin-top:8px; cursor:pointer; }
+  @media (max-width: 720px) {
+    .app { grid-template-columns:1fr; height:auto; }
+    .podium { height:70vw; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="podium"><svg id="atoom" viewBox="-260 -260 520 520" role="img" aria-label="Atoommodel"></svg></div>
+  <div class="paneel">
+    <div class="kaart">
+      <h2>Kies een element</h2>
+      <div class="bediening">
+        <button id="vorige" aria-label="Vorig element">◀</button>
+        <select id="keuze" aria-label="Element"></select>
+        <button id="volgende" aria-label="Volgend element">▶</button>
+      </div>
+      <button class="hoofd" id="pauze">⏸ Pauzeer</button>
+      <label class="optie"><input type="checkbox" id="schillen" checked> Schillen tonen (K, L, M, N)</label>
+    </div>
+    <div class="kaart"><div class="tegel" id="tegel"></div></div>
+    <div class="kaart">
+      <h2>Bouw van het atoom</h2>
+      <table>
+        <tr><td><span class="stip" style="background:var(--proton)"></span>Protonen</td><td id="p"></td></tr>
+        <tr><td><span class="stip" style="background:var(--neutron)"></span>Neutronen</td><td id="n"></td></tr>
+        <tr><td><span class="stip" style="background:var(--elektron)"></span>Elektronen</td><td id="e"></td></tr>
+        <tr><td>Atoomnummer</td><td id="zz"></td></tr>
+        <tr><td>Massagetal</td><td id="a"></td></tr>
+      </table>
+    </div>
+    <div class="kaart">
+      <h2>Elektronenverdeling</h2>
+      <div class="verdeling" id="verdeling"></div>
+      <p class="uitleg">De K-schil bevat maximaal 2 elektronen, de L-schil maximaal 8. In dit model vult de M-schil tot 8 voordat de N-schil wordt gebruikt.</p>
+    </div>
+  </div>
+</div>
+<script>
+  // [symbool, naam, neutronen (meest voorkomende isotoop), atoommassa]
+  const ELEMENTEN = [
+    ["H","Waterstof",0,"1,008"],["He","Helium",2,"4,003"],["Li","Lithium",4,"6,941"],
+    ["Be","Beryllium",5,"9,012"],["B","Boor",6,"10,81"],["C","Koolstof",6,"12,01"],
+    ["N","Stikstof",7,"14,01"],["O","Zuurstof",8,"16,00"],["F","Fluor",10,"19,00"],
+    ["Ne","Neon",10,"20,18"],["Na","Natrium",12,"22,99"],["Mg","Magnesium",12,"24,31"],
+    ["Al","Aluminium",14,"26,98"],["Si","Silicium",14,"28,09"],["P","Fosfor",16,"30,97"],
+    ["S","Zwavel",16,"32,06"],["Cl","Chloor",18,"35,45"],["Ar","Argon",22,"39,95"],
+    ["K","Kalium",20,"39,10"],["Ca","Calcium",20,"40,08"]
+  ];
+  const SCHIL_NAMEN = ["K","L","M","N"];
+  const NS = "http://www.w3.org/2000/svg";
+  const svg = document.getElementById("atoom");
+  const keuze = document.getElementById("keuze");
+  let z = 6, loopt = true, hoek = 0, elektronGroepen = [];
+
+  ELEMENTEN.forEach(([s, naam], i) => keuze.add(new Option(`${i + 1}. ${naam} (${s})`, i + 1)));
+
+  function verdeling(n) {
+    const max = [2, 8, 8, 2], uit = [];
+    for (const m of max) { if (n <= 0) break; const x = Math.min(m, n); uit.push(x); n -= x; }
+    return uit;
+  }
+  function maak(tag, attrs, ouder) {
+    const el = document.createElementNS(NS, tag);
+    for (const k in attrs) el.setAttribute(k, attrs[k]);
+    (ouder || svg).appendChild(el);
+    return el;
+  }
+
+  function teken() {
+    const [sym, naam, neutronen, massa] = ELEMENTEN[z - 1];
+    const schillen = verdeling(z);
+    svg.innerHTML = "";
+    elektronGroepen = [];
+    const toonSchillen = document.getElementById("schillen").checked;
+
+    // schillen + elektronen
+    schillen.forEach((aantal, i) => {
+      const r = 80 + i * 48;
+      maak("circle", { r, fill: "none", stroke: "#c9d8ea", "stroke-width": 1.5, "stroke-dasharray": "4 5" });
+      if (toonSchillen) {
+        const t = maak("text", { x: 0, y: -r - 6, "text-anchor": "middle", "font-size": 13, fill: "#4a5a72", "font-weight": 600 });
+        t.textContent = SCHIL_NAMEN[i];
+      }
+      const g = maak("g", {});
+      for (let k = 0; k < aantal; k++) {
+        const a = (k / aantal) * Math.PI * 2;
+        maak("circle", { cx: r * Math.cos(a), cy: r * Math.sin(a), r: 8, fill: "#2f6fb5", stroke: "#fff", "stroke-width": 2 }, g);
+      }
+      elektronGroepen.push({ g, snelheid: 0.9 / (i + 1) });
+    });
+
+    // kern: protonen en neutronen in een compacte spiraal
+    const deeltjes = [];
+    for (let i = 0; i < z; i++) deeltjes.push("p");
+    for (let i = 0; i < neutronen; i++) deeltjes.push("n");
+    // meng gelijkmatig
+    deeltjes.sort((a, b) => 0);
+    const gemengd = [];
+    let pi = 0, ni = 0;
+    for (let i = 0; i < deeltjes.length; i++) {
+      const wilP = (pi / z) <= (ni / Math.max(neutronen, 1));
+      if ((wilP && pi < z) || ni >= neutronen) { gemengd.push("p"); pi++; } else { gemengd.push("n"); ni++; }
+    }
+    const kern = maak("g", {});
+    const straal = 7.5;
+    gemengd.map((soort, i) => {
+      const r = i === 0 ? 0 : straal * 1.15 * Math.sqrt(i);
+      const a = i * 2.39996; // gulden hoek
+      return { soort, x: r * Math.cos(a), y: r * Math.sin(a) };
+    }).reverse().forEach(({ soort, x, y }) => {
+      maak("circle", { cx: x, cy: y, r: straal, fill: soort === "p" ? "#d64545" : "#8a97a8", stroke: "#fff", "stroke-width": 1.2 }, kern);
+    });
+
+    // paneel
+    document.getElementById("tegel").innerHTML =
+      `<span class="z">${z}</span><span class="sym">${sym}</span><span class="naam">${naam}</span><span class="m">${massa}</span>`;
+    document.getElementById("p").textContent = z;
+    document.getElementById("n").textContent = neutronen;
+    document.getElementById("e").textContent = z;
+    document.getElementById("zz").textContent = z;
+    document.getElementById("a").textContent = z + neutronen;
+    document.getElementById("verdeling").textContent = schillen.join(" , ");
+    svg.setAttribute("aria-label", `Atoommodel van ${naam}: ${z} protonen, ${neutronen} neutronen, ${z} elektronen`);
+    keuze.value = z;
+  }
+
+  function animeer() {
+    if (loopt) {
+      hoek += 0.4;
+      elektronGroepen.forEach(({ g, snelheid }) => g.setAttribute("transform", `rotate(${hoek * snelheid})`));
+    }
+    requestAnimationFrame(animeer);
+  }
+
+  keuze.addEventListener("change", () => { z = +keuze.value; teken(); });
+  document.getElementById("vorige").onclick = () => { z = z > 1 ? z - 1 : 20; teken(); };
+  document.getElementById("volgende").onclick = () => { z = z < 20 ? z + 1 : 1; teken(); };
+  document.getElementById("schillen").onchange = teken;
+  document.getElementById("pauze").onclick = (e) => {
+    loopt = !loopt;
+    e.target.textContent = loopt ? "⏸ Pauzeer" : "▶ Afspelen";
+  };
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    loopt = false; document.getElementById("pauze").textContent = "▶ Afspelen";
+  }
+  teken();
+  requestAnimationFrame(animeer);
+</script>
+</body>
+</html>

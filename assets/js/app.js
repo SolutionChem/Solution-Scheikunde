@@ -46,7 +46,7 @@
       href ? `<a href="${href}">${esc(tekst)}</a>` : `<span aria-current="page">${esc(tekst)}</span>`
     ).join('<span class="sep">/</span>')}</nav>`;
 
-  const hsTegel = (h) => `<div class="tegel hs-tegel" aria-hidden="true"><span class="nr">H</span>${h.nr}</div>`;
+  const hsTegel = (h) => `<div class="tegel hs-tegel" aria-hidden="true">${h.nr}</div>`;
 
   /* ---------- logo ---------- */
 

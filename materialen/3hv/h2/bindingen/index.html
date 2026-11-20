@@ -111,11 +111,34 @@
   .s-binding line.raak { stroke: transparent; stroke-width: 26; cursor: pointer; }
   .s-binding:hover line.zie { stroke: var(--navy3); }
   .s-voorbeeld { stroke: var(--valentie); stroke-width: 3; stroke-dasharray: 6 6; }
-  .score { display: flex; justify-content: space-between; font-size: .95rem; margin-bottom: 4px; }
-  .stippen { display: flex; gap: 5px; margin-top: 6px; }
-  .stippen span { width: 14px; height: 14px; border-radius: 50%; background: var(--licht2); }
-  .stippen span.p2 { background: var(--goed); } .stippen span.p1 { background: #8cc9a4; } .stippen span.p0 { background: var(--fout); }
-  .stippen span.nu { outline: 2px solid var(--navy3); outline-offset: 1px; }
+  /* spelbalk, start- en eindscherm: zoals bij de spellen van Bouw een atoom */
+  .spelbalk {
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+    background: #fff; border-radius: 10px; padding: 8px 14px; margin-bottom: 12px;
+    box-shadow: 0 1px 3px rgba(11,26,51,.1); font-size: .92rem;
+  }
+  .spelbalk strong { color: var(--navy); }
+  .voortgang { display: flex; gap: 5px; }
+  .voortgang i { width: 22px; height: 6px; border-radius: 3px; background: var(--licht2); }
+  .voortgang i.af { background: var(--navy3); }
+  .voortgang i.nu { background: var(--navy); outline: 2px solid #9cc3f0; }
+  .pogingslabel { font-size: .8rem; font-weight: 600; padding: 2px 9px; border-radius: 99px; background: var(--licht2); color: var(--navy2); }
+  .spelbalk .stop { margin-left: auto; border: 1px solid var(--rand); background: #fff; color: var(--zacht); border-radius: 8px; padding: 4px 12px; font-size: .85rem; }
+  .start-spel { max-width: 640px; margin: 18px auto; padding: 22px 26px; }
+  .start-spel h2 { font-family: var(--kop); font-size: 1.4rem; letter-spacing: .04em; color: var(--navy); text-transform: none; margin: 0 0 10px; }
+  .start-spel ul { margin: 6px 0 14px; padding-left: 20px; }
+  .groot-knop { font-size: 1.05rem; font-weight: 600; padding: 10px 28px; border-radius: 8px; border: 0; background: var(--navy2); color: #fff; }
+  .groot-knop.licht { background: #fff; color: var(--navy2); border: 1px solid var(--rand); }
+  .resultaat { max-width: 720px; margin: 18px auto; padding: 24px 26px; text-align: center; }
+  .resultaat h2 { text-align: center; }
+  .resultaat .totaal { font-size: 3rem; font-weight: 700; color: var(--navy); line-height: 1.1; margin: 8px 0 2px; }
+  .resultaat .sterren { font-size: 1.8rem; letter-spacing: .15em; color: #e0a800; }
+  .resultaat ol { list-style: none; padding: 0; margin: 18px 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+  .resultaat li { border: 1px solid var(--rand); border-radius: 10px; padding: 8px 14px 6px; min-width: 112px; }
+  .resultaat li .f { font-family: var(--kop); font-size: 1.5rem; color: var(--navy); }
+  .resultaat li .pnt { font-size: .85rem; font-weight: 600; }
+  .resultaat li .pnt.vol { color: var(--goed); } .resultaat li .pnt.half { color: #b77b00; } .resultaat li .pnt.nul { color: var(--fout); }
+  .resultaat .rij { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
   .instructie { margin: 0; padding-left: 18px; font-size: .9rem; }
   .instructie li { margin-bottom: 3px; }
   .feedback { padding: 10px 12px; border-radius: 8px; font-size: .93rem; background: var(--licht); }
@@ -241,15 +264,38 @@
     </div>
   </section>
   <!-- ===== Spel: bouw een molecuul ===== -->
-  <section data-paneel="spel" class="app" hidden>
+  <section data-paneel="spel" hidden>
+    <!-- startscherm -->
+    <div class="kaart start-spel" id="s-startscherm">
+      <h2>Spel: Bouw een molecuul</h2>
+      <p>Je krijgt een molecuulformule en de losse atomen. Sleep de atomen tegen elkaar en maak de <b>structuurformule</b>.</p>
+      <ul>
+        <li>Je krijgt <b>5 moleculen</b>.</li>
+        <li>Per molecuul mag je <b>twee keer</b> op Controleer klikken.</li>
+        <li>In één keer goed: <b>2 punten</b>. Goed bij de tweede keer: <b>1 punt</b>.</li>
+        <li>Twee keer fout: 0 punten. Je ziet dan hoe de goede structuurformule eruitziet.</li>
+      </ul>
+      <button class="groot-knop" id="s-begin">Start</button>
+    </div>
+    <!-- eindscherm -->
+    <div class="kaart resultaat" id="s-resultaat" hidden></div>
+    <!-- speelscherm -->
+    <div id="s-speelscherm" hidden>
+    <div class="spelbalk">
+      <strong>Bouw een molecuul</strong>
+      <span id="s-vraag"></span>
+      <span class="voortgang" id="s-voortgang" aria-hidden="true"></span>
+      <span>Score: <strong id="s-punten">0</strong></span>
+      <span class="pogingslabel" id="s-poging"></span>
+      <button type="button" class="stop" id="s-stop">Stoppen</button>
+    </div>
+    <div class="app">
     <div class="kaart podium">
       <p class="opdracht" id="s-opdracht"></p>
       <svg id="s-tekening" role="application" aria-label="Speelveld: sleep de atomen tegen elkaar om bindingen te maken"></svg>
     </div>
     <div class="paneel">
       <div class="kaart kies">
-        <div class="score"><span id="s-vraag"></span><span id="s-punten"></span></div>
-        <div class="stippen" id="s-stippen"></div>
         <div class="knoppen">
           <button class="hoofd" id="s-controleer">Controleer</button>
           <button id="s-leg">↺ Opnieuw leggen</button>
@@ -266,9 +312,11 @@
           <li>Sleep een atoom tegen een ander atoom: er ontstaat een <b>binding</b> (een streepje).</li>
           <li>Klik of tik op een binding om er een <b>dubbele</b> of <b>drievoudige</b> binding van te maken.</li>
           <li>Sleep een atoom weg om de binding te verbreken.</li>
-          <li>Klaar? Klik op <b>Controleer</b>. Je hebt 2 pogingen: 2 punten of 1 punt.</li>
+          <li>Klaar? Klik op <b>Controleer</b>. In één keer goed: 2 punten. Goed bij de tweede keer controleren: 1 punt.</li>
         </ul>
       </div>
+    </div>
+    </div>
     </div>
   </section>
 </main>
@@ -1075,27 +1123,27 @@ cBouw();
 Object.assign(CATOOM, { S: { z: 16, n: 16, naam: "zwavel" }, P: { z: 15, n: 16, naam: "fosfor" } });
 // atomen: [symbool, ouder, richting in graden, bindingsorde] (de goede structuur, voor na de laatste poging)
 const SPEL_MOL = [
-  { formule: "H₂O",  atomen: [["O"], ["H", 0, 142, 1], ["H", 0, 38, 1]] },
+  { formule: "H₂O",  atomen: [["O"], ["H", 0, 180, 1], ["H", 0, 90, 1]] },
   { formule: "NH₃",  atomen: [["N"], ["H", 0, 180, 1], ["H", 0, 0, 1], ["H", 0, 90, 1]] },
   { formule: "CH₄",  atomen: [["C"], ["H", 0, 180, 1], ["H", 0, 0, 1], ["H", 0, 270, 1], ["H", 0, 90, 1]] },
   { formule: "CO₂",  atomen: [["C"], ["O", 0, 180, 2], ["O", 0, 0, 2]] },
   { formule: "HCl",  atomen: [["H"], ["Cl", 0, 0, 1]] },
-  { formule: "H₂S",  atomen: [["S"], ["H", 0, 142, 1], ["H", 0, 38, 1]] },
+  { formule: "H₂S",  atomen: [["S"], ["H", 0, 180, 1], ["H", 0, 90, 1]] },
   { formule: "PH₃",  atomen: [["P"], ["H", 0, 180, 1], ["H", 0, 0, 1], ["H", 0, 90, 1]] },
   { formule: "N₂",   atomen: [["N"], ["N", 0, 0, 3]] },
   { formule: "O₂",   atomen: [["O"], ["O", 0, 0, 2]] },
   { formule: "Cl₂",  atomen: [["Cl"], ["Cl", 0, 0, 1]] },
   { formule: "CCl₄", atomen: [["C"], ["Cl", 0, 180, 1], ["Cl", 0, 0, 1], ["Cl", 0, 270, 1], ["Cl", 0, 90, 1]] },
-  { formule: "CH₂O", atomen: [["C"], ["O", 0, 0, 2], ["H", 0, 135, 1], ["H", 0, 225, 1]] },
+  { formule: "CH₂O", atomen: [["C"], ["O", 0, 270, 2], ["H", 0, 180, 1], ["H", 0, 0, 1]] },
   { formule: "HCN",  atomen: [["C"], ["H", 0, 180, 1], ["N", 0, 0, 3]] },
   { formule: "C₂H₆", atomen: [["C"], ["C", 0, 0, 1], ["H", 0, 180, 1], ["H", 0, 270, 1], ["H", 0, 90, 1], ["H", 1, 0, 1], ["H", 1, 270, 1], ["H", 1, 90, 1]] },
-  { formule: "C₂H₄", atomen: [["C"], ["C", 0, 0, 2], ["H", 0, 135, 1], ["H", 0, 225, 1], ["H", 1, 45, 1], ["H", 1, 315, 1]] },
+  { formule: "C₂H₄", atomen: [["C"], ["C", 0, 0, 2], ["H", 0, 270, 1], ["H", 0, 90, 1], ["H", 1, 270, 1], ["H", 1, 90, 1]] },
   // extra moleculen met dubbele en drievoudige bindingen
   { formule: "C₂H₂", atomen: [["C"], ["C", 0, 0, 3], ["H", 0, 180, 1], ["H", 1, 0, 1]] },                       // ethyn
   { formule: "CS₂",  atomen: [["C"], ["S", 0, 180, 2], ["S", 0, 0, 2]] },                                        // koolstofdisulfide
   { formule: "CH₂O₂", atomen: [["C"], ["O", 0, 270, 2], ["O", 0, 0, 1], ["H", 0, 180, 1], ["H", 2, 0, 1]] },     // methaanzuur
-  { formule: "H₂CO₃", atomen: [["C"], ["O", 0, 270, 2], ["O", 0, 150, 1], ["O", 0, 30, 1], ["H", 2, 180, 1], ["H", 3, 0, 1]] }, // koolzuur
-  { formule: "CH₄N₂O", atomen: [["C"], ["O", 0, 270, 2], ["N", 0, 150, 1], ["N", 0, 30, 1],
+  { formule: "H₂CO₃", atomen: [["C"], ["O", 0, 270, 2], ["O", 0, 180, 1], ["O", 0, 0, 1], ["H", 2, 180, 1], ["H", 3, 0, 1]] }, // koolzuur
+  { formule: "CH₄N₂O", atomen: [["C"], ["O", 0, 270, 2], ["N", 0, 180, 1], ["N", 0, 0, 1],
                                 ["H", 2, 180, 1], ["H", 2, 90, 1], ["H", 3, 0, 1], ["H", 3, 90, 1]] },          // ureum
   { formule: "C₂H₄O₂", atomen: [["C"], ["C", 0, 0, 1], ["H", 0, 180, 1], ["H", 0, 270, 1], ["H", 0, 90, 1],
                                 ["O", 1, 270, 2], ["O", 1, 0, 1], ["H", 6, 0, 1]] }                              // azijnzuur
@@ -1113,7 +1161,13 @@ function spelNieuw() {
   const enkel = SPEL_MOL.map((m, i) => i).filter(i => !meervoudig.includes(i));
   sp.ronde = schud([...schud(meervoudig).slice(0, 3), ...schud(enkel).slice(0, S_AANTAL - 3)]);
   sp.i = 0; sp.punten = [];
+  spelScherm("speel");
   spelVraag();
+}
+function spelScherm(welk) {
+  document.getElementById("s-startscherm").hidden = welk !== "start";
+  document.getElementById("s-speelscherm").hidden = welk !== "speel";
+  document.getElementById("s-resultaat").hidden = welk !== "resultaat";
 }
 
 function spelVraag() {
@@ -1127,7 +1181,7 @@ function spelVraag() {
   const volgorde = M.formule.match(/[A-Z][a-z]?/g);
   const telling = volgorde.map(sym => { const n = sp.atomen.filter(a => a.sym === sym).length; return `${n} ${spelNaam(sym)}${meervoud(n, "atoom", "atomen")}`; });
   document.getElementById("s-opdracht").innerHTML = `<b>${M.formule}</b> bevat ${telling.join(" en ")}. Maak de structuurformule.`;
-  zetFeedback("", "Sleep de atomen tegen elkaar om bindingen te maken.");
+  zetFeedback("", "Sleep de atomen tegen elkaar om bindingen te maken. Klaar? Klik op <b>Controleer</b>.");
   spelKnoppen(); spelScore();
 }
 
@@ -1213,9 +1267,11 @@ function spelLaatLos(e) {
   sp.sleep = null;
   if (doel) {
     sp.bindingen.push({ a, b: doel, orde: 1 });
-    // netjes neerzetten: op bindingsafstand, in de dichtstbijzijnde vrije richting (stappen van 45°)
+    // netjes neerzetten op bindingsafstand: bij voorkeur recht ernaast, erboven of eronder (hoeken van 90°,
+    // zoals je een structuurformule tekent); alleen als daar geen plek is schuin (45°)
     const h0 = Math.atan2(a.y - doel.y, a.x - doel.x);
-    const opties = [...Array(8)].map((_, k) => k * Math.PI / 4).sort((p, q) => hoekVerschil(p, h0) - hoekVerschil(q, h0));
+    const opRichting = (lijst) => lijst.sort((p, q) => hoekVerschil(p, h0) - hoekVerschil(q, h0));
+    const opties = [...opRichting([0, 1, 2, 3].map(k => k * Math.PI / 2)), ...opRichting([0, 1, 2, 3].map(k => Math.PI / 4 + k * Math.PI / 2))];
     for (const h of opties) {
       const x = doel.x + Math.cos(h) * S_LENGTE, y = doel.y + Math.sin(h) * S_LENGTE;
       const binnen = x > S_R && x < sp.W - S_R && y > S_R && y < sp.H - S_R;
@@ -1265,15 +1321,15 @@ function spelControleer() {
     const p = sp.poging === 1 ? 2 : 1;
     sp.punten.push(p); sp.klaar = true;
     const meer = sp.bindingen.filter(bd => bd.orde > 1);
-    zetFeedback("goed", `<p><b>Goed! +${p} ${meervoud(p, "punt", "punten")}</b></p>` +
+    zetFeedback("goed", `<p><b>${p === 2 ? "Goed zo! +2 punten" : "Goed! +1 punt"}</b></p>` +
       `<p>Elk atoom heeft precies zoveel bindingen als zijn covalentie (${covLijst}). Zo voldoet elk atoom aan de octetregel; waterstof heeft een volle K-schil met 2 elektronen.` +
       (meer.length ? ` Tussen ${meer[0].a.sym} en ${meer[0].b.sym} zit een ${meer[0].orde === 2 ? "dubbele" : "drievoudige"} binding: ${meer[0].orde} gedeelde elektronenparen.` : "") + `</p>`);
   } else if (sp.poging === 1) {
-    zetFeedback("fout", `<p><b>Nog niet goed.</b> Je hebt nog één poging.</p>` + fouten.map(f => `<p>${f}</p>`).join("") + hints.map(h => `<p><i>${h}</i></p>`).join(""));
+    zetFeedback("fout", `<p><b>Nog niet goed.</b> Pas je structuurformule aan en klik nog een keer op Controleer. Is het dan goed, dan krijg je 1 punt.</p>` + fouten.map(f => `<p>${f}</p>`).join("") + hints.map(h => `<p><i>${h}</i></p>`).join(""));
   } else {
     sp.punten.push(0); sp.klaar = true;
     spelToonAntwoord();
-    zetFeedback("fout", `<p><b>Helaas, ook niet goed.</b> ${fouten[0]}</p><p>Zo hoort het: elk atoom heeft precies zoveel bindingen als zijn covalentie.</p>` +
+    zetFeedback("fout", `<p><b>Helaas, ook niet goed: 0 punten.</b> ${fouten[0]}</p><p>In het speelveld staat nu de goede structuurformule: elk atoom heeft precies zoveel bindingen als zijn covalentie.</p>` +
       `<p>${[...new Set(sp.atomen.map(a => a.sym))].map(sym => hoofdletter(covUitleg(sym))).join(". ")}.</p>`);
   }
   spelTeken(); spelKnoppen(); spelScore();
@@ -1308,10 +1364,21 @@ function spelToonAntwoord() {
 
 function spelVolgende() {
   if (sp.i < sp.ronde.length - 1) { sp.i++; spelVraag(); return; }
-  const tot = sp.punten.reduce((s, p) => s + p, 0);
-  zetFeedback(tot >= sp.ronde.length * 1.5 ? "goed" : "", `<p><b>Klaar! Je hebt ${tot} van de ${sp.ronde.length * 2} punten.</b></p>` +
-    `<p>Klik op <b>Nieuw spel</b> voor nieuwe moleculen.</p>`);
-  sp.einde = true; spelKnoppen();
+  // eindscherm, zoals bij de spellen van Bouw een atoom
+  const tot = sp.punten.reduce((s, p) => s + p, 0), max = sp.ronde.length * 2;
+  const sterren = tot >= 9 ? 3 : tot >= 6 ? 2 : tot >= 3 ? 1 : 0;
+  const woord = tot === max ? "Perfect!" : tot >= 7 ? "Heel goed!" : tot >= 5 ? "Goed bezig!" : "Blijf oefenen!";
+  const res = document.getElementById("s-resultaat");
+  res.innerHTML = `
+    <h2>Bouw een molecuul</h2>
+    <div class="sterren" aria-label="${sterren} van 3 sterren">${"★".repeat(sterren)}${"☆".repeat(3 - sterren)}</div>
+    <div class="totaal">${tot} / ${max}</div>
+    <div>${woord}</div>
+    <ol>${sp.ronde.map((m, k) => { const p = sp.punten[k]; return `<li><div class="f">${SPEL_MOL[m].formule}</div>
+      <div class="pnt ${p === 2 ? "vol" : p === 1 ? "half" : "nul"}">${p === 2 ? "✓ 2 punten" : p === 1 ? "✓ 1 punt" : "✗ 0 punten"}</div></li>`; }).join("")}</ol>
+    <div class="rij"><button class="groot-knop" id="s-nogmaals">Opnieuw spelen</button></div>`;
+  document.getElementById("s-nogmaals").addEventListener("click", spelNieuw);
+  spelScherm("resultaat");
 }
 function zetFeedback(soort, html) {
   const f = document.getElementById("s-feedback");
@@ -1320,25 +1387,22 @@ function zetFeedback(soort, html) {
 }
 function spelKnoppen() {
   const k = document.getElementById("s-controleer");
-  k.textContent = sp.einde ? "Nieuw spel" : sp.klaar ? (sp.i < sp.ronde.length - 1 ? "Volgende →" : "Bekijk je score") : "Controleer";
+  k.textContent = sp.klaar ? (sp.i < sp.ronde.length - 1 ? "Volgend molecuul →" : "Bekijk je score") : "Controleer";
   document.getElementById("s-leg").disabled = sp.klaar;
 }
 function spelScore() {
   document.getElementById("s-vraag").textContent = `Molecuul ${sp.i + 1} van ${sp.ronde.length}`;
-  document.getElementById("s-punten").textContent = `${sp.punten.reduce((s, p) => s + p, 0)} punten`;
-  document.getElementById("s-stippen").innerHTML = sp.ronde.map((_, i) =>
-    `<span class="${i < sp.punten.length ? "p" + sp.punten[i] : ""}${i === sp.i && !sp.einde ? " nu" : ""}"></span>`).join("");
+  document.getElementById("s-punten").textContent = sp.punten.reduce((s, p) => s + p, 0);
+  document.getElementById("s-voortgang").innerHTML = sp.ronde.map((_, k) => `<i class="${k < sp.i ? "af" : k === sp.i ? "nu" : ""}"></i>`).join("");
+  // welke poging is het, en hoeveel punten is goed nu nog waard?
+  document.getElementById("s-poging").textContent = sp.klaar ? (sp.punten.at(-1) ? `+${sp.punten.at(-1)} ${meervoud(sp.punten.at(-1), "punt", "punten")}` : "0 punten") : sp.poging === 0 ? "Poging 1 van 2 · goed = 2 punten" : "Poging 2 van 2 · goed = 1 punt";
 }
-document.getElementById("s-controleer").addEventListener("click", () => {
-  if (sp.einde) { sp.einde = false; spelNieuw(); } else spelControleer();
-});
+document.getElementById("s-controleer").addEventListener("click", spelControleer);
+document.getElementById("s-begin").addEventListener("click", spelNieuw);
+document.getElementById("s-stop").addEventListener("click", () => spelScherm("start"));
 document.getElementById("s-leg").addEventListener("click", () => { sp.atomen.forEach(a => a.fout = false); spelLeg(); });
 document.getElementById("s-hulp").addEventListener("change", () => spelTeken());
-// het speelveld pas opbouwen als het tabblad zichtbaar is (dan is de breedte bekend)
-let spelGestart = false;
-document.querySelector('.tabs button[data-tab="spel"]').addEventListener("click", () => {
-  if (!spelGestart) { spelGestart = true; requestAnimationFrame(spelNieuw); }
-});
+// het speelveld wordt pas opgebouwd na Start (dan is de breedte van het veld bekend)
 </script>
 </body>
 </html>

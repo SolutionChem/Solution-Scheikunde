@@ -57,12 +57,11 @@
   .el.gat .n { font-size: .6cqw; }
   .rooster.filter .el:not(.aan) { opacity: .18; }
 
-  /* ---------- informatieblok (in het lege vak, overlapt niets) ---------- */
-  .info { grid-column: 4 / 14; grid-row: 2 / 5; position: relative; margin: 0 .7cqw 1.2cqw; }
+  /* ---------- informatieblok (onder het periodiek systeem, overlapt niets) ---------- */
+  .info { grid-column: 1 / -1; grid-row: 12; margin-top: 14px; }
   .info-binnen {
-    position: absolute; inset: 0; overflow: auto; background: var(--licht);
-    border: 1px solid var(--rand); border-radius: 8px; padding: .65cqw .95cqw;
-    font-size: clamp(10px, 1.04cqw, 14px); line-height: 1.33;
+    background: var(--licht); border: 1px solid var(--rand); border-radius: 8px;
+    padding: 12px 18px 14px; font-size: clamp(14px, 1.5cqw, 17px); line-height: 1.45; min-height: 13em;
   }
   .info-kop { display: flex; align-items: center; gap: .8em; margin-bottom: .4em; flex-wrap: wrap; }
   .mini { width: 3.1em; height: 3.1em; flex: 0 0 auto; border: 1px solid #1d2433; border-radius: 3px; background: var(--bg);
@@ -85,8 +84,7 @@
   .opm { margin: .35em 0 0; font-size: .9em; color: var(--zacht); }
 
   @container ps (max-width: 960px) {
-    .info { grid-column: 1 / -1; grid-row: 12; margin: 12px 0 0; }
-    .info-binnen { position: static; font-size: 14px; padding: 12px 14px; }
+    .info-binnen { min-height: 0; padding: 12px 14px; }
   }
   @container ps (max-width: 900px) {
     .el .n, .el.gat .n { display: none; }
@@ -109,17 +107,31 @@
   }
 
   /* ---------- legenda ---------- */
-  .legenda { display: flex; flex-wrap: wrap; gap: 10px 26px; margin-top: 14px; }
-  .legenda-groep h3 { margin: 0 0 6px; font-family: var(--kop); font-weight: 500; font-size: .8rem; letter-spacing: .12em;
-                      text-transform: uppercase; color: var(--zacht); }
-  .legenda-groep div { display: flex; flex-wrap: wrap; gap: 6px; }
-  .leg { display: inline-flex; align-items: center; gap: 7px; padding: 4px 10px 4px 5px; border-radius: 8px;
-         border: 1px solid var(--rand); background: #fff; font-size: .88rem; }
-  .leg:hover, .leg:focus-visible { border-color: var(--navy3); }
-  .leg.hoofd { font-weight: 600; }
-  .leg.vast { background: var(--navy2); color: #fff; border-color: var(--navy2); }
-  .vlak { width: 26px; height: 20px; border: 1px solid #1d2433; border-radius: 2px; background: var(--bg); flex: 0 0 auto; }
-  .hint { font-size: .85rem; color: var(--zacht); margin: 10px 0 0; }
+  /* in het lege vak bovenin, net als de legenda in het boek */
+  .legenda {
+    grid-column: 4 / 14; grid-row: 2 / 5; margin: 0 .7cqw 1cqw; align-self: start;
+    display: grid; grid-template-columns: auto auto; grid-template-areas: "m n" "m x";
+    gap: .5em 2.2em; justify-content: start; font-size: clamp(11px, 1.1cqw, 15px); line-height: 1.25;
+  }
+  .legenda-groep[data-vak="m"] { grid-area: m; }
+  .legenda-groep[data-vak="n"] { grid-area: n; }
+  .legenda-groep[data-vak="x"] { grid-area: x; }
+  .legenda-groep .items { display: grid; gap: .1em .8em; }
+  .legenda-groep[data-vak="m"] .items { grid-template-columns: auto auto; grid-auto-flow: column; grid-template-rows: repeat(3, auto); }
+  .leg, .leg-titel { display: inline-flex; align-items: center; gap: .5em; padding: .2em .5em .2em .25em; border-radius: 6px;
+         border: 0; background: transparent; text-align: left; white-space: nowrap; }
+  .leg-titel { font-family: var(--kop); font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--navy); margin-bottom: .1em; }
+  .leg-titel.stil { cursor: default; }
+  .leg:hover, .leg:focus-visible, .leg-titel:not(.stil):hover, .leg-titel:focus-visible { background: var(--licht2); outline: none; }
+  .leg.vast, .leg-titel.vast { background: var(--navy2); color: #fff; }
+  .vlak { width: 1.25em; height: 1.25em; border: 1px solid #1d2433; border-radius: 2px; background: var(--bg); flex: 0 0 auto; }
+  @container ps (max-width: 960px) {
+    .legenda { grid-column: 1 / -1; grid-row: 13; margin: 14px 0 0; font-size: 14px;
+               grid-template-columns: auto auto; grid-template-areas: "m m" "n x"; }
+  }
+  @container ps (max-width: 560px) {
+    .legenda { grid-template-columns: 1fr; grid-template-areas: "m" "n" "x"; }
+  }
 
   @media (prefers-reduced-motion: reduce) {
     .el { transition: none; }
@@ -130,10 +142,9 @@
 <body>
 <div class="ps">
   <div class="rooster" id="rooster">
+    <div class="legenda" id="legenda" aria-label="Legenda"></div>
     <div class="info" id="info" aria-live="polite"><div class="info-binnen" id="info-binnen"></div></div>
   </div>
-  <div class="legenda" id="legenda"></div>
-  <p class="hint">Beweeg over een kleur in de legenda (of tik erop) om die groep op te lichten.</p>
 </div>
 
 <script>
@@ -447,16 +458,17 @@ function toonStart() {
     <div class="info-kop"><div><h2>Het periodiek systeem</h2></div></div>
     <div class="kolommen">
       <section><h3>Zo werkt het</h3><p>Beweeg met de muis over een element, of tik erop. Hier verschijnt dan de fase bij kamertemperatuur, waar het element voorkomt en waarvoor het wordt gebruikt.</p></section>
-      <section><h3>In elk vakje</h3><p>Linksboven de atoommassa, in het midden het symbool, daaronder het atoomnummer en de naam. De kleuren vind je in de legenda onder het periodiek systeem.</p></section>
+      <section><h3>Legenda</h3><p>Beweeg over een soort in de legenda (of tik erop) om die groep op te lichten. Met de kopjes Metalen en Niet-metalen licht je ze allemaal tegelijk op.</p></section>
     </div>`;
 }
 toonStart();
 
 /* ---------- legenda: groepen oplichten ---------- */
+/* [titel, filter voor de hele groep (of null), kleur van het kopje, soorten, vak in de legenda] */
 const LEGENDA = [
-  ["Metalen", [["metaal", "Metalen (alle)", true], "alkali", "aardalkali", "transitie", "posttransitie", "lanthanide", "actinide"]],
-  ["Niet-metalen", [["nietmetaal-alle", "Niet-metalen (alle)", true], "nietmetaal", "halogeen", "edelgas"]],
-  ["Metalloïden", ["metalloide"]]
+  ["Metalen", "metaal", "var(--metaal)", ["alkali", "aardalkali", "transitie", "posttransitie", "lanthanide", "actinide"], "m"],
+  ["Niet-metalen", "nietmetaal-alle", "var(--nietmetaal)", ["nietmetaal", "halogeen", "edelgas"], "n"],
+  ["Metalloïden", "metalloide", "var(--metalloide)", [], "x"]
 ];
 const legenda = document.getElementById("legenda");
 let vastFilter = null;
@@ -474,32 +486,30 @@ function licht(filter) {
   rooster.querySelectorAll(".el").forEach(el => el.classList.toggle("aan", !!f && past(el.dataset.soort, f)));
 }
 
-LEGENDA.forEach(([titel, items]) => {
-  const groep = maak("div", "legenda-groep", legenda, `<h3>${titel}</h3>`);
-  const rij = maak("div", "", groep);
-  items.forEach(item => {
-    let sleutel, tekst, hoofd = false, bg;
-    if (Array.isArray(item)) {
-      [sleutel, tekst, hoofd] = item;
-      bg = sleutel === "metaal" ? "var(--metaal)" : "var(--nietmetaal)";
-    } else {
-      sleutel = item; tekst = SOORTEN[item].naam; bg = achtergrond(item);
-    }
-    const b = maak("button", "leg" + (hoofd ? " hoofd" : ""), rij, `<span class="vlak" style="--bg:${bg}"></span>${tekst}`);
-    b.type = "button";
-    b.setAttribute("aria-pressed", "false");
-    b.addEventListener("mouseenter", () => licht(sleutel));
-    b.addEventListener("focus", () => licht(sleutel));
-    b.addEventListener("mouseleave", () => licht(null));
-    b.addEventListener("blur", () => licht(null));
-    b.addEventListener("click", () => {
-      const aan = vastFilter !== sleutel;
-      vastFilter = aan ? sleutel : null;
-      legenda.querySelectorAll(".leg").forEach(l => { l.classList.remove("vast"); l.setAttribute("aria-pressed", "false"); });
-      if (aan) { b.classList.add("vast"); b.setAttribute("aria-pressed", "true"); }
-      licht(aan ? sleutel : null);
-    });
+function legKnop(ouder, cls, html, sleutel) {
+  const b = maak("button", cls, ouder, html);
+  b.type = "button";
+  b.setAttribute("aria-pressed", "false");
+  b.addEventListener("mouseenter", () => licht(sleutel));
+  b.addEventListener("focus", () => licht(sleutel));
+  b.addEventListener("mouseleave", () => licht(null));
+  b.addEventListener("blur", () => licht(null));
+  b.addEventListener("click", () => {
+    const aan = vastFilter !== sleutel;
+    vastFilter = aan ? sleutel : null;
+    legenda.querySelectorAll("button").forEach(l => { l.classList.remove("vast"); l.setAttribute("aria-pressed", "false"); });
+    if (aan) { b.classList.add("vast"); b.setAttribute("aria-pressed", "true"); }
+    licht(aan ? sleutel : null);
   });
+}
+
+LEGENDA.forEach(([titel, sleutel, kleur, soorten, vak]) => {
+  const groep = maak("div", "legenda-groep", legenda);
+  groep.dataset.vak = vak;
+  legKnop(groep, "leg-titel", `<span class="vlak" style="--bg:${kleur}"></span>${titel}`, sleutel);
+  if (!soorten.length) return;
+  const items = maak("div", "items", groep);
+  soorten.forEach(soort => legKnop(items, "leg", `<span class="vlak" style="--bg:${achtergrond(soort)}"></span>${SOORTEN[soort].naam}`, soort));
 });
 </script>
 </body>

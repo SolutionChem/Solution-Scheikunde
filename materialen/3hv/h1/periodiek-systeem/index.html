@@ -29,8 +29,11 @@
   button { font: inherit; cursor: pointer; color: inherit; }
 
   /* ---------- periodiek systeem ---------- */
+  /* De breedte hangt af van de hoogte van het venster, zodat periodiek systeem
+     en uitlegblok samen in beeld passen (niet smaller dan 990 px). */
   .ps { container: ps / inline-size; background: #fff; border-radius: 10px;
-        box-shadow: 0 1px 3px rgba(0,0,0,.1); padding: 10px 12px 14px; }
+        box-shadow: 0 1px 3px rgba(0,0,0,.1); padding: 10px 12px 14px;
+        max-width: max(990px, calc((100vh - 300px) * 1.85)); margin: 0 auto; }
   .rooster {
     display: grid; grid-template-columns: .55fr repeat(18, minmax(0, 1fr));
     gap: .22cqw;
@@ -61,7 +64,7 @@
   .info { grid-column: 1 / -1; grid-row: 12; margin-top: 14px; }
   .info-binnen {
     background: var(--licht); border: 1px solid var(--rand); border-radius: 8px;
-    padding: 12px 18px 14px; font-size: clamp(14px, 1.5cqw, 17px); line-height: 1.45; min-height: 13em;
+    padding: 12px 18px 14px; font-size: clamp(15px, 1.6cqw, 17px); line-height: 1.45; min-height: 13em;
   }
   .info-kop { display: flex; align-items: center; gap: .8em; margin-bottom: .4em; flex-wrap: wrap; }
   .mini { width: 3.1em; height: 3.1em; flex: 0 0 auto; border: 1px solid #1d2433; border-radius: 3px; background: var(--bg);
@@ -108,17 +111,22 @@
 
   /* ---------- legenda ---------- */
   /* in het lege vak bovenin, net als de legenda in het boek */
+  .legenda-vak { grid-column: 4 / 14; grid-row: 2 / 5; display: flex; align-items: center; justify-content: center;
+                 padding-bottom: .6cqw; }
   .legenda {
-    grid-column: 4 / 14; grid-row: 2 / 5; margin: 0 .7cqw 1cqw; align-self: start;
+    position: relative; border: 1px solid var(--rand); border-radius: 8px; padding: .9em 1em .55em;
     display: grid; grid-template-columns: auto auto; grid-template-areas: "m n" "m x";
-    gap: .5em 2.2em; justify-content: start; font-size: clamp(11px, 1.1cqw, 15px); line-height: 1.25;
+    gap: .35em 2em; font-size: 1.2cqw; line-height: 1.2;
   }
+  .kader-titel { position: absolute; top: 0; left: .8em; transform: translateY(-50%); background: #fff; padding: 0 .45em;
+                 font-family: var(--kop); font-weight: 600; letter-spacing: .14em; text-transform: uppercase;
+                 font-size: .85em; color: var(--zacht); }
   .legenda-groep[data-vak="m"] { grid-area: m; }
   .legenda-groep[data-vak="n"] { grid-area: n; }
   .legenda-groep[data-vak="x"] { grid-area: x; }
   .legenda-groep .items { display: grid; gap: .1em .8em; }
   .legenda-groep[data-vak="m"] .items { grid-template-columns: auto auto; grid-auto-flow: column; grid-template-rows: repeat(3, auto); }
-  .leg, .leg-titel { display: inline-flex; align-items: center; gap: .5em; padding: .2em .5em .2em .25em; border-radius: 6px;
+  .leg, .leg-titel { display: inline-flex; align-items: center; gap: .5em; padding: .15em .5em .15em .25em; border-radius: 6px;
          border: 0; background: transparent; text-align: left; white-space: nowrap; }
   .leg-titel { font-family: var(--kop); font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--navy); margin-bottom: .1em; }
   .leg-titel.stil { cursor: default; }
@@ -126,8 +134,9 @@
   .leg.vast, .leg-titel.vast { background: var(--navy2); color: #fff; }
   .vlak { width: 1.25em; height: 1.25em; border: 1px solid #1d2433; border-radius: 2px; background: var(--bg); flex: 0 0 auto; }
   @container ps (max-width: 960px) {
-    .legenda { grid-column: 1 / -1; grid-row: 13; margin: 14px 0 0; font-size: 14px;
-               grid-template-columns: auto auto; grid-template-areas: "m m" "n x"; }
+    .legenda-vak { grid-column: 1 / -1; grid-row: 13; margin-top: 22px; padding: 0; justify-content: flex-start; }
+    .legenda { font-size: 14px; width: 100%; grid-template-columns: auto auto; justify-content: start;
+               grid-template-areas: "m m" "n x"; }
   }
   @container ps (max-width: 560px) {
     .legenda { grid-template-columns: 1fr; grid-template-areas: "m" "n" "x"; }
@@ -142,7 +151,7 @@
 <body>
 <div class="ps">
   <div class="rooster" id="rooster">
-    <div class="legenda" id="legenda" aria-label="Legenda"></div>
+    <div class="legenda-vak"><div class="legenda" id="legenda" role="group" aria-labelledby="kader-titel"><div class="kader-titel" id="kader-titel">Legenda</div></div></div>
     <div class="info" id="info" aria-live="polite"><div class="info-binnen" id="info-binnen"></div></div>
   </div>
 </div>

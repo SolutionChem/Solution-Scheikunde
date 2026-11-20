@@ -75,8 +75,32 @@ window.SOLUTION = {
           titel: "Indeling van stoffen",
           pagina: 25,
           paragrafen: [
-            { nr: 1, titel: "Zouten", pagina: 26, materialen: [] },
-            { nr: 2, titel: "Verhoudingsformules en naamgeving van zouten", pagina: 33, materialen: [] },
+            {
+              nr: 1, titel: "Zouten", pagina: 26,
+              materialen: [
+                {
+                  id: "bouw-een-ion",
+                  type: "simulatie",
+                  titel: "Bouw een ion",
+                  beschrijving: "Bouw atomen en ionen uit protonen, neutronen en elektronen en ontdek wat er gebeurt met de lading. Met drie spellen; ionen staan al aan.",
+                  url: "materialen/3hv/h1/bouw-een-atoom/index.html?ionen=1",
+                  formaat: "groot"
+                }
+              ]
+            },
+            {
+              nr: 2, titel: "Verhoudingsformules en naamgeving van zouten", pagina: 33,
+              materialen: [
+                {
+                  id: "ionbinding",
+                  type: "simulatie",
+                  titel: "Zo ontstaat een zout",
+                  beschrijving: "Bekijk hoe een metaalatoom elektronen afstaat aan een niet-metaalatoom, hoe de ionen ontstaan en waarom ze in een vaste verhouding samen een zout vormen.",
+                  url: "materialen/3hv/h2/bindingen/index.html",
+                  formaat: "groot"
+                }
+              ]
+            },
             { nr: 3, titel: "Metalen", pagina: 40, materialen: [] },
             { nr: 4, titel: "Moleculaire stoffen", pagina: 44, materialen: [] },
             { nr: 5, titel: "Naamgeving van moleculaire stoffen", pagina: 51, materialen: [] }

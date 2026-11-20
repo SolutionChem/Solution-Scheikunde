@@ -469,9 +469,13 @@ function pseHTML({ markeer = 0, klikbaar = false, beperkt = false } = {}) {
 
 /* ===================== toestand ===================== */
 
+// Met ?ionen=1 in de URL (zoals bij §2.1 "Bouw een ion") staat de ionen-schakelaar meteen aan.
+const metIonen = new URLSearchParams(location.search).get("ionen") === "1";
+if (metIonen) document.title = "Bouw een ion";
+
 const st = {
   modus: "bouw",
-  ionen: false,
+  ionen: metIonen,
   bouw: { p: 0, n: 0, e: 0, nieuw: null, dicht: {} },
   spel: null
 };

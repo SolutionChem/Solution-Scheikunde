@@ -1,0 +1,496 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bindingen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Oswald:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #11264a; --navy2: #163a63; --navy3: #2c5687;
+    --licht: #eef4fb; --licht2: #dbe8f5; --rand: #c9d8ea;
+    --tekst: #14213a; --zacht: #4a5a72;
+    --elektron: #2f6fb5; --valentie: #e8890c; --kern: #d64545;
+    --metaal: #f8e39b; --nietmetaal: #f0948a;
+    --kop: "Oswald", "Arial Narrow", Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    font-family: Inter, "Helvetica Neue", Arial, sans-serif; color: var(--tekst);
+    background: var(--licht); line-height: 1.45; font-size: 15px; -webkit-font-smoothing: antialiased;
+  }
+  button, select { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  [hidden] { display: none !important; }
+
+  /* ---------- menu ---------- */
+  .tabs { display: flex; gap: 4px; padding: 8px 12px 0; background: var(--navy); overflow-x: auto; scrollbar-width: none; }
+  .tabs button {
+    flex: 0 0 auto; border: 0; background: transparent; color: #cfdcef;
+    padding: 9px 14px 10px; border-radius: 8px 8px 0 0;
+    font-family: var(--kop); letter-spacing: .08em; text-transform: uppercase; font-size: .9rem;
+  }
+  .tabs button:hover { color: #fff; background: rgba(255,255,255,.08); }
+  .tabs button[aria-selected="true"] { background: var(--licht); color: var(--navy); }
+  .tabs .binnenkort { font-family: Inter, Arial, sans-serif; text-transform: none; letter-spacing: 0; font-size: .7rem;
+                      opacity: .8; margin-left: 6px; }
+
+  /* ---------- indeling ---------- */
+  .scherm { padding: 12px; }
+  .app { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 12px; align-items: start; }
+  .kaart { background: #fff; border-radius: 10px; box-shadow: 0 1px 3px rgba(11,26,51,.1); padding: 12px 14px; min-width: 0; }
+  .kaart h2 { margin: 0 0 8px; font-size: .78rem; letter-spacing: .12em; text-transform: uppercase; color: var(--zacht); font-weight: 600; }
+  .paneel { display: flex; flex-direction: column; gap: 12px; }
+
+  .podium { padding: 8px; }
+  #tekening { width: 100%; height: min(64vh, 560px); display: block; }
+  .onderschrift {
+    margin: 6px 4px 2px; padding: 10px 14px; border-radius: 8px; background: var(--licht);
+    border-left: 4px solid var(--navy3); min-height: 3.2em; font-size: 1rem;
+  }
+  .onderschrift b { color: var(--navy); }
+
+  select { width: 100%; padding: 8px 10px; border-radius: 7px; border: 1px solid var(--rand); background: #fff; }
+  .knoppen { display: flex; gap: 8px; margin-top: 10px; }
+  .knoppen button { flex: 1; padding: 9px 10px; border-radius: 7px; border: 1px solid var(--rand); background: #fff; font-weight: 600; }
+  .knoppen button.hoofd { background: var(--navy2); color: #fff; border-color: var(--navy2); }
+  .knoppen button:disabled { opacity: .45; cursor: default; }
+
+  .stap { margin: 0; font-size: .92rem; }
+  .uitleg-eind { margin: 10px 0 0; font-size: .92rem; padding-top: 10px; border-top: 1px dashed var(--rand); }
+  .legenda { display: grid; gap: 6px; font-size: .9rem; }
+  .legenda div { display: flex; align-items: center; gap: 9px; }
+  .stip { width: 14px; height: 14px; border-radius: 50%; flex: 0 0 auto; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.15); }
+  .bol { width: 18px; height: 18px; border-radius: 50%; flex: 0 0 auto; border: 1.5px solid rgba(0,0,0,.35); }
+
+  .leeg { text-align: center; padding: 60px 20px; }
+  .leeg h2 { font-family: var(--kop); font-size: 1.5rem; color: var(--navy); letter-spacing: .04em; text-transform: none; }
+
+  /* ---------- tekening ---------- */
+  svg text { font-family: Inter, Arial, sans-serif; }
+  .schil { fill: none; stroke: #b9cbe2; stroke-width: 2; stroke-dasharray: 5 6; }
+  .kern { fill: var(--kern); }
+  .kern-tekst { fill: #fff; font-weight: 700; text-anchor: middle; }
+  .e { stroke: #fff; stroke-width: 2.5; }
+  .e.binnen { fill: var(--elektron); }
+  .e.val { fill: var(--valentie); }
+  .lab1 { font-size: 21px; font-weight: 600; fill: var(--tekst); text-anchor: middle; }
+  .lab2 { font-size: 19px; font-weight: 600; fill: var(--valentie); text-anchor: middle; }
+  .lab2.ion { fill: var(--navy3); }
+  .lading { font-size: 26px; font-weight: 700; fill: var(--navy); text-anchor: middle; }
+  .ion-bol.m { fill: var(--metaal); stroke: #a88d2c; stroke-width: 2; }
+  .ion-bol.x { fill: var(--nietmetaal); stroke: #a8524a; stroke-width: 2; }
+  .ion-tekst { font-size: 26px; font-weight: 700; fill: #1b1b1b; text-anchor: middle; dominant-baseline: central; }
+
+  @media (max-width: 760px) {
+    .app { display: flex; flex-direction: column; align-items: stretch; }
+    .paneel { display: contents; }        /* kaarten los, zodat de zoutkeuze bovenaan kan */
+    .kaart.kies { order: 1; }
+    .podium { order: 2; }
+    .kaart.uitleg { order: 3; }
+    .kaart.leg { order: 4; }
+    #tekening { height: auto; max-height: 60vh; aspect-ratio: var(--verhouding, 1); }
+    .scherm { padding: 8px; }
+  }
+</style>
+</head>
+<body>
+<nav class="tabs" role="tablist" aria-label="Soort binding">
+  <button role="tab" data-tab="ion" aria-selected="true">Ionbinding</button>
+  <button role="tab" data-tab="covalent" aria-selected="false">Covalente binding<span class="binnenkort">(binnenkort)</span></button>
+  <button role="tab" data-tab="metaal" aria-selected="false">Metaalbinding<span class="binnenkort">(binnenkort)</span></button>
+</nav>
+
+<main class="scherm">
+  <!-- ===== Ionbinding ===== -->
+  <section data-paneel="ion" class="app">
+    <div class="kaart podium">
+      <svg id="tekening" role="img" aria-label="Atoommodellen van het metaal en het niet-metaal"></svg>
+      <div class="onderschrift" id="onderschrift" aria-live="polite"></div>
+    </div>
+    <div class="paneel">
+      <div class="kaart kies">
+        <h2>Kies een zout</h2>
+        <select id="keuze" aria-label="Zout"></select>
+        <div class="knoppen">
+          <button class="hoofd" id="start">▶ Start</button>
+          <button id="opnieuw">↺ Opnieuw</button>
+        </div>
+      </div>
+      <div class="kaart uitleg">
+        <h2>Wat gebeurt er?</h2>
+        <p class="stap" id="stap"></p>
+        <p class="uitleg-eind" id="uitleg-eind" hidden></p>
+      </div>
+      <div class="kaart leg">
+        <h2>Legenda</h2>
+        <div class="legenda">
+          <div><span class="stip" style="background:var(--kern)"></span>Kern (protonen en neutronen)</div>
+          <div><span class="stip" style="background:var(--elektron)"></span>Elektron</div>
+          <div><span class="stip" style="background:var(--valentie)"></span>Valentie-elektron (buitenste schil)</div>
+          <div><span class="bol" style="background:var(--metaal)"></span>Positief ion (metaal)</div>
+          <div><span class="bol" style="background:var(--nietmetaal)"></span>Negatief ion (niet-metaal)</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== later: covalente binding en metaalbinding ===== -->
+  <section data-paneel="covalent" class="kaart leeg" hidden>
+    <h2>Covalente binding</h2>
+    <p>Deze simulatie komt binnenkort.</p>
+  </section>
+  <section data-paneel="metaal" class="kaart leeg" hidden>
+    <h2>Metaalbinding</h2>
+    <p>Deze simulatie komt binnenkort.</p>
+  </section>
+</main>
+
+<script>
+/* ===================== menu ===================== */
+document.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click", () => {
+  document.querySelectorAll(".tabs button").forEach(x => x.setAttribute("aria-selected", x === b ? "true" : "false"));
+  document.querySelectorAll("[data-paneel]").forEach(p => p.hidden = p.dataset.paneel !== b.dataset.tab);
+  if (b.dataset.tab !== "ion") pauzeer();
+}));
+
+/* ===================== gegevens ===================== */
+// atoomnummer, neutronen (meest voorkomende isotoop), naam, naam van het negatieve ion
+const ELEM = {
+  Li: { z: 3,  n: 4,  naam: "lithium" },
+  Na: { z: 11, n: 12, naam: "natrium" },
+  K:  { z: 19, n: 20, naam: "kalium" },
+  Mg: { z: 12, n: 12, naam: "magnesium" },
+  Ca: { z: 20, n: 20, naam: "calcium" },
+  N:  { z: 7,  n: 7,  naam: "stikstof", ion: "nitride" },
+  P:  { z: 15, n: 16, naam: "fosfor",   ion: "fosfide" },
+  O:  { z: 8,  n: 8,  naam: "zuurstof", ion: "oxide" },
+  S:  { z: 16, n: 16, naam: "zwavel",   ion: "sulfide" },
+  F:  { z: 9,  n: 10, naam: "fluor",    ion: "fluoride" },
+  Cl: { z: 17, n: 18, naam: "chloor",   ion: "chloride" }
+};
+// [metaal, niet-metaal, extra toelichting]
+const ZOUTEN = [
+  ["Na", "Cl", "keukenzout"], ["K", "Cl", "zoutvervanger"], ["Na", "F", "in tandpasta"], ["Li", "F", ""],
+  ["Na", "O", ""], ["K", "O", ""], ["Li", "O", ""], ["Na", "S", ""], ["Li", "N", ""],
+  ["Mg", "O", ""], ["Ca", "O", "ongebluste kalk"], ["Mg", "S", ""], ["Mg", "Cl", ""], ["Ca", "Cl", "strooizout"],
+  ["Ca", "F", "het mineraal vloeispaat"], ["Mg", "N", ""], ["Ca", "N", ""], ["Ca", "P", ""]
+];
+
+function verdeling(z) { // K 2, L 8, M 8, N 2 (zoals in het boek, t/m calcium)
+  const max = [2, 8, 8, 2], uit = [];
+  for (const m of max) { if (z <= 0) break; const x = Math.min(m, z); uit.push(x); z -= x; }
+  return uit;
+}
+const SUP = { "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴", "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹", "+": "⁺", "-": "⁻" };
+const SUB = { "1": "", "2": "₂", "3": "₃", "4": "₄" };
+const sup = s => [...s].map(c => SUP[c] || c).join("");
+const ionSym = (sym, q) => sym + sup((Math.abs(q) === 1 ? "" : Math.abs(q)) + (q > 0 ? "+" : "-"));
+const lading = q => (Math.abs(q) === 1 ? "" : Math.abs(q)) + (q > 0 ? "+" : "−");
+const ggd = (a, b) => b ? ggd(b, a % b) : a;
+const hoofdletter = s => s[0].toUpperCase() + s.slice(1);
+const meervoud = (n, enk, mv) => n === 1 ? enk : mv;
+
+function zoutInfo([m, x, extra]) {
+  const qm = verdeling(ELEM[m].z).at(-1);          // metaal staat zijn valentie-elektronen af
+  const qx = 8 - verdeling(ELEM[x].z).at(-1);      // niet-metaal vult aan tot 8
+  const kgv = qm * qx / ggd(qm, qx);
+  const nm = kgv / qm, nx = kgv / qx;
+  return {
+    m, x, qm, qx, nm, nx, overgedragen: kgv,
+    formule: m + SUB[nm] + x + SUB[nx],
+    naam: ELEM[m].naam + ELEM[x].ion,
+    extra
+  };
+}
+
+/* ===================== geometrie ===================== */
+const R = [0, 36, 64, 92, 120];   // straal van schil K, L, M, N
+const RE = 8, RK = 25;            // straal elektron, straal kern
+const NS = "http://www.w3.org/2000/svg";
+const svg = document.getElementById("tekening");
+
+function maak(tag, attrs, ouder, tekst) {
+  const el = document.createElementNS(NS, tag);
+  for (const k in attrs) el.setAttribute(k, attrs[k]);
+  if (tekst != null) el.textContent = tekst;
+  (ouder || svg).appendChild(el);
+  return el;
+}
+const pol = (x, y, r, a) => ({ x: x + r * Math.cos(a), y: y + r * Math.sin(a) });
+const hoek = (a, b) => Math.atan2(b.y - a.y, b.x - a.x);
+const hoekVerschil = (a, b) => Math.abs(Math.atan2(Math.sin(a - b), Math.cos(a - b)));
+
+/* ===================== opbouw van één zout ===================== */
+let Z, scene, t = 0, speelt = false, vorige = null;
+
+function bouw() {
+  svg.innerHTML = "";
+  const info = Z;
+  const sm = verdeling(ELEM[info.m].z), sx = verdeling(ELEM[info.x].z);
+  const Rm = R[sm.length], Rx = R[sx.length];
+  const labelH = 70;
+
+  // posities van de atomen: kolommen (metaal links) of, bij veel atomen, rijen (metaal boven)
+  const atomen = [];
+  const kolommen = Math.max(info.nm, info.nx) <= 2;
+  const plaats = (n, i, stap) => (i - (n - 1) / 2) * stap;
+  if (kolommen) {
+    const X = (Rm + Rx) / 2 + 95;
+    const dy = 2 * Math.max(Rm, Rx) + labelH + 26;
+    for (let i = 0; i < info.nm; i++) atomen.push({ sym: info.m, metaal: true, x: -X, y: plaats(info.nm, i, dy) - labelH / 2 });
+    for (let i = 0; i < info.nx; i++) atomen.push({ sym: info.x, metaal: false, x: X, y: plaats(info.nx, i, dy) - labelH / 2 });
+  } else {
+    const dx = Math.max(2 * Math.max(Rm, Rx) + 50, 300); // ruimte voor de labels
+    const Y = (Rm + Rx) / 2 + labelH / 2 + 70;
+    for (let i = 0; i < info.nm; i++) atomen.push({ sym: info.m, metaal: true, x: plaats(info.nm, i, dx), y: -Y - labelH / 2 });
+    for (let i = 0; i < info.nx; i++) atomen.push({ sym: info.x, metaal: false, x: plaats(info.nx, i, dx), y: Y - labelH / 2 });
+  }
+  const metalen = atomen.filter(a => a.metaal), nietmetalen = atomen.filter(a => !a.metaal);
+  atomen.forEach(a => { a.schillen = verdeling(ELEM[a.sym].z); a.R = R[a.schillen.length]; });
+
+  // welke elektronen gaan waarheen: gewoon op volgorde koppelen
+  const overdrachten = [];
+  let k = 0;
+  metalen.forEach((m, i) => { for (let j = 0; j < info.qm; j++, k++) overdrachten.push({ van: m, naar: nietmetalen[Math.floor(k / info.qx)] }); });
+
+  // ----- tekenen: atoommodellen -----
+  const lagen = { modellen: maak("g", {}), bewegend: maak("g", {}), ionen: maak("g", {}) };
+  atomen.forEach(a => {
+    a.g = maak("g", {}, lagen.modellen);
+    const L = a.schillen.length;
+    a.schilEl = [];
+    for (let s = 1; s <= L; s++) a.schilEl.push(maak("circle", { class: "schil", cx: a.x, cy: a.y, r: R[s] }, a.g));
+    maak("circle", { class: "kern", cx: a.x, cy: a.y, r: RK }, a.g);
+    maak("text", { class: "kern-tekst", x: a.x, y: a.y - 2, "font-size": 15 }, a.g, ELEM[a.sym].z + "p⁺");
+    maak("text", { class: "kern-tekst", x: a.x, y: a.y + 14, "font-size": 12, "font-weight": 500 }, a.g, ELEM[a.sym].n + "n");
+    // binnenste schillen: gelijkmatig verdeeld
+    for (let s = 1; s < L; s++) {
+      const n = a.schillen[s - 1];
+      for (let i = 0; i < n; i++) {
+        const p = pol(a.x, a.y, R[s], -Math.PI / 2 + (i / n) * 2 * Math.PI + (s % 2 ? 0 : Math.PI / n));
+        maak("circle", { class: "e binnen", cx: p.x, cy: p.y, r: RE }, a.g);
+      }
+    }
+    // labels onder het atoom
+    const ly = a.y + a.R + 32;
+    a.lab1 = maak("text", { class: "lab1", x: a.x, y: ly }, a.g);
+    a.lab2 = maak("text", { class: "lab2", x: a.x, y: ly + 26 }, a.g);
+    a.ladingEl = maak("text", { class: "lading", x: a.x + a.R * .78 + 18, y: a.y - a.R * .78 - 6, opacity: 0 }, lagen.modellen,
+      lading(a.metaal ? info.qm : -info.qx));
+  });
+
+  // buitenste schil van het metaal: valentie-elektronen richting het niet-metaal waar ze heen gaan
+  metalen.forEach(m => {
+    const mijn = overdrachten.filter(o => o.van === m);
+    mijn.forEach((o, i) => {
+      const doelen = mijn.filter(p => p.naar === o.naar);
+      const idx = doelen.indexOf(o), spreid = (idx - (doelen.length - 1) / 2) * 0.5;
+      o.hoekStart = hoek(m, o.naar) + spreid;
+      o.start = pol(m.x, m.y, m.R, o.hoekStart);
+    });
+  });
+  // buitenste schil van het niet-metaal: 8 plekken; de lege plekken wijzen naar de metaalatomen
+  nietmetalen.forEach(x => {
+    const v = x.schillen.at(-1), mijn = overdrachten.filter(o => o.naar === x);
+    const richting = Math.atan2(mijn.reduce((s, o) => s + Math.sin(hoek(x, o.van)), 0), mijn.reduce((s, o) => s + Math.cos(hoek(x, o.van)), 0));
+    const plekken = [...Array(8)].map((_, i) => richting + Math.PI / 8 + i * Math.PI / 4);
+    const vrij = new Set();
+    // kies voor elk binnenkomend elektron de vrije plek die het dichtst bij zijn metaalatoom ligt
+    mijn.forEach(o => {
+      const h = hoek(x, o.van);
+      let beste = -1;
+      plekken.forEach((p, i) => { if (!vrij.has(i) && (beste < 0 || hoekVerschil(p, h) < hoekVerschil(plekken[beste], h))) beste = i; });
+      vrij.add(beste);
+      o.eind = pol(x.x, x.y, x.R, plekken[beste]);
+    });
+    plekken.forEach((p, i) => {
+      if (vrij.has(i)) return;
+      const q = pol(x.x, x.y, x.R, p);
+      maak("circle", { class: "e val", cx: q.x, cy: q.y, r: RE }, x.g);
+    });
+  });
+  overdrachten.forEach(o => {
+    o.el = maak("circle", { class: "e val", cx: o.start.x, cy: o.start.y, r: RE }, lagen.bewegend);
+    // bocht in de baan, zodat het elektron rustig "overspringt"
+    const mx = (o.start.x + o.eind.x) / 2, my = (o.start.y + o.eind.y) / 2;
+    const dx = o.eind.x - o.start.x, dy = o.eind.y - o.start.y, len = Math.hypot(dx, dy) || 1;
+    o.ctrl = { x: mx - dy / len * 45, y: my + dx / len * 45 };
+  });
+
+  // ----- ionen als bollen + eindpositie in het zout -----
+  atomen.forEach(a => {
+    const L = a.schillen.length;
+    a.ionR = (a.metaal ? R[L - 1] : R[L]) + 10;
+  });
+  const rm = metalen[0].ionR, rx = nietmetalen[0].ionR;
+  let eind = [];
+  if (info.nm === 3 && info.nx === 1) { // driehoek rond het negatieve ion
+    eind.push({ a: nietmetalen[0], x: 0, y: 0 });
+    metalen.forEach((m, i) => eind.push({ a: m, ...pol(0, 0, rm + rx, -Math.PI / 2 + i * 2 * Math.PI / 3) }));
+  } else { // om en om op een rij, beginnend met de soort waarvan er het meest zijn
+    const rij = [], mm = [...metalen], xx = [...nietmetalen];
+    let beurt = info.nm >= info.nx;
+    while (mm.length || xx.length) { rij.push((beurt && mm.length) || !xx.length ? mm.shift() : xx.shift()); beurt = !beurt; }
+    const breed = rij.reduce((s, a) => s + 2 * a.ionR, 0);
+    let x = -breed / 2;
+    rij.forEach(a => { eind.push({ a, x: x + a.ionR, y: 0 }); x += 2 * a.ionR; });
+  }
+  eind.forEach(e => { e.a.eindX = e.x; e.a.eindY = e.y; });
+  atomen.forEach(a => {
+    a.bol = maak("g", { opacity: 0 }, lagen.ionen);
+    a.bolC = maak("circle", { class: "ion-bol " + (a.metaal ? "m" : "x"), r: a.ionR }, a.bol);
+    a.bolT = maak("text", { class: "ion-tekst" }, a.bol, ionSym(a.sym, a.metaal ? info.qm : -info.qx));
+  });
+
+  // ----- passend venster -----
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  const neem = (x, y, r) => { x0 = Math.min(x0, x - r); x1 = Math.max(x1, x + r); y0 = Math.min(y0, y - r); y1 = Math.max(y1, y + r); };
+  atomen.forEach(a => { neem(a.x, a.y, a.R + 20); neem(a.x, a.y + a.R + 70, 10); x0 = Math.min(x0, a.x - 150); x1 = Math.max(x1, a.x + 150); neem(a.eindX, a.eindY, a.ionR + 10); });
+  svg.setAttribute("viewBox", `${x0 - 15} ${y0 - 20} ${x1 - x0 + 30} ${y1 - y0 + 35}`);
+  svg.style.setProperty("--verhouding", `${x1 - x0 + 30} / ${y1 - y0 + 35}`);
+
+  // ----- tijdlijn (in seconden) -----
+  const D = 1.8, VLUCHT = 1.5;
+  overdrachten.forEach((o, i) => { o.t0 = 0.3 + i * D; o.t1 = o.t0 + VLUCHT; });
+  const tT = overdrachten.at(-1).t1;
+  const tA = tT + 0.4, tB = tA + 2.6, tC = tB + 1.2, tEind = tC + 2.0;
+  metalen.forEach(m => {
+    const laatste = overdrachten.filter(o => o.van === m).at(-1);
+    m.leegT0 = laatste.t0; m.leegT1 = laatste.t1;
+  });
+
+  scene = { info, atomen, metalen, nietmetalen, overdrachten, tA, tB, tC, tEind };
+  t = 0; speelt = false;
+  zetKnoppen();
+  render();
+}
+
+/* ===================== weergave op tijdstip t ===================== */
+const klem = v => Math.max(0, Math.min(1, v));
+const zacht = v => v < .5 ? 2 * v * v : 1 - Math.pow(-2 * v + 2, 2) / 2;
+const voortgang = (t, a, b) => zacht(klem((t - a) / (b - a)));
+
+function render() {
+  const S = scene, info = S.info;
+  // elektronen onderweg
+  S.overdrachten.forEach(o => {
+    const p = voortgang(t, o.t0, o.t1), q = 1 - p;
+    o.el.setAttribute("cx", q * q * o.start.x + 2 * q * p * o.ctrl.x + p * p * o.eind.x);
+    o.el.setAttribute("cy", q * q * o.start.y + 2 * q * p * o.ctrl.y + p * p * o.eind.y);
+  });
+  // lege buitenschil van het metaal verdwijnt
+  S.metalen.forEach(m => m.schilEl.at(-1).setAttribute("opacity", 1 - voortgang(t, m.leegT0, m.leegT1)));
+
+  // labels: eerst atoom, daarna ion
+  const ion = t >= S.tA;
+  S.atomen.forEach(a => {
+    const E = ELEM[a.sym], s = a.schillen;
+    if (!ion) {
+      const v = s.at(-1);
+      a.lab1.textContent = `${hoofdletter(E.naam)} (${a.sym}) · ${s.join(", ")}`;
+      a.lab2.textContent = `${v} ${meervoud(v, "valentie-elektron", "valentie-elektronen")}`;
+      a.lab2.setAttribute("class", "lab2");
+    } else {
+      const q = a.metaal ? info.qm : -info.qx;
+      const na = a.metaal ? s.slice(0, -1) : [...s.slice(0, -1), 8];
+      a.lab1.textContent = `${ionSym(a.sym, q)}-ion · ${na.join(", ")}`;
+      a.lab2.textContent = a.metaal
+        ? `${info.qm} ${meervoud(info.qm, "elektron", "elektronen")} afgestaan`
+        : `${info.qx} ${meervoud(info.qx, "elektron", "elektronen")} opgenomen`;
+      a.lab2.setAttribute("class", "lab2 ion");
+    }
+    a.ladingEl.setAttribute("opacity", voortgang(t, S.tA, S.tA + 0.6) * (1 - voortgang(t, S.tB, S.tB + 0.8)));
+  });
+  // modellen vervagen, ionen worden bollen en schuiven naar elkaar toe
+  const weg = 1 - voortgang(t, S.tB, S.tB + 0.9);
+  S.atomen.forEach(a => a.g.setAttribute("opacity", weg));
+  S.overdrachten[0].el.parentNode.setAttribute("opacity", weg);
+  const bij = voortgang(t, S.tB + 0.2, S.tB + 1.0), schuif = voortgang(t, S.tC, S.tC + 1.8);
+  S.atomen.forEach(a => {
+    const x = a.x + (a.eindX - a.x) * schuif, y = a.y + (a.eindY - a.y) * schuif;
+    a.bol.setAttribute("opacity", bij);
+    a.bolC.setAttribute("cx", x); a.bolC.setAttribute("cy", y);
+    a.bolT.setAttribute("x", x); a.bolT.setAttribute("y", y);
+  });
+  teksten();
+}
+
+function teksten() {
+  const S = scene, I = S.info, Em = ELEM[I.m], Ex = ELEM[I.x];
+  const stap = document.getElementById("stap"), onder = document.getElementById("onderschrift"), eind = document.getElementById("uitleg-eind");
+  const ionM = ionSym(I.m, I.qm), ionX = ionSym(I.x, -I.qx);
+  const vm = I.qm, vx = 8 - I.qx;
+  let s, o;
+  if (t === 0) {
+    s = `${hoofdletter(Em.naam)} is een metaal met ${vm} ${meervoud(vm, "valentie-elektron", "valentie-elektronen")}. ` +
+        `${hoofdletter(Ex.naam)} is een niet-metaal met ${vx} valentie-elektronen; het heeft er nog ${I.qx} nodig voor een volle buitenste schil (8). ` +
+        `Klik op <b>Start</b>.`;
+    o = `<b>${I.formule}</b> · ${I.naam}${I.extra ? " (" + I.extra + ")" : ""}`;
+  } else if (t < S.tA) {
+    const klaar = S.overdrachten.filter(x => t >= x.t1).length;
+    const bezig = Math.min(S.overdrachten.length, S.overdrachten.filter(x => t >= x.t0).length);
+    s = `Het ${Em.naam}atoom staat zijn ${meervoud(vm, "valentie-elektron", "valentie-elektronen")} af. ` +
+        `Het ${Ex.naam}atoom neemt ${I.qx === 1 ? "één elektron" : I.qx + " elektronen"} op.`;
+    o = `Elektron ${Math.max(bezig, 1)} van ${I.overgedragen} gaat van ${I.m} naar ${I.x} · <b>${klaar} ${meervoud(klaar, "elektron", "elektronen")} overgedragen</b>`;
+  } else if (t < S.tB) {
+    s = `Alle elektronen zijn overgedragen. Elk ${I.m}-atoom is nu een <b>${ionM}</b>-ion en elk ${I.x}-atoom een <b>${ionX}</b>-ion. ` +
+        `Alle ionen hebben nu een volle buitenste schil.`;
+    o = `<b>${I.overgedragen} ${meervoud(I.overgedragen, "elektron", "elektronen")} overgedragen</b> · ontstaan: ${I.nm} × ${ionM} en ${I.nx} × ${ionX}`;
+  } else if (t < S.tEind) {
+    s = `Positieve en negatieve ionen trekken elkaar aan. Ze gaan tegen elkaar aan liggen: zo ontstaat een zout.`;
+    o = `<b>${I.overgedragen} ${meervoud(I.overgedragen, "elektron", "elektronen")} overgedragen</b> · ${I.nm} × ${ionM} en ${I.nx} × ${ionX} trekken elkaar aan`;
+  } else {
+    s = `De ionen vormen samen het zout <b>${I.naam}</b>. Een zout bestaat uit positieve metaalionen en negatieve niet-metaalionen.`;
+    o = `<b>${I.overgedragen} ${meervoud(I.overgedragen, "elektron", "elektronen")} overgedragen</b> · ` +
+        `ionen: <b>${ionM}</b> (lading ${lading(I.qm)}) en <b>${ionX}</b> (lading ${lading(-I.qx)}) · ` +
+        `verhoudingsformule <b>${I.formule}</b>`;
+  }
+  stap.innerHTML = s;
+  onder.innerHTML = o;
+  eind.hidden = t < S.tEind;
+  if (!eind.hidden) {
+    eind.innerHTML = `<b>Waarom ${I.nm} : ${I.nx}?</b> Een ${I.m}-atoom staat ${I.qm} ${meervoud(I.qm, "elektron", "elektronen")} af, ` +
+      `een ${I.x}-atoom neemt er ${I.qx} op. Met ${I.nm} × ${I.m} en ${I.nx} × ${I.x} zijn dat er ${I.overgedragen} aan beide kanten. ` +
+      `De totale lading is dan 0: ${I.nm} × (${lading(I.qm)}) + ${I.nx} × (${lading(-I.qx)}) = 0.`;
+  }
+}
+
+/* ===================== bediening ===================== */
+const startKnop = document.getElementById("start");
+function zetKnoppen() {
+  if (t >= scene.tEind) { startKnop.textContent = "✓ Klaar"; startKnop.disabled = true; return; }
+  startKnop.disabled = false;
+  startKnop.textContent = speelt ? "⏸ Pauzeer" : (t === 0 ? "▶ Start" : "▶ Verder");
+}
+function pauzeer() { speelt = false; if (scene) zetKnoppen(); }
+function stap(nu) {
+  if (!speelt) return;
+  if (vorige != null) t = Math.min(scene.tEind, t + (nu - vorige) / 1000);
+  vorige = nu;
+  render();
+  if (t >= scene.tEind) { speelt = false; zetKnoppen(); return; }
+  requestAnimationFrame(stap);
+}
+startKnop.addEventListener("click", () => {
+  speelt = !speelt;
+  if (speelt) { vorige = null; requestAnimationFrame(stap); }
+  zetKnoppen();
+});
+document.getElementById("opnieuw").addEventListener("click", () => { speelt = false; t = 0; render(); zetKnoppen(); });
+
+const keuze = document.getElementById("keuze");
+[["Metaal uit groep 1", z => ["Li", "Na", "K"].includes(z[0])], ["Metaal uit groep 2", z => ["Mg", "Ca"].includes(z[0])]].forEach(([label, past]) => {
+  const og = document.createElement("optgroup"); og.label = label;
+  ZOUTEN.forEach((z, i) => { if (past(z)) { const inf = zoutInfo(z); og.appendChild(new Option(`${inf.formule} – ${inf.naam}`, i)); } });
+  keuze.appendChild(og);
+});
+keuze.addEventListener("change", () => { Z = zoutInfo(ZOUTEN[keuze.value]); bouw(); });
+Z = zoutInfo(ZOUTEN[0]);
+bouw();
+</script>
+</body>
+</html>

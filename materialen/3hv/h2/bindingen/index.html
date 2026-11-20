@@ -764,7 +764,7 @@ const MOLECULEN = [
 ];
 const OVERLAP = { 1: 20, 2: 30, 3: 30 }, SPREID = 150, SF_LENGTE = 105;
 const bindAfstand = b => b.a.R + b.b.R - OVERLAP[b.orde];
-const CT = { weg: 1.2, samen0: 1.5, samen1: 5.5, paren: 6.0, formule: 13.5, eind: 16 };
+const CT = { weg: 1.2, samen0: 1.5, samen1: 5.5, paren: 6.0, formule: 11.0, eind: 13.5 };
 const cs = { mol: MOLECULEN[3], t: 0, speelt: false, vorige: null };
 const csvg = document.getElementById("c-tekening");
 const covalentie = sym => sym === "H" ? 1 : 8 - verdeling(CATOOM[sym].z).at(-1);
@@ -800,6 +800,9 @@ function cBouw() {
     at.forEach(a => { a[kx] -= mx; a[ky] -= my; });
   };
   centreer("fx", "fy"); centreer("sx", "sy"); centreer("px", "py");
+  // de structuurformule komt rechts naast het atoommodel
+  const modelRechts = Math.max(...at.map(a => a.fx + a.R)), sfLinks = Math.min(...at.map(a => a.px));
+  at.forEach(a => { a.px += modelRechts + 150 - sfLinks; });
 
   // ----- elektronen -----
   const elektronen = []; // {el, sa (atoom), rx, ry (relatief begin), ex, ey (absoluut eind) of mee met atoom}
@@ -873,6 +876,13 @@ function cBouw() {
     }, sf));
   });
   at.forEach(a => maak("text", { class: "sf-sym", x: a.px, y: a.py }, sf, a.sym));
+  // kopjes: atoommodel en structuurformule naast elkaar
+  const kopY = Math.min(...at.map(a => a.fy - a.R)) - 30;
+  const modelMidden = (Math.min(...at.map(a => a.fx - a.R)) + modelRechts) / 2;
+  const sfMidden = (Math.min(...at.map(a => a.px)) + Math.max(...at.map(a => a.px))) / 2;
+  maak("text", { class: "lab3", x: modelMidden, y: kopY }, sf, "atoommodel");
+  maak("text", { class: "lab3", x: sfMidden, y: kopY }, sf, "structuurformule");
+  maak("text", { class: "lab1", x: (modelRechts + Math.min(...at.map(a => a.px))) / 2, y: 8, "font-size": 34, fill: "#9fb6d3" }, sf, "→");
   // gedeelde paren omcirkelen (na het samenkomen)
   bindingen.forEach(b => {
     const ux = Math.cos(b.hoek), uy = Math.sin(b.hoek);
@@ -893,7 +903,7 @@ function cBouw() {
   const kaders = {
     begin: kader(neem => at.forEach(a => { neem(a.sx, a.sy, Math.max(a.R + 15, 120), a.R + 15); neem(a.sx, a.sy + a.R + 85, 120, 0); })),
     model: kader(neem => at.forEach(a => neem(a.fx, a.fy, a.R + 15))),
-    formule: kader(neem => at.forEach(a => neem(a.px, a.py, 45)))
+    formule: kader(neem => at.forEach(a => { neem(a.fx, a.fy, a.R + 15); neem(a.px, a.py, 45); neem(a.fx, a.fy - a.R - 55, 0); }))
   };
   csvg.style.setProperty("--verhouding", `${kaders.begin[2]} / ${kaders.begin[3]}`);
 
@@ -919,9 +929,9 @@ function cRender() {
     e.el.setAttribute("cy", e.atoom.y + e.start.y + (ey - e.start.y) * pe);
   });
   cs.labels.setAttribute("opacity", 1 - voortgang(t, CT.weg - 0.6, CT.samen0 + 0.4));
-  cs.parenLaag.setAttribute("opacity", voortgang(t, CT.paren, CT.paren + 0.8) * (1 - voortgang(t, CT.formule, CT.formule + 0.8)));
-  cs.model.setAttribute("opacity", 1 - voortgang(t, CT.formule, CT.formule + 0.9));
-  cs.sf.setAttribute("opacity", voortgang(t, CT.formule + 0.7, CT.formule + 1.6));
+  // het atoommodel blijft staan; de structuurformule komt ernaast
+  cs.parenLaag.setAttribute("opacity", voortgang(t, CT.paren, CT.paren + 0.8));
+  cs.sf.setAttribute("opacity", voortgang(t, CT.formule + 0.6, CT.formule + 1.6));
   cTeksten();
 }
 
@@ -942,23 +952,29 @@ function cTeksten() {
         `Niet-metaalatomen bereiken dat door elektronen te <b>delen</b>. ` +
         soorten.map((a, i) => `${i ? CATOOM[a.sym].naam : hoofdletter(CATOOM[a.sym].naam)} heeft ${a.v} ${meervoud(a.v, "valentie-elektron", "valentie-elektronen")} en komt er ${a.cov} tekort`).join("; ") + `. ` +
         `Zoveel bindingen vormt het atoom: dat heet de <b>covalentie</b>. Klik op <b>Start</b>.`;
-    o = `<b>${M.formule}</b> · ${M.naam} · covalentie: ` + soorten.map(a => `${a.sym} ${a.cov}`).join(", ");
+    // aantal atomen per soort, in de volgorde van de formule
+    const volgorde = M.formule.match(/[A-Z][a-z]?/g);
+    const telling = volgorde.map(sym => { const n = cs.at.filter(a => a.sym === sym).length; return `${n} ${CATOOM[sym].naam}${meervoud(n, "atoom", "atomen")}`; });
+    o = `<b>${M.formule}</b> bevat ${telling.join(" en ")}` +
+        volgorde.map(sym => `<br>Covalentie ${CATOOM[sym].naam}: <b>${covalentie(sym)}</b>`).join("");
   } else if (t < CT.paren) {
     s = `De atomen gaan naar elkaar toe. Een ongepaard valentie-elektron van het ene atoom vormt samen met een elektron van het andere atoom een <b>gedeeld elektronenpaar</b>.`;
     o = `De buitenste schillen gaan elkaar overlappen`;
-  } else if (t < CT.formule) {
+  } else {
     const dubbel = cs.bindingen.filter(b => b.orde > 1);
-    s = `Elk gedeeld elektronenpaar is een <b>atoombinding</b> (covalente binding). Het paar hoort bij béide atomen. ` +
+    s = `Elk gedeeld elektronenpaar is een <b>atoombinding</b> (covalente binding). Het paar hoort bij beide atomen. ` +
         `Tel je de gedeelde elektronen bij allebei de atomen mee, dan heeft ` +
         soorten.map(a => `${a.sym} er ${a.sym === "H" ? 2 : 8}`).join(" en ") + `: alle atomen voldoen aan de octetregel.` +
         (dubbel.length ? ` Tussen ${dubbel[0].a.sym} en ${dubbel[0].b.sym} zitten ${dubbel[0].orde} gedeelde paren: een <b>${soortBinding[dubbel[0].orde]}</b>.` : "");
     o = `<b>${nParen} ${meervoud(nParen, "gedeeld elektronenpaar", "gedeelde elektronenparen")}</b> · ` +
         `${cs.bindingen.length} ${meervoud(cs.bindingen.length, soortBinding[cs.bindingen[0].orde], soortBinding[cs.bindingen[0].orde].replace("binding", "bindingen"))}`;
-  } else {
-    s = `In de <b>structuurformule</b> is elke atoombinding (elk gedeeld elektronenpaar) een streepje. ` +
-        `De elektronen die niet in een binding zitten, en de schillen, tekenen we niet.`;
-    o = sfTekst ? `Structuurformule van ${M.naam}: <b>${sfTekst}</b>`
-                : `Structuurformule van ${M.naam} (${M.formule}): ${nParen} streepjes = ${nParen} atoombindingen`;
+    // de structuurformule komt erbij; de uitleg hierboven blijft staan
+    if (t >= CT.formule) {
+      s += `<br><br>Rechts staat de <b>structuurformule</b>. Elk gedeeld elektronenpaar uit het atoommodel is daarin een streepje` +
+           (dubbel.length ? `; een dubbele binding zijn dus 2 streepjes` : "") + `. ` +
+           `De elektronen die niet in een binding zitten, en de schillen, tekenen we niet.`;
+      if (sfTekst) o += ` · structuurformule: <b>${sfTekst}</b>`;
+    }
   }
   document.getElementById("c-stap").innerHTML = s;
   document.getElementById("c-onderschrift").innerHTML = o;

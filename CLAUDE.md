@@ -23,7 +23,7 @@ materialen/<jaar>/h<nr>/<naam>/index.html   eigen animaties en bestanden
 ```
 - Inhoud toevoegen of wijzigen gebeurt **alleen in `data.js`**; `app.js` hoeft daarvoor niet aangepast te worden.
 - **Na elke aanpassing in `materialen/`: verhoog `versie` bovenaan `data.js`** (bijv. `"2026-11-20c"` → `"2026-11-20d"`). `app.js` zet `?v=<versie>` achter het adres van eigen materialen; zonder nieuwe versie zien docenten en leerlingen een oude versie uit de browsercache.
-- Eén bestand kan bij meer paragrafen staan via URL-parameters, in plaats van het te kopiëren. Bestaande parameters: `?ionen=1` en `?spel=1` (Bouw een atoom), `?tab=metaal|covalent|spel` (bindingen), `?compact=1` (periodiek systeem zonder informatieblok, voor insluiten in een andere simulatie). Leg een nieuwe parameter vast in `README.md`.
+- Eén bestand kan bij meer paragrafen staan via URL-parameters, in plaats van het te kopiëren. Bestaande parameters: `?ionen=1` en `?spel=1` (Bouw een atoom), `?tab=metaal|covalent|spel` (bindingen). Leg een nieuwe parameter vast in `README.md`.
 - Materialen staan **per hoofdstuk** (`hoofdstuk.materialen`), niet per paragraaf. De hoofdstukpagina toont één tegel per tool; de paragrafen staan alleen als overzicht in de zijbalk (en op de leerjaarpagina).
 - **Eén tool = één tegel.** Kan een tool meer dingen (bijv. zouten, metalen, moleculen én een spel), maak dan geen losse tegels maar één materiaal met `onderdelen`, die in de tegel onder "Wat kun je ermee?" staan.
 - Een materiaal heeft: `id` (uniek binnen het hoofdstuk, kebab-case), `type` (een sleutel uit `typen`, of een lijst zoals `["simulatie", "oefening"]`), `paragrafen` (bijv. `[2, 3, 4]`), `titel`, `beschrijving`, en `url` of `youtube`. Optioneel: `onderdelen`, `bron`, `embed: false` (voor sites die niet in een iframe mogen).
@@ -47,6 +47,7 @@ materialen/<jaar>/h<nr>/<naam>/index.html   eigen animaties en bestanden
 - Laat bij een overgang naar een andere weergave het model staan en zet de nieuwe weergave ernaast (bijv. atoommodel → structuurformule), zodat leerlingen ze kunnen vergelijken.
 - Slepen en tikken: gebruik `pointerdown`/`pointerup` met `touch-action: none` op het speelveld, niet `click`; op touchschermen valt de eerste tik na het slepen anders weg.
 - Scheikundig correct: controleer gegevens (atoommassa's, elektronenverdeling, formules) tegen de Binas/het boek.
+- Periodiek systeem in een animatie of spel: gebruik dat van *Bouw een atoom* (§1.2: groep- en periodenummers, niet-metaal/metalloïde/metaal, t/m calcium helder). Het spel *Bouw een molecuul* heeft er een kopie van (schakelaar "Toon het periodiek systeem"); pas ze samen aan.
 - Na het maken: voeg het materiaal toe in `data.js` bij het juiste hoofdstuk, met de paragrafen in `paragrafen`.
 
 ## Eigen materialen, geen externe bronnen

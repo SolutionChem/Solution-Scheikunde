@@ -355,9 +355,11 @@ function bouw() {
 
   // ----- tijdlijn (in seconden) -----
   const D = 1.8, VLUCHT = 1.5;
-  overdrachten.forEach((o, i) => { o.t0 = 0.3 + i * D; o.t1 = o.t0 + VLUCHT; });
+  // Ruim tijd om de tekst te lezen: even wachten voor het eerste elektron,
+  // en langer stilstaan bij de ionen voordat ze naar elkaar toe gaan.
+  overdrachten.forEach((o, i) => { o.t0 = 1.5 + i * D; o.t1 = o.t0 + VLUCHT; });
   const tT = overdrachten.at(-1).t1;
-  const tA = tT + 0.4, tB = tA + 2.6, tC = tB + 1.2, tEind = tC + 2.0;
+  const tA = tT + 0.6, tB = tA + 6.5, tC = tB + 2.5, tEind = tC + 2.3;
   metalen.forEach(m => {
     const laatste = overdrachten.filter(o => o.van === m).at(-1);
     m.leegT0 = laatste.t0; m.leegT1 = laatste.t1;

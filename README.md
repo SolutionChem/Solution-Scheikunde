@@ -48,7 +48,7 @@ dat staat als label (§2.2) op de tegel.
 
 Elke tool staat maar één keer op de hoofdstukpagina. Kan een tool meer dingen (zoals *Bindingen*: zouten, metalen,
 moleculen en een spel), beschrijf dat dan met `onderdelen`. Ze verschijnen in de tegel onder *Wat kun je ermee?*
-en als knoppen boven het venster. Een tool kan meer soorten hebben: `type: ["simulatie", "oefening"]`.
+en zijn daar los aan te klikken. Een tool kan meer soorten hebben: `type: ["simulatie", "oefening"]`.
 
 ```js
 {

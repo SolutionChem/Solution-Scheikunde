@@ -13,7 +13,7 @@
     --licht: #eef4fb; --licht2: #dbe8f5; --rand: #c9d8ea;
     --tekst: #14213a; --zacht: #4a5a72;
     --elektron: #2f6fb5; --valentie: #e8890c; --kern: #f4c20d;
-    --metaal: #f8e39b; --nietmetaal: #f0948a;
+    --metaal: #f8e39b; --nietmetaal: #f0948a; --metalloide: #5aaee0;
     --goed: #1f8a4c; --fout: #c0392b;
     --kop: "Oswald", "Arial Narrow", Arial, sans-serif;
   }
@@ -102,8 +102,6 @@
                 background: var(--licht); border-radius: 8px; }
   .s-atoom circle { fill: #fff; stroke: var(--navy3); stroke-width: 2.5; }
   .s-atoom text { font-size: 30px; font-weight: 700; fill: var(--navy); text-anchor: middle; dominant-baseline: central; pointer-events: none; }
-  .s-atoom .cov { font-size: 15px; fill: #fff; }
-  .s-atoom .covbol { fill: var(--navy3); stroke: #fff; stroke-width: 2; }
   .s-atoom { cursor: grab; }
   .s-atoom.sleep circle { stroke: var(--valentie); stroke-width: 3.5; }
   .s-atoom.fout circle { stroke: var(--fout); stroke-width: 3.5; fill: #fdecea; }
@@ -145,7 +143,44 @@
   .feedback.goed { background: #e9f7ef; border-left: 5px solid var(--goed); }
   .feedback.fout { background: #fdecea; border-left: 5px solid var(--fout); }
   .feedback p { margin: 0 0 6px; } .feedback p:last-child { margin: 0; }
-  label.optie { display: flex; gap: 8px; align-items: center; font-size: .9rem; margin-top: 10px; cursor: pointer; }
+  /* schakelaar, zoals "Ionen meenemen" in Bouw een atoom */
+  .schakelaar { display: flex; align-items: center; gap: 12px; margin-top: 12px; cursor: pointer; font-weight: 600; font-size: .92rem; position: relative; }
+  .schakelaar input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  .schakelaar .baan { width: 46px; height: 26px; border-radius: 99px; background: #b8c4d4; position: relative; transition: background .15s; flex: 0 0 auto; }
+  .schakelaar .baan::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: left .15s; box-shadow: 0 1px 2px rgba(0,0,0,.3); }
+  .schakelaar input:checked + .baan { background: var(--goed); }
+  .schakelaar input:checked + .baan::after { left: 23px; }
+  .schakelaar input:focus-visible + .baan { outline: 3px solid #9cc3f0; outline-offset: 2px; }
+  .ps-kaart { margin-top: 12px; }
+  /* periodiek systeem: hetzelfde als in Bouw een atoom (§1.2) */
+  .pse-wrap { container-type: inline-size; }
+  .pse {
+    display: grid; width: 95%; margin: 0 auto;
+    grid-template-columns: 1.4em repeat(18, minmax(0, 1fr));
+    grid-template-rows: auto repeat(7, auto) .8em repeat(2, auto);
+    padding: 1.2cqw 1.6cqw 1.6cqw 0;
+  }
+  .pse .gnr, .pse .pnr {
+    font-weight: 700; color: var(--tekst); display: grid; place-items: center;
+    font-size: clamp(8px, 1.9cqw, 14px);
+  }
+  .pse .gnr { padding-bottom: 3px; }
+  .pse .el {
+    aspect-ratio: 1; border: 1px solid #2b2b2b; margin: 0 -1px -1px 0; padding: 0;
+    display: grid; place-items: center; position: relative;
+    font-weight: 700; font-size: clamp(8px, 2.35cqw, 17px); color: #111;
+    transition: transform .12s ease, box-shadow .12s ease;
+  }
+  .pse .nietmetaal { background: var(--nietmetaal); }
+  .pse .metalloide { background: var(--metalloide); }
+  .pse .metaal { background: var(--metaal); }
+  .pse .leegvak { border: 1px dashed #2b2b2b; margin: 0 -1px -1px 0; }
+  .pse .pse-legenda {
+    grid-column: 5 / span 9; grid-row: 2 / span 2; display: flex; flex-wrap: wrap;
+    align-content: center; gap: .4em 1.4em; padding-left: .6em; font-size: clamp(8px, 1.8cqw, 13px);
+  }
+  .pse .pse-legenda span { display: inline-flex; align-items: center; gap: .5em; }
+  .pse .pse-legenda i { width: 1.6em; height: 1.2em; border: 1px solid #2b2b2b; display: inline-block; }
   .ion-tekst { font-size: 26px; font-weight: 700; fill: #1b1b1b; text-anchor: middle; dominant-baseline: central; }
 
   @media (max-width: 760px) {
@@ -300,7 +335,7 @@
           <button class="hoofd" id="s-controleer">Controleer</button>
           <button id="s-leg">↺ Opnieuw leggen</button>
         </div>
-        <label class="optie"><input type="checkbox" id="s-hulp"> Hulp: toon de covalentie bij elk atoom</label>
+        <label class="schakelaar"><input type="checkbox" id="s-ps-aan"><span class="baan" aria-hidden="true"></span>Toon het periodiek systeem</label>
       </div>
       <div class="kaart uitleg">
         <h2>Feedback</h2>
@@ -316,6 +351,10 @@
         </ul>
       </div>
     </div>
+    </div>
+    <div class="kaart ps-kaart" id="s-ps-kaart" hidden>
+      <h2>Periodiek systeem</h2>
+      <div id="s-ps"></div>
     </div>
     </div>
   </section>
@@ -1218,12 +1257,10 @@ function spelTeken(voorbeeld) {
     // komt de eerste "click" na het slepen soms niet door)
     raak.addEventListener("pointerdown", e => { if (sp.klaar) return; e.preventDefault(); sp.tik = { bd, x: e.clientX, y: e.clientY, id: e.pointerId }; });
   });
-  const hulp = document.getElementById("s-hulp").checked;
   sp.atomen.forEach(a => {
     const g = maak("g", { class: "s-atoom" + (a === sp.sleep?.atoom ? " sleep" : "") + (a.fout ? " fout" : ""), transform: `translate(${a.x} ${a.y})` }, aLaag);
     maak("circle", { r: S_R }, g);
     maak("text", { y: 1 }, g, a.sym);
-    if (hulp) { maak("circle", { class: "covbol", cx: 22, cy: -22, r: 12 }, g); maak("text", { class: "cov", x: 22, y: -21 }, g, covalentie(a.sym)); }
     g.addEventListener("pointerdown", e => spelPak(e, a));
   });
 }
@@ -1401,7 +1438,77 @@ document.getElementById("s-controleer").addEventListener("click", spelControleer
 document.getElementById("s-begin").addEventListener("click", spelNieuw);
 document.getElementById("s-stop").addEventListener("click", () => spelScherm("start"));
 document.getElementById("s-leg").addEventListener("click", () => { sp.atomen.forEach(a => a.fout = false); spelLeg(); });
-document.getElementById("s-hulp").addEventListener("change", () => spelTeken());
+/* ===================== periodiek systeem =====================
+   Hetzelfde periodiek systeem als in Bouw een atoom (§1.2): groep- en periodenummers,
+   niet-metaal / metalloïde / metaal. Alle elementen even duidelijk, zonder markering. */
+const SYMBOLEN = ("H He Li Be B C N O F Ne Na Mg Al Si P S Cl Ar K Ca Sc Ti V Cr Mn Fe Co Ni Cu Zn " +
+  "Ga Ge As Se Br Kr Rb Sr Y Zr Nb Mo Tc Ru Rh Pd Ag Cd In Sn Sb Te I Xe Cs Ba La Ce Pr Nd Pm Sm " +
+  "Eu Gd Tb Dy Ho Er Tm Yb Lu Hf Ta W Re Os Ir Pt Au Hg Tl Pb Bi Po At Rn Fr Ra Ac Th Pa U Np Pu " +
+  "Am Cm Bk Cf Es Fm Md No Lr Rf Db Sg Bh Hs Mt Ds Rg Cn Nh Fl Mc Lv Ts Og").split(" ");
+
+const NAMEN = ["Waterstof", "Helium", "Lithium", "Beryllium", "Boor", "Koolstof", "Stikstof",
+  "Zuurstof", "Fluor", "Neon", "Natrium", "Magnesium", "Aluminium", "Silicium", "Fosfor",
+  "Zwavel", "Chloor", "Argon", "Kalium", "Calcium", "Scandium", "Titanium", "Vanadium", "Chroom",
+  "Mangaan", "IJzer", "Kobalt", "Nikkel", "Koper", "Zink", "Gallium", "Germanium", "Arseen", "Seleen",
+  "Broom", "Krypton", "Rubidium", "Strontium", "Yttrium", "Zirkonium", "Niobium", "Molybdeen",
+  "Technetium", "Ruthenium", "Rhodium", "Palladium", "Zilver", "Cadmium", "Indium", "Tin", "Antimoon",
+  "Telluur", "Jodium", "Xenon", "Cesium", "Barium", "Lanthaan", "Cerium", "Praseodymium", "Neodymium",
+  "Promethium", "Samarium", "Europium", "Gadolinium", "Terbium", "Dysprosium", "Holmium", "Erbium",
+  "Thulium", "Ytterbium", "Lutetium", "Hafnium", "Tantaal", "Wolfraam", "Rhenium", "Osmium", "Iridium",
+  "Platina", "Goud", "Kwik", "Thallium", "Lood", "Bismut", "Polonium", "Astaat", "Radon", "Francium",
+  "Radium", "Actinium", "Thorium", "Protactinium", "Uraan", "Neptunium", "Plutonium", "Americium",
+  "Curium", "Berkelium", "Californium", "Einsteinium", "Fermium", "Mendelevium", "Nobelium",
+  "Lawrencium", "Rutherfordium", "Dubnium", "Seaborgium", "Bohrium", "Hassium", "Meitnerium",
+  "Darmstadtium", "Roentgenium", "Copernicium", "Nihonium", "Flerovium", "Moscovium", "Livermorium",
+  "Tennessine", "Oganesson"];
+
+const NIET_METAAL = [1, 2, 6, 7, 8, 9, 10, 15, 16, 17, 18, 34, 35, 36, 53, 54, 86, 118];
+const METALLOIDE = [5, 14, 32, 33, 51, 52, 84, 85, 117];
+const naam = (z) => NAMEN[z - 1] || "";
+const categorie = (z) => NIET_METAAL.includes(z) ? "nietmetaal" : METALLOIDE.includes(z) ? "metalloide" : "metaal";
+
+function positie(z) {
+  if (z === 1) return [1, 1];
+  if (z === 2) return [1, 18];
+  if (z <= 4) return [2, z - 2];
+  if (z <= 10) return [2, z + 8];
+  if (z <= 12) return [3, z - 10];
+  if (z <= 18) return [3, z];
+  if (z <= 36) return [4, z - 18];
+  if (z <= 54) return [5, z - 36];
+  if (z <= 56) return [6, z - 54];
+  if (z <= 71) return ["f1", z - 54];   // La (57) onder groep 3
+  if (z <= 86) return [6, z - 68];
+  if (z <= 88) return [7, z - 86];
+  if (z <= 103) return ["f2", z - 86];  // Ac (89) onder groep 3
+  return [7, z - 100];
+}
+
+function pseHTML() {
+  let s = `<div class="pse-wrap"><div class="pse" role="group" aria-label="Periodiek systeem">`;
+  for (let g = 1; g <= 18; g++) s += `<div class="gnr" style="grid-row:1;grid-column:${g + 1}">${g}</div>`;
+  for (let p = 1; p <= 7; p++) s += `<div class="pnr" style="grid-row:${p + 1};grid-column:1">${p}</div>`;
+  s += `<div class="pse-legenda">
+      <span><i style="background:var(--nietmetaal)"></i>Niet-metaal</span>
+      <span><i style="background:var(--metalloide)"></i>Metalloïde</span>
+      <span><i style="background:var(--metaal)"></i>Metaal</span>
+    </div>`;
+  s += `<div class="leegvak" style="grid-row:7;grid-column:4"></div><div class="leegvak" style="grid-row:8;grid-column:4"></div>`;
+  for (let z = 1; z <= SYMBOLEN.length; z++) {
+    const [rij, kolom] = positie(z);
+    const r = rij === "f1" ? 10 : rij === "f2" ? 11 : rij + 1;
+    s += `<div class="el ${categorie(z)}" style="grid-row:${r};grid-column:${kolom + 1}" title="${naam(z)}">${SYMBOLEN[z - 1]}</div>`;
+  }
+  return s + `</div></div>`;
+}
+
+const psKaart = document.getElementById("s-ps-kaart");
+document.getElementById("s-ps-aan").addEventListener("change", e => {
+  psKaart.hidden = !e.target.checked;
+  if (!e.target.checked) return;
+  if (!psKaart.dataset.klaar) { document.getElementById("s-ps").innerHTML = pseHTML(); psKaart.dataset.klaar = "1"; }
+  psKaart.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "nearest" });
+});
 // het speelveld wordt pas opgebouwd na Start (dan is de breedte van het veld bekend)
 </script>
 </body>

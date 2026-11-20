@@ -6,7 +6,7 @@
 <title>Het atoommodel van Bohr</title>
 <style>
   :root { --navy:#11264a; --navy2:#163a63; --licht:#eef4fb; --rand:#c9d8ea;
-          --proton:#d64545; --neutron:#8a97a8; --elektron:#2f6fb5; }
+          --proton:#f4c20d; --neutron:#8a97a8; --elektron:#2f6fb5; }
   * { box-sizing: border-box; }
   body { margin:0; font-family: Inter, "Helvetica Neue", Arial, sans-serif; color:#14213a;
          background: var(--licht); min-height:100vh; }
@@ -149,7 +149,7 @@
       const a = i * 2.39996; // gulden hoek
       return { soort, x: r * Math.cos(a), y: r * Math.sin(a) };
     }).reverse().forEach(({ soort, x, y }) => {
-      maak("circle", { cx: x, cy: y, r: straal, fill: soort === "p" ? "#d64545" : "#8a97a8", stroke: "#fff", "stroke-width": 1.2 }, kern);
+      maak("circle", { cx: x, cy: y, r: straal, fill: soort === "p" ? "#f4c20d" : "#8a97a8", stroke: soort === "p" ? "#b88f00" : "#fff", "stroke-width": soort === "p" ? 1 : 1.2 }, kern);
     });
 
     // paneel

@@ -124,6 +124,14 @@ window.SOLUTION = {
                   beschrijving: "Zie hoe niet-metaalatomen elektronen delen om aan de octetregel te voldoen, hoe zo atoombindingen ontstaan en hoe je daaruit de structuurformule tekent.",
                   url: "materialen/3hv/h2/bindingen/index.html?tab=covalent",
                   formaat: "groot"
+                },
+                {
+                  id: "bouw-een-molecuul",
+                  type: "oefening",
+                  titel: "Spel: bouw een molecuul",
+                  beschrijving: "Je krijgt een molecuulformule en de losse atomen. Sleep ze tegen elkaar en maak zelf de structuurformule, met enkele, dubbele en drievoudige bindingen.",
+                  url: "materialen/3hv/h2/bindingen/index.html?tab=spel",
+                  formaat: "groot"
                 }
               ]
             },

@@ -568,7 +568,7 @@ function mBouw() {
     const g = maak("g", {}, atoomLaag);
     const c = maak("circle", { class: "m-bol", cx: x, cy: y, r: MR_ATOOM }, g);
     const tx = maak("text", { class: "m-tekst", x, y }, g, M.sym);
-    const a = { x, y, c, tx, fase: (r * M_KOL + k) * 0.7 };
+    const a = { x, y, c, tx };
     ms.atomen.push(a);
     for (let i = 0; i < v; i++) {
       const h = -Math.PI / 4 + (i - (v - 1) / 2) * 0.9;
@@ -616,9 +616,7 @@ function mRender() {
   }
   const ion = t >= MT.ion + 0.6;
   ms.atomen.forEach(a => {
-    // ionen trillen een beetje op hun plek; zonder rust-instelling
-    const tril = t >= MT.los && !rustig ? 2.2 : 0;
-    const x = a.x + tril * Math.sin(t * 5 + a.fase), y = a.y + tril * Math.cos(t * 4.3 + a.fase);
+    const x = a.x, y = a.y;
     a.c.setAttribute("cx", x); a.c.setAttribute("cy", y);
     a.c.setAttribute("r", MR_ATOOM + (MR_ION - MR_ATOOM) * krimp);
     a.tx.setAttribute("x", x); a.tx.setAttribute("y", y);
@@ -661,7 +659,6 @@ function mTeksten() {
   document.getElementById("m-onderschrift").innerHTML = o;
 }
 
-const rustig = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const mStartKnop = document.getElementById("m-start");
 function mKnoppen() { mStartKnop.textContent = ms.speelt ? "⏸ Pauzeer" : (ms.t === 0 ? "▶ Start" : "▶ Verder"); }
 function metaalPauze() { ms.speelt = false; mKnoppen(); }

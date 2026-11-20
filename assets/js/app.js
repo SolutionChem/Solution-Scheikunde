@@ -282,7 +282,7 @@
                 </li>`).join("")}
             </ul>
           </div>` : ""}
-        <span class="open" aria-hidden="true">Openen →</span>
+        <span class="open" aria-hidden="true">Openen</span>
       </article>`;
   }
 

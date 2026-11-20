@@ -755,7 +755,7 @@ const MOLECULEN = [
   { formule: "H₂",  naam: "waterstof",        atomen: [["H"], ["H", 0, 0, 1]] },
   { formule: "Cl₂", naam: "chloor",           atomen: [["Cl"], ["Cl", 0, 0, 1]] },
   { formule: "HCl", naam: "waterstofchloride", atomen: [["H"], ["Cl", 0, 0, 1]] },
-  { formule: "H₂O", naam: "water",            atomen: [["O"], ["H", 0, 180, 1], ["H", 0, 0, 1]] },
+  { formule: "H₂O", naam: "water",            atomen: [["O"], ["H", 0, 142, 1], ["H", 0, 38, 1]] }, // met een knik van ± 104°
   { formule: "NH₃", naam: "ammoniak",         atomen: [["N"], ["H", 0, 180, 1], ["H", 0, 0, 1], ["H", 0, 90, 1]] },
   { formule: "CH₄", naam: "methaan",          atomen: [["C"], ["H", 0, 180, 1], ["H", 0, 0, 1], ["H", 0, 270, 1], ["H", 0, 90, 1]] },
   { formule: "O₂",  naam: "zuurstof",         atomen: [["O"], ["O", 0, 0, 2]] },
@@ -821,18 +821,13 @@ function cBouw() {
         maak("circle", { class: "e binnen", cx: p.x, cy: p.y, r: RE }, a.g);
       }
     }
-    // niet-bindende elektronenparen: verdeeld over de richtingen zonder binding
+    // niet-bindende elektronenparen: gelijkmatig verdeeld over de grootste lege ruimte tussen de bindingen
     const vrijeParen = (a.v - a.cov) / 2;
-    const bindHoeken = a.bindingen.map(x => x.hoek);
-    let lpHoeken = [];
-    if (vrijeParen > 0) {
-      if (a.bindingen.length === 1) {
-        const tegen = bindHoeken[0] + Math.PI, stap = 2 * Math.PI / (vrijeParen + 1);
-        for (let i = 0; i < vrijeParen; i++) lpHoeken.push(tegen + (i - (vrijeParen - 1) / 2) * stap);
-      } else {
-        lpHoeken = [0, 90, 180, 270].map(graden).filter(h => bindHoeken.every(b => hoekVerschil(b, h) > 0.3)).slice(0, vrijeParen);
-      }
-    }
+    const bindHoeken = [...new Set(a.bindingen.map(x => ((x.hoek % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI)))].sort((p, q) => p - q);
+    let gatStart = bindHoeken.at(-1), gat = 2 * Math.PI - bindHoeken.at(-1) + bindHoeken[0];
+    bindHoeken.forEach((h, i) => { if (i && h - bindHoeken[i - 1] > gat) { gat = h - bindHoeken[i - 1]; gatStart = bindHoeken[i - 1]; } });
+    const lpHoeken = [];
+    for (let i = 0; i < vrijeParen; i++) lpHoeken.push(gatStart + gat * (i + 1) / (vrijeParen + 1));
     lpHoeken.forEach(h => [-0.2, 0.2].forEach(d => {
       const p = pol(0, 0, a.R, h + d);
       maak("circle", { class: "e val", cx: p.x, cy: p.y, r: RE }, a.g);

@@ -114,7 +114,19 @@ window.SOLUTION = {
                 }
               ]
             },
-            { nr: 4, titel: "Moleculaire stoffen", pagina: 44, materialen: [] },
+            {
+              nr: 4, titel: "Moleculaire stoffen", pagina: 44,
+              materialen: [
+                {
+                  id: "atoombinding",
+                  type: "simulatie",
+                  titel: "De atoombinding",
+                  beschrijving: "Zie hoe niet-metaalatomen elektronen delen om aan de octetregel te voldoen, hoe zo atoombindingen ontstaan en hoe je daaruit de structuurformule tekent.",
+                  url: "materialen/3hv/h2/bindingen/index.html?tab=covalent",
+                  formaat: "groot"
+                }
+              ]
+            },
             { nr: 5, titel: "Naamgeving van moleculaire stoffen", pagina: 51, materialen: [] }
           ]
         },

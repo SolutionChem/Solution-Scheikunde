@@ -118,7 +118,7 @@
   .leg:hover, .leg:focus-visible { border-color: var(--navy3); }
   .leg.hoofd { font-weight: 600; }
   .leg.vast { background: var(--navy2); color: #fff; border-color: var(--navy2); }
-  .vlak { width: 20px; height: 20px; border: 1px solid #1d2433; border-radius: 2px; background: var(--bg); flex: 0 0 auto; }
+  .vlak { width: 26px; height: 20px; border: 1px solid #1d2433; border-radius: 2px; background: var(--bg); flex: 0 0 auto; }
   .hint { font-size: .85rem; color: var(--zacht); margin: 10px 0 0; }
 
   @media (prefers-reduced-motion: reduce) {
@@ -172,7 +172,7 @@ function soortVan(z) {
 function achtergrond(soort) {
   const s = SOORTEN[soort];
   if (!s.eigen) return `var(--${s.basis})`;
-  return `linear-gradient(135deg, var(--${s.basis}) 50%, var(--${s.eigen}) 50%)`;
+  return `linear-gradient(90deg, var(--${s.basis}) 80%, var(--${s.eigen}) 80%)`; // 4/5 basiskleur, 1/5 groepskleur rechts
 }
 
 /* ---------- gegevens per element ----------

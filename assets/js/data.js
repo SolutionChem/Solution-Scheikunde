@@ -52,6 +52,14 @@ window.SOLUTION = {
                   beschrijving: "Bouw atomen en ionen uit protonen, neutronen en elektronen en ontdek wat er gebeurt met het element, het massagetal en de lading. Met drie spellen.",
                   url: "materialen/3hv/h1/bouw-een-atoom/index.html",
                   formaat: "groot"
+                },
+                {
+                  id: "spellen-atoombouw",
+                  type: "oefening",
+                  titel: "Spellen: atoomnummer, massagetal en symbool",
+                  beschrijving: "Drie spellen: welk element is het, vul het symbool aan en maak zelf het symbool met atoomnummer en massagetal. Ionen kun je aanzetten met een schakelaar.",
+                  url: "materialen/3hv/h1/bouw-een-atoom/index.html?spel=1",
+                  formaat: "groot"
                 }
               ]
             },
@@ -129,7 +137,7 @@ window.SOLUTION = {
                   id: "bouw-een-molecuul",
                   type: "oefening",
                   titel: "Spel: bouw een molecuul",
-                  beschrijving: "Je krijgt een molecuulformule en de losse atomen. Sleep ze tegen elkaar en maak zelf de structuurformule, met enkele, dubbele en drievoudige bindingen.",
+                  beschrijving: "Je krijgt een molecuulformule en de losse atomen. Sleep ze tegen elkaar en maak zelf de structuurformule, met enkele, dubbele en drievoudige bindingen. Vijf moleculen per ronde.",
                   url: "materialen/3hv/h2/bindingen/index.html?tab=spel",
                   formaat: "groot"
                 }

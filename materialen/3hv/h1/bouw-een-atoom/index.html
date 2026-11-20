@@ -125,14 +125,27 @@
   .notatie input.goed { border-color: var(--goed); background: #e9f7ef; }
   .notatie input.fout { border-color: var(--fout); background: #fdecea; }
   .notatie .ingevuld { color: var(--goed); }
+  .ladingkeuze {
+    display: inline-flex; align-items: center; border: 2px solid var(--navy3); border-radius: 6px;
+    background: #f7fbff; margin: 2px 0; overflow: hidden;
+  }
+  .ladingkeuze button {
+    border: 0; background: var(--licht2); color: var(--navy); width: 28px; height: 34px;
+    font-size: .8rem; padding: 0;
+  }
+  .ladingkeuze button:hover:not(:disabled) { background: #c6d9ef; }
+  .ladingkeuze button:disabled { color: #b5c1d1; cursor: default; }
+  .ladingkeuze output { min-width: 2.1em; text-align: center; font-size: 1.2rem; font-weight: 600; }
+  .ladingkeuze.goed { border-color: var(--goed); background: #e9f7ef; }
+  .ladingkeuze.fout { border-color: var(--fout); background: #fdecea; }
 
   /* ---------- periodiek systeem ---------- */
-  .pse-wrap { overflow-x: auto; }
+  .pse-wrap { container-type: inline-size; }
   .pse {
-    display: grid; container-type: inline-size; min-width: 340px;
+    display: grid; width: 95%; margin: 0 auto;
     grid-template-columns: 1.4em repeat(18, minmax(0, 1fr));
     grid-template-rows: auto repeat(7, auto) .8em repeat(2, auto);
-    padding: 2px 2px 2px 0;
+    padding: 1.2cqw 1.6cqw 1.6cqw 0;
   }
   .pse .gnr, .pse .pnr {
     font-weight: 700; color: var(--tekst); display: grid; place-items: center;
@@ -151,13 +164,12 @@
   .pse .el.buiten { opacity: .45; }
   .pse .leegvak { border: 1px dashed #2b2b2b; margin: 0 -1px -1px 0; }
   .pse .el.markeer {
-    z-index: 3; transform: scale(1.18); outline: 3px solid var(--navy);
+    z-index: 3; transform: scale(1.14); outline: 3px solid var(--navy);
     box-shadow: 0 4px 12px rgba(0,0,0,.35);
   }
-  .pse.klikbaar { min-width: 430px; }
-  .pse.klikbaar .el.binnen { cursor: pointer; }
-  .pse.klikbaar .el.binnen:hover, .pse.klikbaar .el.binnen:focus-visible { z-index: 3; transform: scale(1.2); box-shadow: 0 3px 10px rgba(0,0,0,.3); outline: 2px solid var(--navy); }
-  .pse .el.goed { background: var(--goed); color: #fff; z-index: 3; transform: scale(1.25); outline: 3px solid #0d4d29; }
+    .pse.klikbaar .el.binnen { cursor: pointer; }
+  .pse.klikbaar .el.binnen:hover, .pse.klikbaar .el.binnen:focus-visible { z-index: 3; transform: scale(1.14); box-shadow: 0 3px 10px rgba(0,0,0,.3); outline: 2px solid var(--navy); }
+  .pse .el.goed { background: var(--goed); color: #fff; z-index: 3; transform: scale(1.14); outline: 3px solid #0d4d29; }
   .pse .el.fout { background: var(--fout); color: #fff; }
   .pse .legenda {
     grid-column: 5 / span 9; grid-row: 2 / span 2; display: flex; flex-wrap: wrap;
@@ -197,6 +209,10 @@
   .gegeven li { display: flex; align-items: center; gap: 10px; font-size: 1.02rem; }
   .gegeven li .stip { width: 13px; height: 13px; border-radius: 50%; }
   .gegeven li b { margin-left: auto; font-size: 1.15rem; font-variant-numeric: tabular-nums; }
+  .gegeven .legenda-deeltjes { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; font-size: .85rem; color: var(--zacht); margin-top: 4px; }
+  .gegeven .legenda-deeltjes span { display: inline-flex; align-items: center; gap: 6px; }
+  .gegeven .legenda-deeltjes i { width: 11px; height: 11px; border-radius: 50%; display: inline-block; }
+  .gegeven .tip { font-size: .88rem; color: var(--zacht); margin: 0 0 4px; }
   .opdracht .vraag { font-size: 1.08rem; font-weight: 600; margin: 0 0 12px; color: var(--navy); }
   .opdracht .hint { font-size: .85rem; color: var(--zacht); margin: -6px 0 12px; }
   .invulrij { display: flex; gap: 22px; align-items: center; flex-wrap: wrap; }
@@ -228,6 +244,8 @@
     .bouw .model { grid-row: auto; }
     .atoom { max-height: 260px; }
     .tabs button { padding: 8px 10px 9px; font-size: .82rem; }
+    .pse-wrap.klik { overflow-x: auto; }
+    .pse-wrap.klik .pse { min-width: 430px; }
   }
 </style>
 </head>
@@ -252,9 +270,22 @@ const SYMBOLEN = ("H He Li Be B C N O F Ne Na Mg Al Si P S Cl Ar K Ca Sc Ti V Cr
 
 const NAMEN = ["Waterstof", "Helium", "Lithium", "Beryllium", "Boor", "Koolstof", "Stikstof",
   "Zuurstof", "Fluor", "Neon", "Natrium", "Magnesium", "Aluminium", "Silicium", "Fosfor",
-  "Zwavel", "Chloor", "Argon", "Kalium", "Calcium"];
+  "Zwavel", "Chloor", "Argon", "Kalium", "Calcium", "Scandium", "Titanium", "Vanadium", "Chroom",
+  "Mangaan", "IJzer", "Kobalt", "Nikkel", "Koper", "Zink", "Gallium", "Germanium", "Arseen", "Seleen",
+  "Broom", "Krypton", "Rubidium", "Strontium", "Yttrium", "Zirkonium", "Niobium", "Molybdeen",
+  "Technetium", "Ruthenium", "Rhodium", "Palladium", "Zilver", "Cadmium", "Indium", "Tin", "Antimoon",
+  "Telluur", "Jodium", "Xenon", "Cesium", "Barium", "Lanthaan", "Cerium", "Praseodymium", "Neodymium",
+  "Promethium", "Samarium", "Europium", "Gadolinium", "Terbium", "Dysprosium", "Holmium", "Erbium",
+  "Thulium", "Ytterbium", "Lutetium", "Hafnium", "Tantaal", "Wolfraam", "Rhenium", "Osmium", "Iridium",
+  "Platina", "Goud", "Kwik", "Thallium", "Lood", "Bismut", "Polonium", "Astaat", "Radon", "Francium",
+  "Radium", "Actinium", "Thorium", "Protactinium", "Uraan", "Neptunium", "Plutonium", "Americium",
+  "Curium", "Berkelium", "Californium", "Einsteinium", "Fermium", "Mendelevium", "Nobelium",
+  "Lawrencium", "Rutherfordium", "Dubnium", "Seaborgium", "Bohrium", "Hassium", "Meitnerium",
+  "Darmstadtium", "Roentgenium", "Copernicium", "Nihonium", "Flerovium", "Moscovium", "Livermorium",
+  "Tennessine", "Oganesson"];
 
-const MAX_Z = 20;                 // bouwen en spellen t/m calcium
+const MAX_Z = 20;                 // bouwen t/m calcium
+const MAX_MODEL = 10;             // spellen met atoommodel t/m neon
 const NIET_METAAL = [1, 2, 6, 7, 8, 9, 10, 15, 16, 17, 18, 34, 35, 36, 53, 54, 86, 118];
 const METALLOIDE = [5, 14, 32, 33, 51, 52, 84, 85, 117];
 
@@ -265,8 +296,21 @@ const STABIEL = {
   16: [16, 17, 18, 20], 17: [18, 20], 18: [18, 20, 22], 19: [20, 22], 20: [20, 22, 23, 24, 26, 28]
 };
 
+/* Massagetal van de meest voorkomende (of meest stabiele) isotoop, vanaf scandium (21) */
+const MASSAGETAL = [45, 48, 51, 52, 55, 56, 59, 58, 63, 64, 69, 74, 75, 80, 79, 84, 85, 88, 89, 90,
+  93, 98, 98, 102, 103, 106, 107, 114, 115, 120, 121, 130, 127, 132, 133, 138, 139, 140, 141, 142,
+  145, 152, 153, 158, 159, 164, 165, 166, 169, 174, 175, 180, 181, 184, 187, 192, 193, 195, 197, 202,
+  205, 208, 209, 209, 210, 222, 223, 226, 227, 232, 231, 238, 237, 244, 243, 247, 247, 251, 252, 257,
+  258, 259, 266, 267, 268, 269, 270, 269, 278, 281, 282, 285, 286, 289, 290, 293, 294, 294];
+
 /* Ionen die in de spellen gevraagd kunnen worden (realistische ladingen) */
-const IONEN = { 1: 1, 3: 1, 4: 2, 7: -3, 8: -2, 9: -1, 11: 1, 12: 2, 13: 3, 15: -3, 16: -2, 17: -1, 19: 1, 20: 2 };
+const IONEN = {
+  1: [1], 3: [1], 4: [2], 7: [-3], 8: [-2], 9: [-1], 11: [1], 12: [2], 13: [3], 15: [-3], 16: [-2],
+  17: [-1], 19: [1], 20: [2], 24: [3], 25: [2], 26: [2, 3], 27: [2], 28: [2], 29: [1, 2], 30: [2],
+  34: [-2], 35: [-1], 37: [1], 38: [2], 47: [1], 48: [2], 50: [2, 4], 53: [-1], 55: [1], 56: [2],
+  80: [2], 82: [2, 4]
+};
+const LADING_MIN = -4, LADING_MAX = 4;
 
 const SCHIL_MAX = [2, 8, 8, 2];
 const SCHIL_NAAM = ["K", "L", "M", "N"];
@@ -282,6 +326,7 @@ const schud = (lijst) => {
   for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
   return a;
 };
+const neutronen = (z) => z <= MAX_Z ? kies(STABIEL[z]) : MASSAGETAL[z - MAX_Z - 1] - z;
 const reeks = (van, tot) => Array.from({ length: tot - van + 1 }, (_, i) => van + i);
 const MIN = "−";
 
@@ -294,16 +339,6 @@ const ladingNotatie = (q) => q === 0 ? "" : (Math.abs(q) === 1 ? "" : Math.abs(q
 /* lading als getal in tekst: "0", "+2", "−1" */
 const ladingGetal = (q) => q === 0 ? "0" : (q > 0 ? "+" : MIN) + Math.abs(q);
 
-/* Leest een ingevoerde lading. Geeft een getal, of null (leeg) of NaN (ongeldig) */
-function leesLading(tekst) {
-  const s = String(tekst).replace(/[−–—]/g, "-").replace(/\s+/g, "");
-  if (s === "") return null;
-  if (/^[+-]?0[+-]?$/.test(s)) return 0;
-  const m = s.match(/^([+-])?(\d*)([+-])?$/);
-  if (!m || (!m[1] && !m[3]) || (m[1] && m[3])) return NaN;
-  const getal = m[2] === "" ? 1 : parseInt(m[2], 10);
-  return (m[1] || m[3]) === "+" ? getal : -getal;
-}
 function leesGetal(tekst) {
   const s = String(tekst).trim();
   if (s === "") return null;
@@ -341,9 +376,9 @@ function atoomSVG(p, n, e, nieuw) {
       if ((wilP && pi < p) || ni >= n) { volgorde.push("p"); pi++; } else { volgorde.push("n"); ni++; }
     }
     const laatste = nieuw === "p" || nieuw === "n" ? volgorde.lastIndexOf(nieuw) : -1;
-    const straal = totaal > 36 ? 6.2 : 7.2;
+    const straal = totaal > 36 ? 6.2 : totaal > 22 ? 7.2 : 8.5;
     const deeltjes = volgorde.map((soort, i) => {
-      const r = i === 0 ? 0 : straal * 1.12 * Math.sqrt(i);
+      const r = straal * 1.35 * Math.sqrt(i + .5);   // zonder overlap, zodat je de deeltjes kunt tellen
       const a = i * 2.39996;
       return { soort, x: r * Math.cos(a), y: r * Math.sin(a), i };
     }).reverse();
@@ -370,6 +405,11 @@ function atoomSVG(p, n, e, nieuw) {
 /* velden: { a, z, sym, q } – elk een tekst, of { invoer: "id" } voor een invulvak */
 function notatieHTML(v, opties = {}) {
   const vak = (x, cls, label) => {
+    if (x && typeof x === "object" && x.lading) {
+      return `<span class="${cls}"><span class="ladingkeuze" id="${x.lading}" data-waarde="0" role="group" aria-label="Lading">
+        <button type="button" data-stap="-1" aria-label="Lading 1 lager">▼</button><output aria-live="polite">0</output><button type="button" data-stap="1" aria-label="Lading 1 hoger">▲</button>
+      </span></span>`;
+    }
     if (x && typeof x === "object") {
       return `<span class="${cls}"><input id="${x.invoer}" inputmode="${x.modus || "numeric"}" autocomplete="off" aria-label="${label}" maxlength="3"></span>`;
     }
@@ -402,8 +442,8 @@ function positie(z) {
   return [7, z - 100];
 }
 
-function pseHTML({ markeer = 0, klikbaar = false } = {}) {
-  let s = `<div class="pse-wrap"><div class="pse ${klikbaar ? "klikbaar" : ""}" role="group" aria-label="Periodiek systeem">`;
+function pseHTML({ markeer = 0, klikbaar = false, beperkt = false } = {}) {
+  let s = `<div class="pse-wrap ${klikbaar ? "klik" : ""}"><div class="pse ${klikbaar ? "klikbaar" : ""}" role="group" aria-label="Periodiek systeem">`;
   for (let g = 1; g <= 18; g++) s += `<div class="gnr" style="grid-row:1;grid-column:${g + 1}">${g}</div>`;
   for (let p = 1; p <= 7; p++) s += `<div class="pnr" style="grid-row:${p + 1};grid-column:1">${p}</div>`;
   s += `<div class="legenda">
@@ -415,13 +455,13 @@ function pseHTML({ markeer = 0, klikbaar = false } = {}) {
   for (let z = 1; z <= SYMBOLEN.length; z++) {
     const [rij, kolom] = positie(z);
     const r = rij === "f1" ? 10 : rij === "f2" ? 11 : rij + 1;
-    const binnen = z <= MAX_Z;
+    const binnen = !beperkt || z <= MAX_Z;
     const cls = `el ${categorie(z)} ${binnen ? "binnen" : "buiten"} ${z === markeer ? "markeer" : ""}`;
     const stijl = `grid-row:${r};grid-column:${kolom + 1}`;
     if (klikbaar && binnen) {
       s += `<button type="button" class="${cls}" style="${stijl}" data-z="${z}" aria-label="${naam(z)}">${SYMBOLEN[z - 1]}</button>`;
     } else {
-      s += `<div class="${cls}" style="${stijl}"${binnen ? ` title="${naam(z)}"` : ""}>${SYMBOLEN[z - 1]}</div>`;
+      s += `<div class="${cls}" style="${stijl}" title="${naam(z)}">${SYMBOLEN[z - 1]}</div>`;
     }
   }
   return s + `</div></div>`;
@@ -524,7 +564,7 @@ function renderBouw() {
           <button class="knop licht" type="button" id="leeg">Leegmaken</button>
         </div>`, "model")}
       ${kaart("gegevens", "Element en symbool", gegevens, "gegevens")}
-      ${kaart("pse", "Periodiek systeem", pseHTML({ markeer: p }))}
+      ${kaart("pse", "Periodiek systeem", pseHTML({ markeer: p, beperkt: true }))}
     </div>`;
 
   st.bouw.nieuw = null;
@@ -554,15 +594,15 @@ function wijzig(soort, d) {
 const SPELLEN = {
   1: {
     titel: "Spel 1: Welk element is het?",
-    uitleg: "Je krijgt het aantal protonen, neutronen en elektronen. Klik in het periodiek systeem op het element dat erbij hoort."
+    uitleg: "Je krijgt het aantal protonen, neutronen en elektronen, of een atoommodel waarin je ze zelf telt. Klik in het periodiek systeem op het element dat erbij hoort."
   },
   2: {
     titel: "Spel 2: Vul het symbool aan",
-    uitleg: "Je krijgt het aantal protonen, neutronen en elektronen en een symbool waarin één getal ontbreekt. Vul het ontbrekende getal in."
+    uitleg: "Je krijgt het aantal protonen, neutronen en elektronen (of een atoommodel waarin je ze zelf telt) en een symbool waarin één getal ontbreekt. Vul het ontbrekende getal in."
   },
   3: {
     titel: "Spel 3: Maak het symbool",
-    uitleg: "Je krijgt het aantal protonen, neutronen en elektronen. Vul zelf het hele symbool in: atoomnummer, massagetal en (bij ionen) de lading."
+    uitleg: "Je krijgt het aantal protonen, neutronen en elektronen, of een atoommodel waarin je ze zelf telt. Vul zelf het hele symbool in: atoomnummer, massagetal en (bij ionen) de lading."
   }
 };
 
@@ -592,19 +632,23 @@ function renderStart(nr) {
 }
 
 function maakUitdagingen(nr, ionen) {
-  let keuzes;
-  if (ionen) {
-    // 3 ionen en 2 atomen, allemaal verschillende elementen
-    const ionZ = schud(Object.keys(IONEN).map(Number)).slice(0, 3);
-    const atoomZ = schud(reeks(1, MAX_Z).filter((z) => !ionZ.includes(z))).slice(0, 2);
-    keuzes = schud([...ionZ.map((z) => ({ z, ion: true })), ...atoomZ.map((z) => ({ z, ion: false }))]);
-  } else {
-    keuzes = schud(reeks(1, MAX_Z)).slice(0, 5).map((z) => ({ z, ion: false }));
-  }
-  const lijst = keuzes.map(({ z, ion }) => {
-    const n = kies(STABIEL[z]);
-    const q = ion ? IONEN[z] : 0;
-    return { z, n, q, e: z - q, a: z + n, ion };
+  // 2 uitdagingen met alleen een atoommodel (t/m neon), 3 met p/n/e in tekst (hele periodiek systeem,
+  // ongeveer de helft t/m calcium). Met ionen: 3 van de 5 uitdagingen zijn ionen. Nooit twee keer hetzelfde element.
+  const vormen = schud(["model", "model", "tekst", "tekst", "tekst"]);
+  const ionPlekken = ionen ? schud([0, 1, 2, 3, 4]).slice(0, 3) : [];
+  const gebruikt = new Set();
+  const lijst = vormen.map((vorm, i) => {
+    const ion = ionPlekken.includes(i);
+    const bereik = vorm === "model" ? reeks(1, MAX_MODEL)
+      : Math.random() < .5 ? reeks(1, MAX_Z) : reeks(MAX_Z + 1, SYMBOLEN.length);
+    const geschikt = (z) => !gebruikt.has(z) && (!ion || IONEN[z]);
+    let pool = bereik.filter(geschikt);
+    if (!pool.length) pool = (vorm === "model" ? reeks(1, MAX_MODEL) : reeks(1, SYMBOLEN.length)).filter(geschikt);
+    const z = kies(pool);
+    gebruikt.add(z);
+    const n = neutronen(z);
+    const q = ion ? kies(IONEN[z]) : 0;
+    return { z, n, q, e: z - q, a: z + n, ion, vorm };
   });
   if (nr === 2) {
     // soorten vragen verdelen: zonder ionen massagetal/atoomnummer, met ionen bij de ionen vooral lading
@@ -638,6 +682,18 @@ function spelbalk() {
 }
 
 function gegevenHTML(u) {
+  if (u.vorm === "model") {
+    return `<section class="kaart gegeven">
+      <div class="kaart-kop"><h2>Gegeven: atoommodel</h2></div>
+      <p class="tip">Tel de protonen, neutronen en elektronen in het model.</p>
+      ${atoomSVG(u.z, u.n, u.e)}
+      <div class="legenda-deeltjes">
+        <span><i style="background:var(--proton)"></i>proton</span>
+        <span><i style="background:var(--neutron)"></i>neutron</span>
+        <span><i style="background:var(--elektron)"></i>elektron</span>
+      </div>
+    </section>`;
+  }
   return `<section class="kaart gegeven">
     <div class="kaart-kop"><h2>Gegeven</h2></div>
     <ul>
@@ -645,7 +701,6 @@ function gegevenHTML(u) {
       <li><span class="stip" style="background:var(--neutron)"></span>Neutronen <b>${u.n}</b></li>
       <li><span class="stip" style="background:var(--elektron)"></span>Elektronen <b>${u.e}</b></li>
     </ul>
-    ${atoomSVG(u.z, u.n, u.e)}
   </section>`;
 }
 
@@ -677,8 +732,8 @@ function renderVraag() {
       vraag = "Vul het atoomnummer in."; hint = "Het symbool verschijnt als je antwoord goed is.";
     }
     if (u.variant === "lading") {
-      v.q = { invoer: "in-q", modus: "text" };
-      vraag = "Vul de lading in."; hint = `Schrijf de lading zoals in een symbool, bijvoorbeeld <b>2+</b>, <b>+</b>, <b>1${MIN}</b> of <b>3${MIN}</b>.`;
+      v.q = { lading: "in-q" };
+      vraag = "Vul de lading in."; hint = "Kies de lading met ▲ (hoger) en ▼ (lager).";
     }
     opdracht = `
       <p class="vraag">${vraag}</p>${hint ? `<p class="hint">${hint}</p>` : ""}
@@ -687,10 +742,10 @@ function renderVraag() {
         <button class="knop groot" type="button" id="controleer">Controleer</button>
       </div>`;
   } else {
-    const v = { a: { invoer: "in-a" }, z: { invoer: "in-z" }, sym: null, q: s.ionen ? { invoer: "in-q", modus: "text" } : "" };
+    const v = { a: { invoer: "in-a" }, z: { invoer: "in-z" }, sym: null, q: s.ionen ? { lading: "in-q" } : "" };
     opdracht = `
       <p class="vraag">Vul het atoomnummer, het massagetal${s.ionen ? " en de lading" : ""} in.</p>
-      <p class="hint">Het symbool verschijnt zodra je een atoomnummer invult.${s.ionen ? ` Schrijf de lading zoals in een symbool (bijv. <b>2+</b> of <b>1${MIN}</b>); bij een neutraal atoom vul je <b>0</b> in of laat je het vak leeg.` : ""}</p>
+      <p class="hint">Het symbool verschijnt zodra je een atoomnummer invult.${s.ionen ? " Kies de lading met ▲ en ▼; bij een neutraal atoom laat je de lading op 0 staan." : ""}</p>
       <div class="invulrij">
         ${notatieHTML(v, { symId: "sym" })}
         <button class="knop groot" type="button" id="controleer">Controleer</button>
@@ -725,7 +780,18 @@ function renderVraag() {
         sym.classList.toggle("onbekend", !ok);
       });
     }
-    const eerste = $(".notatie input", scherm);
+    $$(".ladingkeuze", scherm).forEach((vak) => {
+      const zet = (q) => {
+        vak.dataset.waarde = q;
+        $("output", vak).textContent = q === 0 ? "0" : ladingNotatie(q);
+        $('[data-stap="-1"]', vak).disabled = q <= LADING_MIN;
+        $('[data-stap="1"]', vak).disabled = q >= LADING_MAX;
+        vak.classList.remove("goed", "fout");
+      };
+      vak.zet = zet;
+      $$("button", vak).forEach((b) => b.addEventListener("click", () => zet(Number(vak.dataset.waarde) + Number(b.dataset.stap))));
+    });
+    const eerste = $(".notatie input", scherm) || $(".ladingkeuze button", scherm);
     if (eerste) eerste.focus({ preventScroll: true });
   }
 }
@@ -803,8 +869,7 @@ function controleer() {
   const lees = (id, soort) => {
     const inp = $("#" + id);
     if (!inp) return;
-    let waarde = soort === "lading" ? leesLading(inp.value) : leesGetal(inp.value);
-    if (soort === "lading" && waarde === null && s.nr === 3) waarde = 0;     // leeg = neutraal
+    const waarde = soort === "lading" ? Number(inp.dataset.waarde) : leesGetal(inp.value);
     if (waarde === null) { leeg.push(inp); return; }
     if (Number.isNaN(waarde)) { ongeldig.push({ inp, soort }); return; }
     const juist = soort === "atoomnummer" ? u.z : soort === "massagetal" ? u.a : u.q;
@@ -820,10 +885,7 @@ function controleer() {
   }
   if (ongeldig.length) {
     ongeldig[0].inp.focus();
-    const tekst = ongeldig[0].soort === "lading"
-      ? `Schrijf een lading als <b>2+</b>, <b>+</b>, <b>1${MIN}</b> of <b>0</b>. Vergeet het teken niet.`
-      : "Vul een geheel getal in.";
-    return toonFeedback("info", "Dit antwoord kan ik niet lezen.", tekst, false);
+    return toonFeedback("info", "Dit antwoord kan ik niet lezen.", "Vul een geheel getal in.", false);
   }
 
   s.poging++;
@@ -831,7 +893,7 @@ function controleer() {
   velden.forEach((v) => { v.inp.classList.toggle("goed", v.goed); v.inp.classList.toggle("fout", !v.goed); });
 
   if (!fout.length) {
-    velden.forEach((v) => { v.inp.readOnly = true; });
+    velden.forEach((v) => vergrendel(v.inp));
     onthulSymbool(u);
     afronden(s.poging === 1 ? 2 : 1);
     const uitleg = velden.map((v) => UITLEG[v.soort](u)).join("<br>");
@@ -843,20 +905,27 @@ function controleer() {
     const delen = fout.map((v) => LIDW[v.soort]);
     let tekst = delen.length === 1 ? delen[0] : delen.slice(0, -1).join(", ") + " en " + delen[delen.length - 1];
     tekst = tekst[0].toUpperCase() + tekst.slice(1) + (delen.length === 1 ? " klopt nog niet." : " kloppen nog niet.");
-    fout[0].inp.focus();
-    fout[0].inp.select();
+    if (fout[0].inp.select) { fout[0].inp.focus(); fout[0].inp.select(); }
     return toonFeedback("fout", "Nog niet helemaal goed.", tekst + " Probeer het nog een keer.", false);
   }
 
   // tweede poging fout: juiste antwoord tonen
   velden.forEach((v) => {
-    v.inp.readOnly = true;
-    if (!v.goed) v.inp.value = v.soort === "atoomnummer" ? u.z : v.soort === "massagetal" ? u.a : (ladingNotatie(u.q) || "0");
+    if (!v.goed) {
+      if (v.soort === "lading") { v.inp.zet(u.q); v.inp.classList.add("fout"); }
+      else v.inp.value = v.soort === "atoomnummer" ? u.z : u.a;
+    }
+    vergrendel(v.inp);
   });
   onthulSymbool(u);
   afronden(0);
   const uitleg = fout.map((v) => UITLEG[v.soort](u)).join("<br>");
   toonFeedback("fout", "Helaas, het goede antwoord staat nu in het symbool.", uitleg, true);
+}
+
+function vergrendel(el) {
+  if (el.classList.contains("ladingkeuze")) $$("button", el).forEach((b) => { b.disabled = true; });
+  else el.readOnly = true;
 }
 
 function onthulSymbool(u) {

@@ -46,6 +46,7 @@ materialen/<jaar>/h<nr>/<naam>/index.html   eigen animaties en bestanden
 - Grote simulaties krijgen `formaat: "groot"` in `data.js` (hoger venster in de viewer).
 - Spellen/oefeningen: willekeurige uitdagingen zonder herhaling, directe feedback met uitleg, 2 pogingen (2 punten / 1 punt). Zie `materialen/3hv/h1/bouw-een-atoom/` als referentie.
 - Ionen komen later in de leerlijn dan atomen: maak ionen in oefeningen optioneel met een schakelaar.
+- Lading laten invoeren met ▲/▼-knoppen (niet typen), zodat er geen verwarring is over de notatie.
 
 ## Controleren
 - Lokaal bekijken: `python3 -m http.server` in de root en `http://localhost:8000` openen.

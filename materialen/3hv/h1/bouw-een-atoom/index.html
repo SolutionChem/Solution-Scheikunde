@@ -469,7 +469,9 @@ function pseHTML({ markeer = 0, klikbaar = false, beperkt = false } = {}) {
 
 /* ===================== toestand ===================== */
 
-// Met ?ionen=1 in de URL (zoals bij §2.1 "Bouw een ion") staat de ionen-schakelaar meteen aan.
+// Zonder parameter (§1.2): alleen atomen. Het aantal elektronen is dan altijd gelijk aan het
+// aantal protonen en ionen komen nergens voor (ionen staan later in de leerlijn).
+// Met ?ionen=1 (§2.1 "Bouw een ion"): elektronen los instellen en de ionen-schakelaar staat aan.
 const metIonen = new URLSearchParams(location.search).get("ionen") === "1";
 if (metIonen) document.title = "Bouw een ion";
 
@@ -517,7 +519,12 @@ function renderBouw() {
   const a = p + n;
   const q = p - e;
 
-  const rij = (soort, label, kleur) => `
+  const rij = (soort, label, kleur) => (soort === "e" && !metIonen) ? `
+    <div class="deeltje">
+      <span class="stip" style="background:${kleur}"></span>
+      <span class="naam">${label} <span class="status">(in een atoom evenveel als protonen)</span></span>
+      <span class="stapper"><output aria-live="polite">${st.bouw.e}</output></span>
+    </div>` : `
     <div class="deeltje">
       <span class="stip" style="background:${kleur}"></span>
       <span class="naam">${label}</span>
@@ -533,7 +540,7 @@ function renderBouw() {
     soortTekst = "Geen element";
     labels = `<span class="label info">Voeg protonen toe: het aantal protonen bepaalt het element.</span>`;
   } else {
-    soortTekst = q === 0 ? "Neutraal atoom" : q > 0 ? "Positief ion" : "Negatief ion";
+    soortTekst = !metIonen ? "Atoom" : q === 0 ? "Neutraal atoom" : q > 0 ? "Positief ion" : "Negatief ion";
     const stabiel = (STABIEL[p] || []).includes(n);
     labels = stabiel
       ? `<span class="label ok">Stabiele kern</span>`
@@ -551,7 +558,7 @@ function renderBouw() {
       <table style="width:100%;margin-top:8px">
         <tr><td>Atoomnummer <span class="status">(= protonen)</span></td><td>${p}</td></tr>
         <tr><td>Massagetal <span class="status">(= protonen + neutronen)</span></td><td>${a}</td></tr>
-        <tr><td>Lading <span class="status">(= protonen ${MIN} elektronen)</span></td><td>${ladingGetal(q)}</td></tr>
+        ${metIonen ? `<tr><td>Lading <span class="status">(= protonen ${MIN} elektronen)</span></td><td>${ladingGetal(q)}</td></tr>` : ""}
       </table>
     </div>`;
 
@@ -586,6 +593,7 @@ function wijzig(soort, d) {
   const nieuw = st.bouw[soort] + d;
   if (nieuw < 0 || nieuw > GRENS[soort]) return;
   st.bouw[soort] = nieuw;
+  if (!metIonen && soort === "p") st.bouw.e = Math.min(nieuw, GRENS.e); // atoom: elektronen = protonen
   st.bouw.nieuw = d > 0 ? soort : null;
   const knop = d > 0 ? `[data-plus="${soort}"]` : `[data-min="${soort}"]`;
   renderBouw();
@@ -606,7 +614,7 @@ const SPELLEN = {
   },
   3: {
     titel: "Spel 3: Maak het symbool",
-    uitleg: "Je krijgt het aantal protonen, neutronen en elektronen, of een atoommodel waarin je ze zelf telt. Vul zelf het hele symbool in: atoomnummer, massagetal en (bij ionen) de lading."
+    uitleg: "Je krijgt het aantal protonen, neutronen en elektronen, of een atoommodel waarin je ze zelf telt. Vul zelf het hele symbool in: atoomnummer en massagetal" + (metIonen ? " en (bij ionen) de lading." : ".")
   }
 };
 
@@ -617,12 +625,12 @@ function renderStart(nr) {
       <h2>${spel.titel}</h2>
       <p>${spel.uitleg}</p>
       <p>Je krijgt <strong>5 uitdagingen</strong>. Goed in één keer: 2 punten. Goed bij de tweede poging: 1 punt.</p>
-      <label class="schakelaar">
+      ${metIonen ? `<label class="schakelaar">
         <input type="checkbox" id="ionen" ${st.ionen ? "checked" : ""}>
         <span class="baan" aria-hidden="true"></span>
         <span>Ionen meenemen</span>
       </label>
-      <p class="klein" id="ionen-uitleg"></p>
+      <p class="klein" id="ionen-uitleg"></p>` : ""}
       <div class="knoppenrij"><button class="knop groot" type="button" id="start">Start</button></div>
     </section>`;
   const uitleg = () => {
@@ -630,8 +638,10 @@ function renderStart(nr) {
       ? "Aan: je krijgt ook ionen, zoals Na⁺, Mg²⁺ en Cl⁻. Het aantal elektronen is dan niet gelijk aan het aantal protonen."
       : "Uit: je krijgt alleen neutrale atomen (evenveel elektronen als protonen).";
   };
-  uitleg();
-  $("#ionen").addEventListener("change", (ev) => { st.ionen = ev.target.checked; uitleg(); });
+  if (metIonen) {
+    uitleg();
+    $("#ionen").addEventListener("change", (ev) => { st.ionen = ev.target.checked; uitleg(); });
+  }
   $("#start").addEventListener("click", () => startSpel(nr));
 }
 

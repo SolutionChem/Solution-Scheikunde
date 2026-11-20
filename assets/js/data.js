@@ -49,7 +49,7 @@ window.SOLUTION = {
                   id: "bouw-een-atoom",
                   type: "simulatie",
                   titel: "Bouw een atoom",
-                  beschrijving: "Bouw atomen en ionen uit protonen, neutronen en elektronen en ontdek wat er gebeurt met het element, het massagetal en de lading. Met drie spellen.",
+                  beschrijving: "Bouw atomen uit protonen, neutronen en elektronen en ontdek wat er gebeurt met het element en het massagetal. Met drie spellen.",
                   url: "materialen/3hv/h1/bouw-een-atoom/index.html",
                   formaat: "groot"
                 },
@@ -57,7 +57,7 @@ window.SOLUTION = {
                   id: "spellen-atoombouw",
                   type: "oefening",
                   titel: "Spellen: atoomnummer, massagetal en symbool",
-                  beschrijving: "Drie spellen: welk element is het, vul het symbool aan en maak zelf het symbool met atoomnummer en massagetal. Ionen kun je aanzetten met een schakelaar.",
+                  beschrijving: "Drie spellen: welk element is het, vul het symbool aan en maak zelf het symbool met atoomnummer en massagetal.",
                   url: "materialen/3hv/h1/bouw-een-atoom/index.html?spel=1",
                   formaat: "groot"
                 }

@@ -142,7 +142,7 @@ Op de hoofdstukpagina kunnen leerlingen filteren op soort.
 
 ## Een nieuw leerjaar toevoegen
 
-Bovenaan de lijst `leerjaren` in `data.js` staat al `2 havo-vwo` (met `actief: false`, die toont dan “Binnenkort”).
+Bovenaan de lijst `leerjaren` in `data.js` staat al `2 havo-vwo` (met `actief: false`, die tegel is dan lichter en toont “Nog in ontwikkeling”).
 Een ander leerjaar voeg je op dezelfde manier toe, bijvoorbeeld
 `{ id: "4h", titel: "4 havo", ondertitel: "Scheikunde – 4 HAVO", actief: false, hoofdstukken: [] }`.
 Vul `hoofdstukken` in, op dezelfde manier als bij 3 havo-vwo, en zet `actief: true`.

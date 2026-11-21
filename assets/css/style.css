@@ -268,11 +268,6 @@ h1, h2, h3 { line-height: 1.2; color: var(--navy-800); }
   display: block;
 }
 .jaar-kaart .klein { opacity: .85; font-size: .95rem; }
-.jaar-kaart .badge {
-  position: absolute; right: 16px; top: 16px;
-  font-size: .75rem; letter-spacing: .08em; text-transform: uppercase;
-  background: rgba(255,255,255,.15); padding: 3px 8px; border-radius: 99px;
-}
 .jaar-kaart.inactief { filter: grayscale(.6) brightness(1.25); opacity: .55; cursor: default; }
 .jaar-kaart.inactief:hover { transform: none; box-shadow: 0 2px 6px rgba(0,0,0,.25); }
 

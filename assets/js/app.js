@@ -143,7 +143,6 @@
                 <span class="klein">${j.hoofdstukken.length} hoofdstukken</span>
               </a>` : `
               <div class="tegel jaar-kaart inactief" aria-disabled="true">
-                <span class="badge">Binnenkort</span>
                 <span class="groot">${esc(j.titel)}</span>
                 <span class="klein">Nog in ontwikkeling</span>
               </div>`).join("")}

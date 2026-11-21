@@ -207,7 +207,7 @@
           <div class="rij">
             ${hsTegel(h)}
             <div>
-              <div class="hs-kop" style="padding:0;border:0"><span class="label">Hoofdstuk ${h.nr}${h.pagina ? ` · boek p. ${h.pagina}` : ""}</span></div>
+              <div class="hs-kop" style="padding:0;border:0"><span class="label">Hoofdstuk ${h.nr}</span></div>
               <h1 class="paginakop">${esc(h.titel)}</h1>
             </div>
           </div>

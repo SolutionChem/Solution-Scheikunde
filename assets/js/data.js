@@ -13,7 +13,7 @@ window.SOLUTION = {
   /* Versie van de materialen. Verhoog dit (bijv. de datum) als je een animatie of
      simulatie in materialen/ hebt aangepast: browsers laden dan zeker de nieuwe versie
      in plaats van een oude uit hun geheugen (cache). */
-  versie: "2026-11-20g",
+  versie: "2026-11-21a",
 
   /* Soorten materiaal. Je kunt hier zelf soorten aan toevoegen. */
   typen: {
@@ -26,6 +26,10 @@ window.SOLUTION = {
   },
 
   leerjaren: [
+    /* Leerjaren in ontwikkeling: zet 'actief' op true zodra
+       er hoofdstukken zijn toegevoegd. */
+    { id: "2hv", titel: "2 havo-vwo", ondertitel: "Scheikunde – 2 HAVO-VWO", actief: false, hoofdstukken: [] },
+
     {
       id: "3hv",
       titel: "3 havo-vwo",
@@ -129,25 +133,15 @@ window.SOLUTION = {
               formaat: "groot",
               onderdelen: [
                 {
-                  id: "ionbinding",
-                  paragraaf: 2,
-                  titel: "Ionbinding: zo ontstaat een zout",
-                  tekst: "Een metaalatoom staat elektronen af aan een niet-metaalatoom. Zie hoe de ionen ontstaan en waarom ze in een vaste verhouding een zout vormen."
+                  id: "uitleg-bindingen",
+                  paragraaf: [2, 3, 4],
+                  titel: "Uitleg: ionbinding, metaalbinding en atoombinding",
+                  tekst: "Kies bovenin een tabblad: ionbinding (zo ontstaat een zout), metaalbinding (vrije elektronen vormen een elektronenzee) of atoombinding (niet-metaalatomen delen elektronen; van atoommodel naar structuurformule)."
                 },
-                {
-                  id: "metaalbinding",
-                  paragraaf: 3,
-                  titel: "Metaalbinding",
-                  tekst: "De valentie-elektronen worden vrije elektronen. De elektronenzee houdt de positieve metaalionen bij elkaar.",
-                  url: "materialen/3hv/h2/bindingen/index.html?tab=metaal"
-                },
-                {
-                  id: "atoombinding",
-                  paragraaf: 4,
-                  titel: "Atoombinding",
-                  tekst: "Niet-metaalatomen delen elektronen om aan de octetregel te voldoen. Van het atoommodel naar de structuurformule.",
-                  url: "materialen/3hv/h2/bindingen/index.html?tab=covalent"
-                },
+                /* verborgen: niet op de tegel, alleen zodat oude links (?m=metaalbinding) blijven werken */
+                { id: "ionbinding", verborgen: true, titel: "Ionbinding" },
+                { id: "metaalbinding", verborgen: true, titel: "Metaalbinding", url: "materialen/3hv/h2/bindingen/index.html?tab=metaal" },
+                { id: "atoombinding", verborgen: true, titel: "Atoombinding", url: "materialen/3hv/h2/bindingen/index.html?tab=covalent" },
                 {
                   id: "bouw-een-molecuul",
                   type: "oefening",
@@ -196,11 +190,6 @@ window.SOLUTION = {
           materialen: []
         }
       ]
-    },
-
-    /* Voorbeelden van toekomstige leerjaren: zet 'actief' op true zodra
-       er hoofdstukken zijn toegevoegd. */
-    { id: "4h", titel: "4 havo", ondertitel: "Scheikunde – 4 HAVO", actief: false, hoofdstukken: [] },
-    { id: "4v", titel: "4 vwo",  ondertitel: "Scheikunde – 4 VWO",  actief: false, hoofdstukken: [] }
+    }
   ]
 };

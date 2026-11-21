@@ -133,7 +133,7 @@
           <div class="tagline"><span>Scheikunde</span></div>
         </div>
       </section>
-      <section class="sectie">
+      <section class="sectie jaren-sectie">
         <div class="container">
           <h2>Kies je leerjaar</h2>
           <div class="jaren">
@@ -177,8 +177,7 @@
               </div>
               <ol>
                 ${h.paragrafen.map((p) => `
-                  <li><span class="p">§${p.nr}</span><span>${esc(p.titel)}</span>
-                  ${p.pagina ? `<span class="pag">${p.pagina}</span>` : ""}</li>`).join("")}
+                  <li><span class="p">§${p.nr}</span><span>${esc(p.titel)}</span></li>`).join("")}
               </ol>
               <div class="hs-voet">
                 ${mats.length
@@ -216,10 +215,15 @@
       </section>
       <div class="container hs-layout">
         <aside class="zijbalk">
-          <h2>Paragrafen</h2>
-          <ol class="par-lijst">
-            ${h.paragrafen.map((p) => `<li><span class="n">§${h.nr}.${p.nr}</span><span>${esc(p.titel)}</span></li>`).join("")}
-          </ol>
+          <section class="zb-actief" aria-label="Paragrafen van dit hoofdstuk">
+            <div class="zb-kop">
+              <span class="zb-label">Hoofdstuk ${h.nr} · paragrafen</span>
+              <span class="zb-titel">${esc(h.titel)}</span>
+            </div>
+            <ol class="par-lijst">
+              ${h.paragrafen.map((p) => `<li><span class="n">§${h.nr}.${p.nr}</span><span>${esc(p.titel)}</span></li>`).join("")}
+            </ol>
+          </section>
           <div class="andere">
             <h2>Andere hoofdstukken</h2>
             ${j.hoofdstukken.filter((x) => x !== h).map((x) => `
@@ -260,7 +264,7 @@
   // één kaart per tool, met de onderdelen (wat je ermee kunt) erin
   function materiaalKaart(j, h, m) {
     const typen = typenVan(m);
-    const delen = m.onderdelen || [];
+    const delen = (m.onderdelen || []).filter((d) => !d.verborgen);
     return `
       <article class="mat-kaart${delen.length ? " breed" : ""}" data-typen="${esc(typen.join(" "))}">
         <div class="mat-labels">

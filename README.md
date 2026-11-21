@@ -60,9 +60,8 @@ en zijn daar los aan te klikken. Een tool kan meer soorten hebben: `type: ["simu
   url: "materialen/3hv/h2/bindingen/index.html",
   formaat: "groot",
   onderdelen: [
-    { id: "ionbinding", paragraaf: 2, titel: "Ionbinding", tekst: "Wat de leerling hier kan doen." },
-    { id: "metaalbinding", paragraaf: 3, titel: "Metaalbinding", tekst: "…",
-      url: "materialen/3hv/h2/bindingen/index.html?tab=metaal" },
+    { id: "uitleg-bindingen", paragraaf: [2, 3, 4], titel: "Uitleg: ionbinding, metaalbinding en atoombinding",
+      tekst: "Wat de leerling hier kan doen." },
     { id: "bouw-een-molecuul", type: "oefening", paragraaf: 4, titel: "Spel: bouw een molecuul", tekst: "…",
       url: "materialen/3hv/h2/bindingen/index.html?tab=spel" }
   ]
@@ -70,7 +69,11 @@ en zijn daar los aan te klikken. Een tool kan meer soorten hebben: `type: ["simu
 ```
 
 Zonder `url` opent een onderdeel het gewone adres van de tool. Een onderdeel kun je direct openen met
-`materiaal.html?jaar=3hv&h=2&m=bindingen&deel=metaalbinding` (of kort: `&m=metaalbinding`).
+`materiaal.html?jaar=3hv&h=2&m=bindingen&deel=uitleg-bindingen` (of kort: `&m=uitleg-bindingen`).
+Houd uitleg die bij elkaar hoort samen in één onderdeel, zodat uitleg en oefening naast elkaar passen.
+
+Een onderdeel met `verborgen: true` staat niet op de tegel, maar oude links ernaartoe blijven werken
+(bij *Bindingen* bijv. `&m=metaalbinding`, dat het tabblad Metaalbinding opent).
 
 ### Een eigen animatie of HTML-bestand
 
@@ -139,7 +142,9 @@ Op de hoofdstukpagina kunnen leerlingen filteren op soort.
 
 ## Een nieuw leerjaar toevoegen
 
-Onderaan `data.js` staan al `4 havo` en `4 vwo` als voorbeeld (met `actief: false`, ze tonen dan “Binnenkort”).
-Vul daar `hoofdstukken` in, op dezelfde manier als bij 3 havo-vwo, en zet `actief: true`.
+Bovenaan de lijst `leerjaren` in `data.js` staat al `2 havo-vwo` (met `actief: false`, die toont dan “Binnenkort”).
+Een ander leerjaar voeg je op dezelfde manier toe, bijvoorbeeld
+`{ id: "4h", titel: "4 havo", ondertitel: "Scheikunde – 4 HAVO", actief: false, hoofdstukken: [] }`.
+Vul `hoofdstukken` in, op dezelfde manier als bij 3 havo-vwo, en zet `actief: true`.
 Het leerjaar verschijnt dan automatisch op de startpagina en in de menubalk.
 Zet de bijbehorende bestanden in een eigen map, bijvoorbeeld `materialen/4h/`.

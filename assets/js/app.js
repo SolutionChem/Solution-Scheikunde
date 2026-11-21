@@ -216,10 +216,7 @@
       <div class="container hs-layout">
         <aside class="zijbalk">
           <section class="zb-actief" aria-label="Paragrafen van dit hoofdstuk">
-            <div class="zb-kop">
-              <span class="zb-label">Hoofdstuk ${h.nr} · paragrafen</span>
-              <span class="zb-titel">${esc(h.titel)}</span>
-            </div>
+            <h2 class="zb-kop">Paragrafen</h2>
             <ol class="par-lijst">
               ${h.paragrafen.map((p) => `<li><span class="n">§${h.nr}.${p.nr}</span><span>${esc(p.titel)}</span></li>`).join("")}
             </ol>

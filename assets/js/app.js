@@ -214,25 +214,23 @@
       </section>
       <div class="container hs-layout">
         <aside class="zijbalk">
-          <section class="zb-actief" aria-label="Paragrafen van dit hoofdstuk">
-            <h2 class="zb-kop">Paragrafen</h2>
-            <ol class="par-lijst">
-              ${h.paragrafen.map((p) => `<li><span class="n">§${h.nr}.${p.nr}</span><span>${esc(p.titel)}</span></li>`).join("")}
-            </ol>
-          </section>
-          <div class="andere">
-            <h2>Andere hoofdstukken</h2>
-            ${j.hoofdstukken.filter((x) => x !== h).map((x) => `
-              <a href="${urlHs(j, x)}"><span class="n">H${x.nr}</span><span>${esc(x.titel)}</span></a>`).join("")}
-          </div>
-        </aside>
-        <div>
+          <nav aria-label="Hoofdstukken">
+            <h2 class="zb-kop">Hoofdstukken</h2>
+            <div class="hs-lijst">
+              ${j.hoofdstukken.map((x) => `
+                <a href="${urlHs(j, x)}"${x === h ? ' class="actief" aria-current="page"' : ""}><span class="n">H${x.nr}</span><span>${esc(x.titel)}</span></a>`).join("")}
+            </div>
+          </nav>
           ${typenAanwezig.length > 1 ? `
             <div class="filters" role="group" aria-label="Filter op soort materiaal">
-              <span class="lbl">Toon:</span>
-              <button class="filter-knop" data-filter="" aria-pressed="true">Alles</button>
-              ${typenAanwezig.map((t) => `<button class="filter-knop" data-filter="${esc(t)}" aria-pressed="false">${esc(type(t).label)}</button>`).join("")}
+              <h2>Toon</h2>
+              <div class="knoppen">
+                <button class="filter-knop" data-filter="" aria-pressed="true">Alles</button>
+                ${typenAanwezig.map((t) => `<button class="filter-knop" data-filter="${esc(t)}" aria-pressed="false">${esc(type(t).label)}</button>`).join("")}
+              </div>
             </div>` : ""}
+        </aside>
+        <div>
           ${mats.length ? `
             <div class="materialen hs-materialen">
               ${mats.map((m) => materiaalKaart(j, h, m)).join("")}

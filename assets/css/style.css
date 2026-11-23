@@ -360,13 +360,17 @@ h1, h2, h3 { line-height: 1.2; color: var(--navy-800); }
   padding: 30px 20px 64px;
   align-items: start;
 }
+/* zijbalk: twee losse blokken (hoofdstukken en filterknoppen) onder elkaar */
 .zijbalk {
   position: sticky; top: 86px;
+  display: flex; flex-direction: column; gap: 16px;
+  font-size: .92rem;
+}
+.zb-blok {
   background: var(--wit);
   border-radius: var(--radius);
   box-shadow: var(--schaduw);
   overflow: hidden;
-  font-size: .92rem;
 }
 /* zijbalk: navy kop met alle hoofdstukken; het open hoofdstuk lichtblauw gemarkeerd */
 .zijbalk .zb-kop {
@@ -391,7 +395,7 @@ h1, h2, h3 { line-height: 1.2; color: var(--navy-800); }
 .zijbalk a.actief { background: var(--blauw-100); border-left-color: var(--navy-700); color: var(--navy-800); font-weight: 600; }
 .zijbalk a.actief .n { color: var(--navy-700); font-weight: 700; }
 
-.filters { border-top: 1px solid var(--rand); padding: 14px 0 16px; }
+.filters { padding: 14px 0 16px; }
 .filters .knoppen { display: flex; gap: 8px; flex-wrap: wrap; padding: 0 18px; }
 .filter-knop {
   font: inherit; font-size: .85rem; cursor: pointer;

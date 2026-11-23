@@ -214,7 +214,7 @@
       </section>
       <div class="container hs-layout">
         <aside class="zijbalk">
-          <nav aria-label="Hoofdstukken">
+          <nav class="zb-blok" aria-label="Hoofdstukken">
             <h2 class="zb-kop">Hoofdstukken</h2>
             <div class="hs-lijst">
               ${j.hoofdstukken.map((x) => `
@@ -222,7 +222,7 @@
             </div>
           </nav>
           ${typenAanwezig.length > 1 ? `
-            <div class="filters" role="group" aria-label="Filter op soort materiaal">
+            <div class="zb-blok filters" role="group" aria-label="Filter op soort materiaal">
               <h2>Toon</h2>
               <div class="knoppen">
                 <button class="filter-knop" data-filter="" aria-pressed="true">Alles</button>

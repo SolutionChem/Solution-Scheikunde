@@ -197,7 +197,6 @@
     document.title = `H${h.nr} ${h.titel} – Solution`;
 
     const mats = alleMaterialen(h);
-    const typenAanwezig = Object.keys(telTypen(mats));
 
     $("#inhoud").innerHTML = `
       <section class="hs-banner">
@@ -214,47 +213,22 @@
       </section>
       <div class="container hs-layout">
         <aside class="zijbalk">
-          <section class="zb-actief" aria-label="Paragrafen van dit hoofdstuk">
-            <h2 class="zb-kop">Paragrafen</h2>
-            <ol class="par-lijst">
-              ${h.paragrafen.map((p) => `<li><span class="n">§${h.nr}.${p.nr}</span><span>${esc(p.titel)}</span></li>`).join("")}
-            </ol>
-          </section>
-          <div class="andere">
-            <h2>Andere hoofdstukken</h2>
-            ${j.hoofdstukken.filter((x) => x !== h).map((x) => `
-              <a href="${urlHs(j, x)}"><span class="n">H${x.nr}</span><span>${esc(x.titel)}</span></a>`).join("")}
-          </div>
+          <nav class="zb-blok" aria-label="Hoofdstukken">
+            <h2 class="zb-kop">Hoofdstukken</h2>
+            <div class="hs-lijst">
+              ${j.hoofdstukken.map((x) => `
+                <a href="${urlHs(j, x)}"${x === h ? ' class="actief" aria-current="page"' : ""}><span class="n">H${x.nr}</span><span>${esc(x.titel)}</span></a>`).join("")}
+            </div>
+          </nav>
         </aside>
         <div>
-          ${typenAanwezig.length > 1 ? `
-            <div class="filters" role="group" aria-label="Filter op soort materiaal">
-              <span class="lbl">Toon:</span>
-              <button class="filter-knop" data-filter="" aria-pressed="true">Alles</button>
-              ${typenAanwezig.map((t) => `<button class="filter-knop" data-filter="${esc(t)}" aria-pressed="false">${esc(type(t).label)}</button>`).join("")}
-            </div>` : ""}
           ${mats.length ? `
             <div class="materialen hs-materialen">
               ${mats.map((m) => materiaalKaart(j, h, m)).join("")}
-            </div>
-            <p class="leeg" id="leeg-filter" hidden>Geen materialen van deze soort in dit hoofdstuk.</p>`
+            </div>`
           : `<p class="leeg">Nog geen materialen bij dit hoofdstuk.</p>`}
         </div>
       </div>`;
-
-    document.querySelectorAll(".filter-knop").forEach((knop) => {
-      knop.addEventListener("click", () => {
-        const f = knop.dataset.filter;
-        document.querySelectorAll(".filter-knop").forEach((k) => k.setAttribute("aria-pressed", String(k === knop)));
-        let zichtbaar = 0;
-        document.querySelectorAll(".mat-kaart").forEach((k) => {
-          const toon = !f || k.dataset.typen.split(" ").includes(f);
-          k.hidden = !toon;
-          if (toon) zichtbaar++;
-        });
-        $("#leeg-filter").hidden = zichtbaar > 0;
-      });
-    });
   }
 
   // één kaart per tool, met de onderdelen (wat je ermee kunt) erin

@@ -13,7 +13,7 @@ window.SOLUTION = {
   /* Versie van de materialen. Verhoog dit (bijv. de datum) als je een animatie of
      simulatie in materialen/ hebt aangepast: browsers laden dan zeker de nieuwe versie
      in plaats van een oude uit hun geheugen (cache). */
-  versie: "2026-11-21a",
+  versie: "2026-11-23a",
 
   /* Soorten materiaal. Je kunt hier zelf soorten aan toevoegen. */
   typen: {
@@ -147,7 +147,7 @@ window.SOLUTION = {
                   type: "oefening",
                   paragraaf: 4,
                   titel: "Spel: bouw een molecuul",
-                  tekst: "Sleep losse atomen tegen elkaar en maak zelf de structuurformule, met enkele, dubbele en drievoudige bindingen. Vijf moleculen per ronde.",
+                  tekst: "Sleep losse atomen uit de bak naar het bouwveld en maak zelf de structuurformule, met enkele, dubbele en drievoudige bindingen. Vijf moleculen per ronde.",
                   url: "materialen/3hv/h2/bindingen/index.html?tab=spel"
                 }
               ]

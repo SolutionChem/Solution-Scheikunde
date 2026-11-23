@@ -138,7 +138,7 @@ Leerlingen krijgen dan meteen de nieuwe versie te zien.
 
 Bovenaan `data.js` staan de soorten (`animatie`, `simulatie`, `video`, `oefening`, `document`, `link`) met hun kleur.
 Je kunt daar zelf een soort toevoegen, bijvoorbeeld `quiz: { label: "Quiz", kleur: "#b03a8c" }`.
-Op de hoofdstukpagina kunnen leerlingen filteren op soort.
+Op de hoofdstukpagina zie je de soort aan de gekleurde labels op de tegels.
 
 ## Een nieuw leerjaar toevoegen
 

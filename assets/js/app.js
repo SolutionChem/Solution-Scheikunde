@@ -197,7 +197,6 @@
     document.title = `H${h.nr} ${h.titel} – Solution`;
 
     const mats = alleMaterialen(h);
-    const typenAanwezig = Object.keys(telTypen(mats));
 
     $("#inhoud").innerHTML = `
       <section class="hs-banner">
@@ -221,38 +220,15 @@
                 <a href="${urlHs(j, x)}"${x === h ? ' class="actief" aria-current="page"' : ""}><span class="n">H${x.nr}</span><span>${esc(x.titel)}</span></a>`).join("")}
             </div>
           </nav>
-          ${typenAanwezig.length > 1 ? `
-            <div class="zb-blok filters" role="group" aria-label="Filter op soort materiaal">
-              <h2>Toon</h2>
-              <div class="knoppen">
-                <button class="filter-knop" data-filter="" aria-pressed="true">Alles</button>
-                ${typenAanwezig.map((t) => `<button class="filter-knop" data-filter="${esc(t)}" aria-pressed="false">${esc(type(t).label)}</button>`).join("")}
-              </div>
-            </div>` : ""}
         </aside>
         <div>
           ${mats.length ? `
             <div class="materialen hs-materialen">
               ${mats.map((m) => materiaalKaart(j, h, m)).join("")}
-            </div>
-            <p class="leeg" id="leeg-filter" hidden>Geen materialen van deze soort in dit hoofdstuk.</p>`
+            </div>`
           : `<p class="leeg">Nog geen materialen bij dit hoofdstuk.</p>`}
         </div>
       </div>`;
-
-    document.querySelectorAll(".filter-knop").forEach((knop) => {
-      knop.addEventListener("click", () => {
-        const f = knop.dataset.filter;
-        document.querySelectorAll(".filter-knop").forEach((k) => k.setAttribute("aria-pressed", String(k === knop)));
-        let zichtbaar = 0;
-        document.querySelectorAll(".mat-kaart").forEach((k) => {
-          const toon = !f || k.dataset.typen.split(" ").includes(f);
-          k.hidden = !toon;
-          if (toon) zichtbaar++;
-        });
-        $("#leeg-filter").hidden = zichtbaar > 0;
-      });
-    });
   }
 
   // één kaart per tool, met de onderdelen (wat je ermee kunt) erin

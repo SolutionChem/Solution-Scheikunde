@@ -109,6 +109,11 @@
   .s-binding line.raak { stroke: transparent; stroke-width: 26; cursor: pointer; }
   .s-binding:hover line.zie { stroke: var(--navy3); }
   .s-voorbeeld { stroke: var(--valentie); stroke-width: 3; stroke-dasharray: 6 6; }
+  /* bak met losse atomen en apart bouwveld */
+  .s-bak { fill: #fff; stroke: var(--rand); stroke-width: 2; }
+  .s-veld { fill: none; stroke: var(--navy3); stroke-opacity: .35; stroke-width: 2; stroke-dasharray: 8 6; }
+  .s-label { font-family: var(--kop); font-size: 15px; letter-spacing: .12em; fill: var(--zacht); pointer-events: none; }
+  .s-plek { fill: none; stroke: var(--rand); stroke-width: 2; stroke-dasharray: 5 5; pointer-events: none; }
   /* spelbalk, start- en eindscherm: zoals bij de spellen van Bouw een atoom */
   .spelbalk {
     display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
@@ -303,7 +308,7 @@
     <!-- startscherm -->
     <div class="kaart start-spel" id="s-startscherm">
       <h2>Spel: Bouw een molecuul</h2>
-      <p>Je krijgt een molecuulformule en de losse atomen. Sleep de atomen tegen elkaar en maak de <b>structuurformule</b>.</p>
+      <p>Je krijgt een molecuulformule en de losse atomen. Sleep de atomen uit de bak naar het bouwveld, leg ze tegen elkaar en maak de <b>structuurformule</b>.</p>
       <ul>
         <li>Je krijgt <b>5 moleculen</b>.</li>
         <li>Per molecuul mag je <b>twee keer</b> op Controleer klikken.</li>
@@ -333,7 +338,7 @@
       <div class="kaart kies">
         <div class="knoppen">
           <button class="hoofd" id="s-controleer">Controleer</button>
-          <button id="s-leg">↺ Opnieuw leggen</button>
+          <button id="s-leg">↺ Alles terug in de bak</button>
         </div>
         <label class="schakelaar"><input type="checkbox" id="s-ps-aan"><span class="baan" aria-hidden="true"></span>Toon het periodiek systeem</label>
       </div>
@@ -344,9 +349,9 @@
       <div class="kaart leg">
         <h2>Zo werkt het</h2>
         <ul class="instructie">
-          <li>Sleep een atoom tegen een ander atoom: er ontstaat een <b>binding</b> (een streepje).</li>
+          <li>Sleep een atoom uit de bak naar het bouwveld en leg het tegen een ander atoom: er ontstaat een <b>binding</b> (een streepje).</li>
           <li>Klik of tik op een binding om er een <b>dubbele</b> of <b>drievoudige</b> binding van te maken.</li>
-          <li>Sleep een atoom weg om de binding te verbreken.</li>
+          <li>Sleep een atoom weg om de binding te verbreken, of terug naar de bak om het weg te halen.</li>
           <li>Klaar? Klik op <b>Controleer</b>. In één keer goed: 2 punten. Goed bij de tweede keer controleren: 1 punt.</li>
         </ul>
       </div>
@@ -1188,7 +1193,8 @@ const SPEL_MOL = [
                                 ["O", 1, 270, 2], ["O", 1, 0, 1], ["H", 6, 0, 1]] }                              // azijnzuur
 ];
 // S_PAK: zo dicht (middelpunt tot middelpunt) moet je een atoom bij een ander leggen voor een binding
-const S_AANTAL = 5, S_R = 30, S_LENGTE = 118, S_PAK = 75, S_BREEK = 190, S_START = 175;
+// S_STAP: afstand tussen de plekken in de bak
+const S_AANTAL = 5, S_R = 30, S_LENGTE = 118, S_PAK = 75, S_BREEK = 190, S_STAP = 70;
 const ssvg = document.getElementById("s-tekening");
 const sp = { ronde: [], i: 0, poging: 0, punten: [], atomen: [], bindingen: [], klaar: false, W: 800, H: 480 };
 const schud = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
@@ -1216,26 +1222,61 @@ function spelVraag() {
   [sp.W, sp.H] = ssvg.clientWidth && ssvg.clientWidth < 560 ? [480, 600] : [800, 480];
   ssvg.setAttribute("viewBox", `0 0 ${sp.W} ${sp.H}`);
   sp.atomen = M.atomen.map(([sym]) => ({ sym, x: 0, y: 0 }));
+  spelIndeling();
   spelLeg();
   const volgorde = M.formule.match(/[A-Z][a-z]?/g);
   const telling = volgorde.map(sym => { const n = sp.atomen.filter(a => a.sym === sym).length; return `${n} ${spelNaam(sym)}${meervoud(n, "atoom", "atomen")}`; });
   document.getElementById("s-opdracht").innerHTML = `<b>${M.formule}</b> bevat ${telling.join(" en ")}. Maak de structuurformule.`;
-  zetFeedback("", "Sleep de atomen tegen elkaar om bindingen te maken. Klaar? Klik op <b>Controleer</b>.");
+  zetFeedback("", "Sleep de atomen uit de bak naar het bouwveld en leg ze tegen elkaar om bindingen te maken. Sleep een atoom terug naar de bak om het weg te halen. Klaar? Klik op <b>Controleer</b>.");
   spelKnoppen(); spelScore();
 }
 
-// atomen willekeurig verspreid neerleggen, zonder bindingen
+// Indeling van het speelveld: een bak met de losse atomen (gesorteerd per element, in de
+// volgorde van de formule) en daarnaast een apart bouwveld. Breed scherm: bak links;
+// smal (staand) scherm: bak bovenaan.
+const binnenVak = (v, x, y) => x >= v.x && x <= v.x + v.w && y >= v.y && y <= v.y + v.h;
+function spelIndeling() {
+  const volgorde = sp.mol.formule.match(/[A-Z][a-z]?/g);
+  const groepen = volgorde.map(sym => sp.atomen.filter(a => a.sym === sym));
+  const h = S_STAP / 2;
+  if (sp.W > sp.H) {
+    sp.bak = { x: 8, y: 8, w: 156, h: sp.H - 16 };
+    const mid = sp.bak.x + sp.bak.w / 2;
+    let y = sp.bak.y + 44 + h;
+    groepen.forEach(g => {
+      for (let i = 0; i < g.length; i += 2) {
+        const rij = g.slice(i, i + 2);
+        rij.forEach((a, k) => { a.plek = { x: rij.length === 1 ? mid : mid + (k ? h : -h), y }; });
+        y += S_STAP;
+      }
+      y += 8; // kleine ruimte tussen de elementen
+    });
+    sp.veld = { x: 172, y: 8, w: sp.W - 180, h: sp.H - 16 };
+  } else {
+    sp.bak = { x: 8, y: 8, w: sp.W - 16, h: 0 };
+    const links = sp.bak.x + 14 + h, rechts = sp.bak.x + sp.bak.w - 10;
+    let x = links, y = sp.bak.y + 36 + h;
+    groepen.forEach((g, gi) => {
+      if (gi && x > links) x += 14; // ruimte tussen de elementen
+      g.forEach(a => {
+        if (x + h > rechts) { x = links; y += S_STAP; }
+        a.plek = { x, y }; x += S_STAP;
+      });
+    });
+    sp.bak.h = y + h + 6 - sp.bak.y;
+    const vy = sp.bak.y + sp.bak.h + 8;
+    sp.veld = { x: 8, y: vy, w: sp.W - 16, h: sp.H - vy - 8 };
+  }
+}
+// alle atomen terug in de bak, zonder bindingen
 function spelLeg() {
   sp.bindingen = [];
-  const plekken = [];
-  sp.atomen.forEach(a => {
-    let x, y, n = 0;
-    do {
-      x = 60 + Math.random() * (sp.W - 120); y = 60 + Math.random() * (sp.H - 120); n++;
-    } while (n < 300 && plekken.some(p => Math.hypot(p.x - x, p.y - y) < S_START));
-    plekken.push({ x, y }); a.x = x; a.y = y;
-  });
+  sp.atomen.forEach(terugInBak);
   spelTeken();
+}
+function terugInBak(a) {
+  a.x = a.plek.x; a.y = a.plek.y; a.inBak = true;
+  sp.bindingen = sp.bindingen.filter(bd => bd.a !== a && bd.b !== a);
 }
 
 const gebonden = (a, b) => sp.bindingen.find(x => (x.a === a && x.b === b) || (x.a === b && x.b === a));
@@ -1243,7 +1284,14 @@ const aantalBindingen = a => sp.bindingen.reduce((s, x) => s + (x.a === a || x.b
 
 function spelTeken(voorbeeld) {
   ssvg.innerHTML = "";
-  const bLaag = maak("g", {}, ssvg), aLaag = maak("g", {}, ssvg);
+  const vLaag = maak("g", {}, ssvg), bLaag = maak("g", {}, ssvg), aLaag = maak("g", {}, ssvg);
+  const { bak, veld } = sp;
+  maak("rect", { class: "s-bak", x: bak.x, y: bak.y, width: bak.w, height: bak.h, rx: 10 }, vLaag);
+  maak("text", { class: "s-label", x: bak.x + 14, y: bak.y + 24 }, vLaag, "ATOMEN");
+  maak("rect", { class: "s-veld", x: veld.x, y: veld.y, width: veld.w, height: veld.h, rx: 10 }, vLaag);
+  maak("text", { class: "s-label", x: veld.x + 14, y: veld.y + 24 }, vLaag, "BOUWVELD");
+  // lege plek in de bak voor atomen die in het bouwveld liggen
+  sp.atomen.forEach(a => { if (!a.inBak) maak("circle", { class: "s-plek", cx: a.plek.x, cy: a.plek.y, r: S_R }, vLaag); });
   if (voorbeeld) maak("line", { class: "s-voorbeeld", x1: voorbeeld.a.x, y1: voorbeeld.a.y, x2: voorbeeld.b.x, y2: voorbeeld.b.y }, bLaag);
   const VERSCHUIF = { 1: [0], 2: [-7, 7], 3: [-12, 0, 12] };
   sp.bindingen.forEach(bd => {
@@ -1272,7 +1320,8 @@ function svgPunt(e) {
 // dichtstbijzijnde atoom waarmee het gesleepte atoom een (nieuwe) binding kan maken
 function spelDoel(a) {
   let beste = null, bd = S_PAK;
-  sp.atomen.forEach(b => { if (b === a || gebonden(a, b)) return; const d = Math.hypot(b.x - a.x, b.y - a.y); if (d < bd) { bd = d; beste = b; } });
+  if (binnenVak(sp.bak, a.x, a.y)) return null; // boven de bak: geen binding
+  sp.atomen.forEach(b => { if (b === a || b.inBak || gebonden(a, b)) return; const d = Math.hypot(b.x - a.x, b.y - a.y); if (d < bd) { bd = d; beste = b; } });
   return beste;
 }
 function spelPak(e, a) {
@@ -1280,6 +1329,7 @@ function spelPak(e, a) {
   e.preventDefault();
   const p = svgPunt(e);
   sp.sleep = { atoom: a, dx: a.x - p.x, dy: a.y - p.y, id: e.pointerId };
+  a.inBak = false;
   sp.atomen.forEach(x => x.fout = false);
   ssvg.setPointerCapture(e.pointerId);
   spelTeken();
@@ -1302,6 +1352,11 @@ function spelLaatLos(e) {
   const s = sp.sleep; if (!s || e.pointerId !== s.id) return;
   const a = s.atoom, doel = spelDoel(a);
   sp.sleep = null;
+  // teruggelegd in de bak: weer op zijn eigen plek, bindingen verbreken
+  if (binnenVak(sp.bak, a.x, a.y)) { terugInBak(a); spelTeken(); return; }
+  const v = sp.veld;
+  a.x = Math.max(v.x + S_R, Math.min(v.x + v.w - S_R, a.x));
+  a.y = Math.max(v.y + S_R, Math.min(v.y + v.h - S_R, a.y));
   if (doel) {
     sp.bindingen.push({ a, b: doel, orde: 1 });
     // netjes neerzetten op bindingsafstand: bij voorkeur recht ernaast, erboven of eronder (hoeken van 90°,
@@ -1311,7 +1366,7 @@ function spelLaatLos(e) {
     const opties = [...opRichting([0, 1, 2, 3].map(k => k * Math.PI / 2)), ...opRichting([0, 1, 2, 3].map(k => Math.PI / 4 + k * Math.PI / 2))];
     for (const h of opties) {
       const x = doel.x + Math.cos(h) * S_LENGTE, y = doel.y + Math.sin(h) * S_LENGTE;
-      const binnen = x > S_R && x < sp.W - S_R && y > S_R && y < sp.H - S_R;
+      const binnen = x > v.x + S_R && x < v.x + v.w - S_R && y > v.y + S_R && y < v.y + v.h - S_R;
       if (binnen && sp.atomen.every(o => o === a || Math.hypot(o.x - x, o.y - y) > 70)) { a.x = x; a.y = y; break; }
     }
   }
@@ -1321,9 +1376,9 @@ ssvg.addEventListener("pointerup", spelLaatLos);
 ssvg.addEventListener("pointercancel", spelLaatLos);
 
 /* ----- controleren, met uitleg waarom het goed of fout is ----- */
-function delen() { // aantal losse stukken
+function delen(lijst) { // aantal losse stukken
   const gezien = new Set(); let n = 0;
-  sp.atomen.forEach(st => {
+  lijst.forEach(st => {
     if (gezien.has(st)) return; n++;
     const stapel = [st]; gezien.add(st);
     while (stapel.length) { const x = stapel.pop(); sp.bindingen.forEach(bd => { const o = bd.a === x ? bd.b : bd.b === x ? bd.a : null; if (o && !gezien.has(o)) { gezien.add(o); stapel.push(o); } }); }
@@ -1339,7 +1394,12 @@ function spelControleer() {
   if (sp.klaar) return spelVolgende();
   sp.poging++;
   const fouten = [], hints = [];
-  const n = delen();
+  const inBak = sp.atomen.filter(a => a.inBak), gebruikt = sp.atomen.filter(a => !a.inBak);
+  if (inBak.length) {
+    const tel = [...new Set(inBak.map(a => a.sym))].map(sym => { const k = inBak.filter(a => a.sym === sym).length; return `${k} ${spelNaam(sym)}${meervoud(k, "atoom", "atomen")}`; });
+    fouten.push(`Je hebt nog niet alle atomen gebruikt: er ${inBak.length === 1 ? "ligt" : "liggen"} nog ${tel.join(" en ")} in de bak. Een molecuul ${sp.mol.formule} bestaat uit al deze atomen samen.`);
+  }
+  const n = delen(gebruikt);
   if (n > 1) fouten.push(`Je molecuul bestaat nog uit ${n} losse delen. In een molecuul zitten alle atomen via bindingen aan elkaar vast.`);
   const teVeel = sp.atomen.filter(a => aantalBindingen(a) > covalentie(a.sym));
   const teWeinig = sp.atomen.filter(a => aantalBindingen(a) < covalentie(a.sym));
@@ -1383,17 +1443,19 @@ function spelToonAntwoord() {
   });
   let xs = doel.map(d => d.x), ys = doel.map(d => d.y);
   // grote moleculen (bijv. azijnzuur op een smal scherm) iets kleiner zetten, zodat ze in het veld passen
-  const f = Math.min(1, (sp.W - 2 * S_R - 20) / (Math.max(...xs) - Math.min(...xs) || 1), (sp.H - 2 * S_R - 20) / (Math.max(...ys) - Math.min(...ys) || 1));
+  const v = sp.veld;
+  const f = Math.min(1, (v.w - 2 * S_R - 20) / (Math.max(...xs) - Math.min(...xs) || 1), (v.h - 2 * S_R - 20) / (Math.max(...ys) - Math.min(...ys) || 1));
   doel.forEach(d => { d.x *= f; d.y *= f; });
   xs = doel.map(d => d.x); ys = doel.map(d => d.y);
   const mx = (Math.min(...xs) + Math.max(...xs)) / 2, my = (Math.min(...ys) + Math.max(...ys)) / 2;
   const van = sp.atomen.map(a => ({ x: a.x, y: a.y }));
-  sp.atomen.forEach(a => a.fout = false);
+  sp.atomen.forEach(a => { a.fout = false; a.inBak = false; });
+  const cx = v.x + v.w / 2, cy = v.y + v.h / 2;
   const t0 = performance.now(), atomen = sp.atomen;
   (function stap(nu) {
     if (sp.atomen !== atomen) return; // intussen al naar het volgende molecuul
     const p = zacht(klem((nu - t0) / 900));
-    sp.atomen.forEach((a, i) => { a.x = van[i].x + (doel[i].x - mx + sp.W / 2 - van[i].x) * p; a.y = van[i].y + (doel[i].y - my + sp.H / 2 - van[i].y) * p; });
+    sp.atomen.forEach((a, i) => { a.x = van[i].x + (doel[i].x - mx + cx - van[i].x) * p; a.y = van[i].y + (doel[i].y - my + cy - van[i].y) * p; });
     spelTeken();
     if (p < 1) requestAnimationFrame(stap);
   })(t0);

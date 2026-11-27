@@ -163,6 +163,7 @@
 
 const NS = "http://www.w3.org/2000/svg";
 const W = 540, H = 430, BODEM = 414;          // microvenster (binnenmaten)
+const KOLF_X = 70;                              // kolf staat 70 naar rechts, links ervan de thermometer
 const ZICHT = 0.2;                              // deel van de gasmoleculen dat in beeld blijft (gas: ver uit elkaar)
 
 /* Atomen per molecuul: [element, x, y, straal]. Kleuren als in molecuulmodellen: O rood, H wit, C zwart. */
@@ -293,9 +294,11 @@ function bouwVeld() {
   E.lijn2 = maak("line", { stroke: "#2c5687", "stroke-width": 2, "stroke-dasharray": "6 5", opacity: .7 }, veld);
 
   /* ===== macroniveau ===== */
-  const m = E.macro = maak("g", {}, veld);
+  let m = E.macro = maak("g", {}, veld);
   const t1 = maak("text", { x: 8, y: 24, class: "titel" }, m, "MACRONIVEAU ");
   maak("tspan", { class: "z" }, t1, "wat je ziet");
+  const th = maak("g", {}, m);                    // thermometer links
+  m = maak("g", { transform: `translate(${KOLF_X} 0)` }, m);   // kolf rechts daarvan
   // ballon
   E.ballon = maak("ellipse", { cx: 190, fill: "rgba(156,195,240,.55)", stroke: "#2c5687", "stroke-width": 2 }, m);
   E.ballonGas = maak("ellipse", { cx: 190, fill: "#8fb6e0", opacity: 0 }, m);
@@ -323,11 +326,11 @@ function bouwVeld() {
   E.plaat = maak("rect", { x: 56, y: 494, width: 268, height: 18, rx: 5, stroke: "#11264a", "stroke-width": 2 }, m);
   E.plaatTekst = maak("text", { x: 190, y: 532, class: "lab-z", "font-weight": 600 }, m);
   // thermometer
-  maak("rect", { x: 337, y: 214, width: 16, height: 262, rx: 8, fill: "#fff", stroke: "#11264a", "stroke-width": 2 }, m);
-  maak("circle", { cx: 345, cy: 488, r: 14, fill: "#c0392b", stroke: "#11264a", "stroke-width": 2 }, m);
-  E.kwik = maak("rect", { x: 341, width: 8, rx: 4, fill: "#c0392b" }, m);
-  E.temp = maak("text", { x: 345, y: 200, "text-anchor": "middle", "font-size": 24, "font-weight": 700, fill: "#11264a" }, m);
-  E.streepjes = maak("g", {}, m);
+  maak("rect", { x: 32, y: 214, width: 16, height: 262, rx: 8, fill: "#fff", stroke: "#11264a", "stroke-width": 2 }, th);
+  maak("circle", { cx: 40, cy: 488, r: 14, fill: "#c0392b", stroke: "#11264a", "stroke-width": 2 }, th);
+  E.kwik = maak("rect", { x: 36, width: 8, rx: 4, fill: "#c0392b" }, th);
+  E.temp = maak("text", { x: 14, y: 200, "font-size": 24, "font-weight": 700, fill: "#11264a" }, th);
+  E.streepjes = maak("g", {}, th);
   // inzoomcirkel
   // ingezoomd stukje (geen vergrootglas: moleculen zijn daarmee niet te zien)
   maak("circle", { cx: 190, cy: 440, r: 52, fill: "rgba(255,255,255,.12)", stroke: "#11264a", "stroke-width": 3, "stroke-dasharray": "8 5" }, m);
@@ -357,11 +360,11 @@ function indeling() {
   if (nuSmal === smal) return;
   smal = nuSmal;
   let mx, my, ux, uy;
-  if (smal) { veld.setAttribute("viewBox", "0 0 560 1030"); mx = 70; my = 0; ux = 10; uy = 586; }
+  if (smal) { veld.setAttribute("viewBox", "0 0 560 1030"); mx = 48; my = 0; ux = 10; uy = 586; }
   else { veld.setAttribute("viewBox", "0 0 1020 540"); mx = 0; my = 0; ux = 466; uy = 62; }
   E.macro.setAttribute("transform", `translate(${mx} ${my})`);
   E.micro.setAttribute("transform", `translate(${ux} ${uy})`);
-  const cx = mx + 190, cy = my + 440, r = 52;
+  const cx = mx + KOLF_X + 190, cy = my + 440, r = 52;
   let a, b, c, d;
   if (smal) { a = [cx - r, cy]; b = [ux, uy]; c = [ux + W, uy]; d = [cx + r, cy]; }
   else { a = [cx, cy - r]; b = [ux, uy]; c = [ux, uy + H]; d = [cx, cy + r]; }
@@ -689,10 +692,10 @@ function tekenStreepjes() {
   const yT = T => 466 - relatief(T) * 240;
   st.grenzen.forEach(g => {
     const y = yT(g.T);
-    maak("line", { x1: 333, x2: 357, y1: y, y2: y, stroke: "#11264a", "stroke-width": 2 }, E.streepjes);
+    maak("line", { x1: 28, x2: 52, y1: y, y2: y, stroke: "#11264a", "stroke-width": 2 }, E.streepjes);
     const naam = g.naar === "l" ? "smeltpunt" : g.van === "l" ? "kookpunt" : "sublimatiepunt";
-    maak("text", { x: 362, y: y - 2, "font-size": 11, fill: "#4a5a72" }, E.streepjes, naam);
-    maak("text", { x: 362, y: y + 11, "font-size": 11, "font-weight": 700, fill: "#11264a" }, E.streepjes, `${fmt(g.T)} °C`);
+    maak("text", { x: 57, y: y - 2, "font-size": 11, fill: "#4a5a72" }, E.streepjes, naam);
+    maak("text", { x: 57, y: y + 11, "font-size": 11, "font-weight": 700, fill: "#11264a" }, E.streepjes, `${fmt(g.T)} °C`);
   });
 }
 

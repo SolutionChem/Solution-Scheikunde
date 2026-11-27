@@ -1,0 +1,1352 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scheidingsmethoden</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Oswald:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #11264a; --navy2: #163a63; --navy3: #2c5687;
+    --licht: #eef4fb; --licht2: #dbe8f5; --rand: #c9d8ea;
+    --tekst: #14213a; --zacht: #4a5a72;
+    --plus: #3fa55b; --min: #e0574a; --metaal: #f8e39b; --elektron: #e8890c;
+    --kop: "Oswald", "Arial Narrow", Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { font-family: Inter, "Helvetica Neue", Arial, sans-serif; color: var(--tekst); background: var(--licht);
+         line-height: 1.45; font-size: 15px; -webkit-font-smoothing: antialiased; }
+  button, select { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  [hidden] { display: none !important; }
+
+  .tabs { display: flex; gap: 4px; padding: 8px 12px 0; background: var(--navy); overflow-x: auto; scrollbar-width: none; }
+  .tabs button { flex: 0 0 auto; border: 0; background: transparent; color: #cfdcef; padding: 9px 14px 10px; border-radius: 8px 8px 0 0;
+                 font-family: var(--kop); letter-spacing: .08em; text-transform: uppercase; font-size: .9rem; }
+  .tabs button:hover { color: #fff; background: rgba(255,255,255,.08); }
+  .tabs button[aria-selected="true"] { background: var(--licht); color: var(--navy); }
+
+  .delen { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; padding: 10px 12px 0; }
+  .delen button { border: 1px solid var(--rand); background: #fff; border-radius: 99px; padding: 6px 14px; font-weight: 600; font-size: .9rem; color: var(--navy2); }
+  .delen button[aria-pressed="true"] { background: var(--navy2); border-color: var(--navy2); color: #fff; }
+  .delen .pauze { margin-left: auto; border-radius: 8px; }
+
+  .scherm { padding: 10px 12px 12px; }
+  .app { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 12px; align-items: start; }
+  .kaart { background: #fff; border-radius: 10px; box-shadow: 0 1px 3px rgba(11,26,51,.1); padding: 12px 14px; min-width: 0; }
+  .kaart h2 { margin: 0 0 8px; font-size: .78rem; letter-spacing: .12em; text-transform: uppercase; color: var(--zacht); font-weight: 600; }
+  .paneel { display: flex; flex-direction: column; gap: 10px; }
+  .podium { padding: 6px; }
+  #tek { width: 100%; height: clamp(300px, calc(100vh - 140px), 600px); display: block; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+
+  .knoppen { display: flex; gap: 6px; flex-wrap: wrap; }
+  .knoppen + .knoppen { margin-top: 8px; }
+  .knoppen button { flex: 1 1 auto; padding: 8px 10px; border-radius: 7px; border: 1px solid var(--rand); background: #fff; font-weight: 600; font-size: .9rem; }
+  .knoppen button.hoofd { background: var(--navy2); color: #fff; border-color: var(--navy2); }
+  .knoppen button[aria-pressed="true"] { background: var(--navy2); color: #fff; border-color: var(--navy2); }
+  .knoppen button:disabled { opacity: .45; cursor: default; }
+  select { width: 100%; padding: 8px 10px; border-radius: 7px; border: 1px solid var(--rand); background: #fff; }
+  label.schuif { display: block; font-size: .9rem; margin-top: 4px; }
+  label.schuif input { width: 100%; accent-color: var(--navy2); }
+  label.optie { display: flex; gap: 8px; align-items: center; font-size: .9rem; margin-top: 8px; cursor: pointer; }
+  label.optie input { width: 17px; height: 17px; accent-color: var(--navy2); }
+  .stoflijst { display: grid; gap: 3px; }
+  .stoflijst button { display: flex; justify-content: space-between; gap: 8px; text-align: left; padding: 2px 10px; border-radius: 7px;
+                      border: 1px solid var(--rand); background: #fff; font-size: .88rem; }
+  .stoflijst button span:last-child { font-weight: 700; color: var(--navy); white-space: nowrap; }
+  .stoflijst button[aria-pressed="true"] { border-color: var(--navy2); box-shadow: inset 0 0 0 1px var(--navy2); background: var(--licht); }
+
+  .schakelaar { display: flex; align-items: center; gap: 10px; margin: 0 0 10px; cursor: pointer; font-weight: 600; font-size: .9rem; position: relative; }
+  .schakelaar input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  .schakelaar .baan { width: 42px; height: 24px; border-radius: 99px; background: #b8c4d4; position: relative; transition: background .15s; flex: 0 0 auto; }
+  .schakelaar .baan::after { content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: left .15s; box-shadow: 0 1px 2px rgba(0,0,0,.3); }
+  .schakelaar input:checked + .baan { background: #c27c0e; }
+  .schakelaar input:checked + .baan::after { left: 21px; }
+  .schakelaar input:focus-visible + .baan { outline: 3px solid #9cc3f0; outline-offset: 2px; }
+  .uitleg p { margin: 0 0 7px; font-size: .9rem; line-height: 1.4; }
+  .uitleg p:last-child { margin-bottom: 0; }
+  .uitleg p.nieuw { animation: in .6s ease; }
+  @keyframes in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+  .uitleg b { color: var(--navy); }
+  .chips { display: flex; flex-wrap: wrap; gap: 5px; margin: -2px 0 10px; }
+  .chips span { font-size: .78rem; font-weight: 600; padding: 2px 9px; border-radius: 99px; background: var(--licht2); color: var(--navy2); }
+  .legenda { display: grid; gap: 5px; font-size: .86rem; margin-top: 8px; }
+  .legenda div { display: flex; align-items: center; gap: 8px; }
+  .legenda i { width: 16px; height: 16px; border-radius: 50%; flex: 0 0 auto; border: 1.5px solid rgba(0,0,0,.3); }
+  .legenda i.lijn { border-radius: 0; height: 0; border: 0; border-top: 3px dashed; width: 20px; }
+
+  svg text { font-family: Inter, Arial, sans-serif; }
+  .ion-t { font-weight: 700; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+  .lab { font-size: 17px; font-weight: 600; fill: var(--navy2); }
+  .lab-z { font-size: 15px; fill: var(--zacht); }
+  .groot { font-size: 26px; font-weight: 700; fill: var(--navy); }
+  .delta { font-size: 19px; font-weight: 700; font-style: italic; text-anchor: middle; dominant-baseline: central; }
+
+  /* vergelijken */
+  .vergelijk { max-width: 1100px; margin: 0 auto; }
+  .vergelijk .rij { display: grid; grid-template-columns: 190px repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 8px; }
+  .vergelijk .kop { font-family: var(--kop); letter-spacing: .06em; text-transform: uppercase; color: #fff; background: var(--navy2);
+                    border-radius: 8px; padding: 8px 12px; font-size: .95rem; }
+  .vergelijk .eig { background: var(--navy2); color: #fff; border-radius: 8px; padding: 10px 12px; font-weight: 600; font-size: .92rem; }
+  .vergelijk .cel { background: #fff; border-radius: 8px; padding: 9px 12px; font-size: .88rem; box-shadow: 0 1px 2px rgba(11,26,51,.08); }
+  .vergelijk .cel b { display: block; color: var(--navy); font-size: .95rem; margin-bottom: 2px; }
+  .vergelijk .cel a { color: var(--navy3); font-weight: 600; font-size: .82rem; text-decoration: none; display: inline-block; margin-top: 3px; cursor: pointer; }
+  .vergelijk .cel a:hover { text-decoration: underline; }
+  .vergelijk .cel .cat { display: none; font-family: var(--kop); letter-spacing: .06em; text-transform: uppercase; font-size: .78rem; color: var(--zacht); }
+
+  /* spel (zelfde opzet als de spellen van Bouw een atoom en Bouw een molecuul) */
+  .spel { max-width: 860px; margin: 0 auto; }
+  .spelbalk { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; background: #fff; border-radius: 10px; padding: 8px 14px; margin-bottom: 10px;
+              box-shadow: 0 1px 3px rgba(11,26,51,.1); font-size: .92rem; }
+  .spelbalk strong { color: var(--navy); }
+  .voortgang { display: flex; gap: 5px; }
+  .voortgang i { width: 22px; height: 6px; border-radius: 3px; background: var(--licht2); }
+  .voortgang i.af { background: var(--navy3); }
+  .voortgang i.nu { background: var(--navy); outline: 2px solid #9cc3f0; }
+  .pogingslabel { font-size: .8rem; font-weight: 600; padding: 2px 9px; border-radius: 99px; background: var(--licht2); color: var(--navy2); }
+  .pogingslabel.verd { background: #f6e7cc; color: #7a4d06; }
+  .spelbalk .stop { margin-left: auto; border: 1px solid var(--rand); background: #fff; color: var(--zacht); border-radius: 8px; padding: 4px 12px; font-size: .85rem; }
+  .start-spel { max-width: 640px; margin: 18px auto; padding: 22px 26px; }
+  .start-spel h2 { font-family: var(--kop); font-size: 1.4rem; letter-spacing: .04em; color: var(--navy); text-transform: none; margin: 0 0 10px; }
+  .start-spel ul { margin: 6px 0 14px; padding-left: 20px; }
+  .start-spel .schakelaar { margin: 14px 0 18px; }
+  .groot-knop { font-size: 1.05rem; font-weight: 600; padding: 10px 28px; border-radius: 8px; border: 0; background: var(--navy2); color: #fff; }
+  .groot-knop.licht { background: #fff; color: var(--navy2); border: 1px solid var(--rand); }
+  .vraagvak { padding: 16px 18px; }
+  .opdracht { font-size: 1.08rem; font-weight: 600; color: var(--navy); margin: 0 0 12px; }
+  .verd-label { font-size: .75rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; background: #f6e7cc; color: #7a4d06; padding: 2px 8px; border-radius: 99px; vertical-align: 2px; }
+  .kaartplek { display: flex; justify-content: center; margin-bottom: 14px; min-height: 150px; }
+  .stofkaart { width: min(100%, 420px); background: #fffdf5; border: 2px solid var(--navy3); border-radius: 12px; padding: 12px 16px; cursor: grab;
+               touch-action: none; user-select: none; -webkit-user-select: none; box-shadow: 0 3px 8px rgba(11,26,51,.15); position: relative; z-index: 2; }
+  .stofkaart.sleep { cursor: grabbing; box-shadow: 0 10px 24px rgba(11,26,51,.3); transition: none; opacity: .92; }
+  .stofkaart:not(.sleep) { transition: transform .25s; }
+  .stofkaart.weg { opacity: .55; cursor: default; }
+  .stofkaart h3 { margin: 0 0 6px; font-family: var(--kop); letter-spacing: .06em; color: var(--navy); font-size: 1.15rem; }
+  .stofkaart ul { margin: 0; padding-left: 18px; }
+  .stofkaart li { margin: 3px 0; }
+  .bakken { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 12px; }
+  .bak { border: 2px dashed var(--navy3); border-radius: 12px; padding: 16px 10px; text-align: center; background: var(--licht); cursor: pointer; transition: background .15s; }
+  .bak .bak-titel { display: block; font-family: var(--kop); letter-spacing: .06em; text-transform: uppercase; color: var(--navy); font-size: 1.05rem; }
+  .bak .bak-sub { display: block; font-size: .8rem; color: var(--zacht); }
+  .bak.boven { background: var(--licht2); border-style: solid; }
+  .bak.goed { background: #e9f7ef; border: 2px solid #1f8a4c; }
+  .bak.fout { background: #fdecea; border: 2px solid #c0392b; }
+  .bak.uit { cursor: default; opacity: .7; }
+  .opties { display: grid; gap: 8px; margin-bottom: 12px; }
+  .opties button { text-align: left; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--rand); background: #fff; font-size: .95rem; }
+  .opties button:hover:not(:disabled) { border-color: var(--navy3); }
+  .opties button.goed { background: #e9f7ef; border-color: #1f8a4c; font-weight: 600; }
+  .opties button.fout { background: #fdecea; border-color: #c0392b; }
+  .opties button:disabled { cursor: default; }
+  .feedback { padding: 10px 12px; border-radius: 8px; font-size: .93rem; background: var(--licht); margin-bottom: 10px; }
+  .feedback.goed { background: #e9f7ef; border-left: 5px solid #1f8a4c; }
+  .feedback.fout { background: #fdecea; border-left: 5px solid #c0392b; }
+  .feedback p { margin: 0 0 6px; } .feedback p:last-child { margin: 0; }
+  .feedback ul { margin: 0; padding-left: 18px; }
+  .resultaat { max-width: 720px; margin: 18px auto; padding: 24px 26px; text-align: center; }
+  .resultaat h2 { font-family: var(--kop); font-size: 1.4rem; color: var(--navy); text-transform: none; letter-spacing: .04em; }
+  .resultaat .totaal { font-size: 3rem; font-weight: 700; color: var(--navy); line-height: 1.1; margin: 8px 0 2px; }
+  .resultaat .sterren { font-size: 1.8rem; letter-spacing: .15em; color: #e0a800; }
+  .resultaat ol { list-style: none; padding: 0; margin: 18px 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+  .resultaat li { border: 1px solid var(--rand); border-radius: 10px; padding: 8px 14px 6px; min-width: 112px; font-size: .88rem; }
+  .resultaat li .f { font-family: var(--kop); font-size: 1.3rem; color: var(--navy); }
+  .resultaat li .pnt { font-size: .85rem; font-weight: 600; }
+  .resultaat li .pnt.vol { color: #1f8a4c; } .resultaat li .pnt.half { color: #b77b00; } .resultaat li .pnt.nul { color: #c0392b; }
+  .resultaat .rij { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+
+
+  /* scheidingsmethoden */
+  .kopje { font-family: var(--kop); font-size: 15px; letter-spacing: .14em; fill: var(--zacht); text-anchor: middle; }
+  .lab-k { font-size: 13px; fill: var(--zacht); }
+  .lab-m { font-size: 14px; font-weight: 600; fill: var(--navy2); paint-order: stroke; stroke: #fbfdff; stroke-width: 4px; stroke-linejoin: round; }
+  .voorbeeld { font-size: .9rem; margin: 0 0 8px; }
+  .voorbeeld b { color: var(--navy); }
+  .legenda .ico { width: 26px; height: 26px; flex: 0 0 auto; }
+
+  /* overzicht */
+  .vergelijk .rij { grid-template-columns: 150px 170px minmax(0, 1.4fr) minmax(0, 1.2fr); }
+  .vergelijk .eig a { color: #fff; }
+
+  /* spel: scheid het mengsel */
+  .mengsel { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 12px; }
+  .mengsel .bekerico { flex: 0 0 auto; width: 92px; height: 92px; }
+  .mengsel h3 { margin: 0 0 2px; font-family: var(--kop); letter-spacing: .05em; color: var(--navy); font-size: 1.15rem; }
+  .mengsel p { margin: 2px 0; font-size: .92rem; }
+  .mengsel .stap { font-size: .8rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--zacht); }
+  .mengsel .doel { background: var(--licht); border-radius: 8px; padding: 6px 10px; margin-top: 6px; }
+  .methoden { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin-bottom: 12px; }
+  .methoden button { padding: 9px 6px; border-radius: 8px; border: 1px solid var(--rand); background: #fff; font-weight: 600; color: var(--navy2); }
+  .methoden button:hover:not(:disabled) { border-color: var(--navy3); background: var(--licht); }
+  .methoden button.goed { background: #e9f7ef; border-color: #1f8a4c; color: #145c33; }
+  .methoden button.fout { background: #fdecea; border-color: #c0392b; color: #8e2a20; }
+  .methoden button:disabled { cursor: default; }
+  .methoden button:disabled:not(.goed):not(.fout) { opacity: .45; }
+  .plaats-vraag { font-weight: 600; color: var(--navy); margin: 4px 0 8px; }
+  .bakje { display: flex; flex-wrap: wrap; gap: 8px; min-height: 58px; padding: 8px; border-radius: 10px; background: var(--licht); margin-bottom: 10px; }
+  .bakje:empty::after { content: "Alle deeltjes staan op een plek. Klik op Controleer."; color: var(--zacht); font-size: .88rem; align-self: center; }
+  .zones { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .zone { border: 2px dashed var(--navy3); border-radius: 12px; padding: 8px 10px 10px; background: #fff; min-height: 112px; transition: background .15s; }
+  .zone.boven { background: var(--licht2); border-style: solid; }
+  .zone .z-titel { display: block; font-family: var(--kop); letter-spacing: .05em; text-transform: uppercase; color: var(--navy); font-size: .98rem; }
+  .zone .z-sub { display: block; font-size: .8rem; color: var(--zacht); margin-bottom: 6px; }
+  .zone .z-in { display: flex; flex-wrap: wrap; gap: 6px; }
+  .dkaart { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px 4px 5px; border-radius: 10px; border: 2px solid var(--navy3); background: #fffdf5;
+            font-size: .88rem; font-weight: 600; color: var(--navy); cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; position: relative; z-index: 2; }
+  .dkaart svg { width: 34px; height: 34px; flex: 0 0 auto; }
+  .dkaart.sleep { cursor: grabbing; box-shadow: 0 10px 24px rgba(11,26,51,.3); opacity: .92; z-index: 5; }
+  .dkaart.gekozen { outline: 3px solid #9cc3f0; }
+  .dkaart.goed { border-color: #1f8a4c; background: #e9f7ef; cursor: default; }
+  .dkaart.fout { border-color: #c0392b; background: #fdecea; }
+  .dkaart.klaar { cursor: default; }
+
+  @media (max-width: 760px) {
+    .app { display: flex; flex-direction: column; align-items: stretch; }
+    .paneel { display: contents; }
+    .kaart.bed { order: 1; }
+    .podium { order: 2; }
+    .kaart.uit { order: 3; }
+    #tek { height: auto; aspect-ratio: 900 / 540; }
+    .scherm { padding: 8px; }
+    .vergelijk .rij { grid-template-columns: 1fr; }
+    .vergelijk .rij.koprij { display: none; }
+    .vergelijk .cel .cat { display: block; }
+    .methoden { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .zones { grid-template-columns: 1fr; gap: 8px; }
+    .zone { min-height: 84px; }
+    .mengsel .bekerico { width: 64px; height: 64px; }
+  }
+</style>
+</head>
+<body>
+<!-- kleurverlopen voor alle tekeningen (ook de icoontjes in het spel) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <radialGradient id="gO" cx="35%" cy="32%" r="70%"><stop offset="0" stop-color="#ff9a8c"/><stop offset="1" stop-color="#cf3a2e"/></radialGradient>
+    <radialGradient id="gH" cx="35%" cy="32%" r="70%"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#d3dae3"/></radialGradient>
+    <radialGradient id="gC" cx="35%" cy="32%" r="70%"><stop offset="0" stop-color="#7a828d"/><stop offset="1" stop-color="#262a30"/></radialGradient>
+    <radialGradient id="gVlam" cx="50%" cy="80%" r="70%"><stop offset="0" stop-color="#fff3b0"/><stop offset=".5" stop-color="#f6a623"/><stop offset="1" stop-color="#e0574a" stop-opacity=".2"/></radialGradient>
+    <marker id="pijl" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#2c5687"/></marker>
+  </defs>
+</svg>
+<nav class="tabs" role="tablist" aria-label="Onderdeel">
+  <button role="tab" data-cat="methode" aria-selected="true">Scheidingsmethoden</button>
+  <button role="tab" data-cat="overzicht" aria-selected="false">Overzicht</button>
+  <button role="tab" data-cat="spel" aria-selected="false">Spel</button>
+</nav>
+<div class="delen" id="delen"></div>
+
+<main class="scherm">
+  <section class="app" id="app">
+    <div class="kaart podium"><svg id="tek" viewBox="0 0 900 540" role="img"></svg></div>
+    <div class="paneel">
+      <div class="kaart bed">
+        <h2 id="bed-titel">Scheidingsmethode</h2>
+        <div id="bediening"></div>
+      </div>
+      <div class="kaart uit">
+        <h2>Wat zie je?</h2>
+        <div class="uitleg" id="uitleg" aria-live="polite"></div>
+      </div>
+    </div>
+  </section>
+  <section class="vergelijk" id="vergelijk" hidden></section>
+  <section class="spel" id="spel" hidden></section>
+</main>
+
+<script>
+"use strict";
+/* =====================================================================
+   Scheidingsmethoden (§3.4)
+   Zeven scheidingsmethoden, elk met een voorbeeld op macroniveau (links)
+   en een model op microniveau (rechts), een overzicht en een spel.
+   URL: ?tab=methode|overzicht|spel  &deel=<id van de methode>
+   ===================================================================== */
+const NS = "http://www.w3.org/2000/svg";
+const $ = id => document.getElementById(id);
+const tek = $("tek");
+const ease = x => x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x);
+const tussen = (t, a, b) => ease((t - a) / (b - a));
+const rnd = (a, b) => a + Math.random() * (b - a);
+const mix = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+
+function maak(tag, attrs, ouder, tekst) {
+  const el = document.createElementNS(NS, tag);
+  for (const k in attrs) el.setAttribute(k, attrs[k]);
+  if (tekst != null) el.textContent = tekst;
+  if (ouder) ouder.appendChild(el);
+  return el;
+}
+
+/* ---------- deeltjes (modellen, niet op schaal) ---------- */
+const AT = { O: ["url(#gO)", "#9b2a20"], H: ["url(#gH)", "#8a97a8"], C: ["url(#gC)", "#15181c"] };
+const MOL = {
+  water: [["H", -9.5, 7, 7], ["H", 9.5, 7, 7], ["O", 0, -2, 11]],
+  ethanol: [["H", -24, -2, 6], ["H", -19, 13, 6], ["H", -13, -9, 6], ["H", -3, -15, 6], ["H", 9, -14, 6], ["H", 26, -3, 5.5],
+            ["C", -14, 3, 9.5], ["C", 2, -4, 9.5], ["O", 17, 3, 9.5]]
+};
+const ZAND = [[-22, -6], [-14, -20], [4, -23], [19, -13], [23, 4], [13, 20], [-6, 22], [-20, 12]];
+/* soort → tekening; r = straal voor botsingen */
+const SOORT = {
+  water:   { r: 11, ico: 18, teken(g) { molecuul(g, "water", 1); } },
+  ethanol: { r: 17, ico: 26, teken(g) { molecuul(g, "ethanol", .8); } },
+  plus:    { r: 11, teken(g) { ionTeken(g, 11, "#3fa55b", "#23733a", "Na⁺"); } },
+  min:     { r: 15, teken(g) { ionTeken(g, 15, "#e0574a", "#9b2a20", "Cl⁻"); } },
+  zand:    { r: 22, teken(g) {
+    maak("path", { d: "M" + ZAND.map(([x, y]) => `${x},${y}`).join("L") + "Z", fill: "#d2ab72", stroke: "#8a6a3c", "stroke-width": 2, "stroke-linejoin": "round" }, g);
+    for (const [x, y] of [[-8, -6], [6, 4], [-3, 10], [10, -10]]) maak("circle", { cx: x, cy: y, r: 2.2, fill: "#a07b45" }, g);
+  } },
+  kleur:   { r: 14, teken(g) { tros(g, "#8e44ad", "#5b2370"); } },
+  smaak:   { r: 14, teken(g) { tros(g, "#b8661e", "#6e3a0c"); } },
+  cel:     { r: 23, teken(g) {
+    maak("ellipse", { rx: 25, ry: 15, fill: "#c0392b", stroke: "#7d1f16", "stroke-width": 2 }, g);
+    maak("ellipse", { rx: 13, ry: 6, fill: "#e06b5c" }, g);
+  } },
+  vet:     { r: 20, teken(g) {
+    maak("circle", { r: 20, fill: "#fbe9a6", stroke: "#c9a640", "stroke-width": 2 }, g);
+    maak("circle", { cx: -6, cy: -7, r: 5, fill: "#fff", opacity: .8 }, g);
+  } },
+  vezel:   { r: 15, teken(g) { maak("circle", { r: 15, fill: "#ece6d6", stroke: "#b4aa90", "stroke-width": 2 }, g); } },
+  kool:    { r: 12, teken(g) { maak("circle", { r: 12, fill: "#3c4248", stroke: "#1b1e22", "stroke-width": 1.5 }, g); } },
+  blad:    { r: 19, teken(g) { maak("rect", { x: -18, y: -18, width: 36, height: 36, rx: 7, fill: "#5f9440", stroke: "#3c6626", "stroke-width": 2 }, g);
+                               maak("circle", { r: 6, fill: "#3c6626", opacity: .55 }, g); } },
+  koffiedik: { r: 19, teken(g) { maak("path", { d: "M-18,-8 L-8,-19 L12,-16 L19,2 L9,18 L-12,16 Z", fill: "#6b4423", stroke: "#3b2410", "stroke-width": 2 }, g); } },
+  zout:    { r: 18, ico: 22, teken(g) {          // icoon: één Na⁺ en één Cl⁻ samen
+    const a = maak("g", { transform: "translate(-9 4)" }, g); ionTeken(a, 9, "#3fa55b", "#23733a", "+");
+    const b = maak("g", { transform: "translate(9 -4)" }, g); ionTeken(b, 11, "#e0574a", "#9b2a20", "−");
+  } }
+};
+function molecuul(g, soort, s) {
+  const b = maak("g", { transform: `scale(${s})` }, g);
+  for (const [el, x, y, r] of MOL[soort]) maak("circle", { cx: x, cy: y, r, fill: AT[el][0], stroke: AT[el][1], "stroke-width": 1 }, b);
+}
+function ionTeken(g, r, vul, rand, label) {
+  maak("circle", { r, fill: vul, stroke: rand, "stroke-width": 2 }, g);
+  maak("text", { "text-anchor": "middle", "dominant-baseline": "central", fill: "#fff", "font-weight": 700, "font-size": Math.max(9, r * .78) }, g, label);
+}
+function tros(g, vul, rand) {                    // een groot molecuul (kleurstof, smaakstof)
+  for (const [x, y, r] of [[-7, -5, 7], [6, -7, 6.5], [8, 6, 7], [-5, 8, 6.5], [0, 0, 6]])
+    maak("circle", { cx: x, cy: y, r, fill: vul, stroke: rand, "stroke-width": 1.2 }, g);
+}
+function deeltje(ouder, soort, x = 0, y = 0) {
+  const g = maak("g", {}, ouder);
+  SOORT[soort].teken(g);
+  const p = { g, soort, r: SOORT[soort].r, x, y, vx: 0, vy: 0, zw: 0, hoek: rnd(-3, 3), vh: rnd(-.6, .6) };
+  zet(p); return p;
+}
+function zet(p) { p.g.setAttribute("transform", `translate(${p.x.toFixed(1)} ${p.y.toFixed(1)}) rotate(${(p.hoek * 57.3).toFixed(0)})`); }
+function weg(D, p) { p.g.remove(); const i = D.indexOf(p); if (i >= 0) D.splice(i, 1); }
+/* klein svg-icoon (legenda, spel) */
+function icoon(soort, cls = "ico") {
+  const r = SOORT[soort].ico || SOORT[soort].r + 3;
+  return `<svg class="${cls}" viewBox="${-r} ${-r} ${2 * r} ${2 * r}" aria-hidden="true">${(() => {
+    const g = document.createElementNS(NS, "g"); SOORT[soort].teken(g); return g.innerHTML; })()}</svg>`;
+}
+
+/* ---------- beweging op microniveau ----------
+   D: bewegende deeltjes, S: vaste deeltjes (filtervezels, kool, blad).
+   p.zw = zwaartekracht, p.vast = zit vast, p.uit = vliegt weg als gas (botst niet). */
+const ZWAAR = { zand: 1, cel: 1, vet: 1 };          // korrels en cellen ruilen niet van plek met moleculen
+function fysica(D, S, vak, dt, o = {}) {
+  if (dt <= 0) return;
+  const K = o.ruis ?? 2200, demp = Math.exp(-4 * dt);
+  if (o.wissel) {                                   // in een vloeistof schuiven buren langs elkaar heen
+    D.wacht = (D.wacht || 0) - dt;
+    if (D.wacht <= 0) {
+      D.wacht = 1 / o.wissel;
+      const vrij = D.filter(p => !p.vast && !p.uit && !p.wissel && !p.spook && !ZWAAR[p.soort]);
+      const a = vrij[Math.floor(Math.random() * vrij.length)];
+      const buren = a ? vrij.filter(b => b !== a && (b.x - a.x) ** 2 + (b.y - a.y) ** 2 < ((a.r + b.r) * 1.4) ** 2) : [];
+      if (buren.length) {
+        const b = buren[Math.floor(Math.random() * buren.length)], kant = Math.random() < .5 ? 1 : -1;
+        a.wissel = { x0: a.x, y0: a.y, x1: b.x, y1: b.y, t: 0, kant, r: a.r + b.r };
+        b.wissel = { x0: b.x, y0: b.y, x1: a.x, y1: a.y, t: 0, kant, r: a.r + b.r };
+      }
+    }
+  }
+  for (const p of D) {
+    p.hoek += p.vh * dt;
+    if (p.wissel) {
+      const w = p.wissel; w.t += dt;
+      const f = Math.min(1, w.t / .9), e = ease(f), dx = w.x1 - w.x0, dy = w.y1 - w.y0, l = Math.hypot(dx, dy) || 1;
+      const boog = Math.sin(Math.PI * f) * w.r * .5 * w.kant;
+      p.x = w.x0 + dx * e - dy / l * boog; p.y = w.y0 + dy * e + dx / l * boog; p.vx = p.vy = 0;
+      if (f >= 1) p.wissel = null;
+      continue;
+    }
+    if (p.vast) continue;
+    if (p.uit) { p.x += p.vx * dt; p.y += p.vy * dt; p.vx += (Math.random() - .5) * 300 * dt; continue; }
+    p.vx += ((Math.random() - .5) * 2 * K + (p.ax || 0)) * dt;
+    p.vy += ((Math.random() - .5) * 2 * K + p.zw + (p.ay || 0)) * dt;
+    p.vx *= demp; p.vy *= demp;
+    p.x += p.vx * dt; p.y += p.vy * dt;
+  }
+  for (let it = 0; it < 2; it++) {
+    for (let i = 0; i < D.length; i++) {
+      const a = D[i]; if (a.uit) continue;
+      const av = a.vast || !!a.wissel;
+      for (let j = i + 1; j < D.length; j++) {
+        const b = D[j]; if (b.uit) continue;
+        const bv = b.vast || !!b.wissel;
+        if (av && bv) continue;
+        const dmin = (a.r + b.r) * 1.04;
+        const dx = b.x - a.x, dy = b.y - a.y;
+        if (Math.abs(dx) > dmin || Math.abs(dy) > dmin) continue;
+        const d2 = dx * dx + dy * dy; if (d2 >= dmin * dmin) continue;
+        const d = Math.sqrt(d2) || .01, nx = dx / d, ny = dy / d, ov = dmin - d;
+        const wa = av ? 0 : (a.zw > b.zw + 50 ? .3 : 1), wb = bv ? 0 : (b.zw > a.zw + 50 ? .3 : 1), s = wa + wb || 1;
+        a.x -= nx * ov * wa / s; a.y -= ny * ov * wa / s; b.x += nx * ov * wb / s; b.y += ny * ov * wb / s;
+      }
+    }
+    for (const p of D) {
+      if (p.vast || p.uit || p.wissel || p.spook) continue;
+      for (const s of S) {
+        const dmin = p.r + s.r, dx = p.x - s.x, dy = p.y - s.y;
+        if (Math.abs(dx) > dmin || Math.abs(dy) > dmin) continue;
+        const d2 = dx * dx + dy * dy; if (d2 >= dmin * dmin) continue;
+        const d = Math.sqrt(d2) || .01;
+        p.x = s.x + dx / d * dmin; p.y = s.y + dy / d * dmin;
+        const vn = (p.vx * dx + p.vy * dy) / d; if (vn < 0) { p.vx -= vn * dx / d; p.vy -= vn * dy / d; }
+      }
+    }
+    for (const p of D) {
+      if (p.vast || p.uit || p.wissel) continue;
+      const v = p.vak || vak;
+      if (p.x < v.x0 + p.r) { p.x = v.x0 + p.r; p.vx = Math.abs(p.vx) * .3; }
+      if (p.x > v.x1 - p.r) { p.x = v.x1 - p.r; p.vx = -Math.abs(p.vx) * .3; }
+      if (!o.rond) {
+        if (p.y < v.y0 + p.r) { p.y = v.y0 + p.r; p.vy = Math.abs(p.vy) * .3; }
+        if (p.y > v.y1 - p.r) { p.y = v.y1 - p.r; p.vy = -Math.abs(p.vy) * .3; }
+      }
+    }
+  }
+}
+/* vul een gebied met deeltjes in een rooster (dicht op elkaar, zoals in een vloeistof) */
+function vul(ouder, D, gebied, afst, kies) {
+  let rij = 0;
+  for (let y = gebied.y1 - afst / 2; y > gebied.y0 + afst / 2 - 1; y -= afst * .88, rij++) {
+    for (let x = gebied.x0 + afst / 2 + (rij % 2) * afst / 2; x < gebied.x1 - afst / 2 + 1; x += afst) {
+      const soort = kies(x, y); if (!soort) continue;
+      const p = deeltje(ouder, soort, x + rnd(-2, 2), y + rnd(-2, 2));
+      D.push(p);
+    }
+  }
+}
+
+/* ---------- tekening: macro links, micro rechts ---------- */
+const MK = { x0: 470, y0: 60, x1: 880, y1: 480 };      // micro-kader
+function nieuweTekening() { tek.innerHTML = ""; return maak("g", {}, tek); }
+function kader(spot, kleur = "#fbfdff") {
+  maak("text", { x: 225, y: 34, class: "kopje" }, tek, "MACRONIVEAU");
+  maak("text", { x: 675, y: 34, class: "kopje" }, tek, "MICRONIVEAU");
+  const s = spot.r;
+  maak("path", { d: `M${spot.x + s},${spot.y - s} L${MK.x0},${MK.y0} M${spot.x + s},${spot.y + s} L${MK.x0},${MK.y1}`, stroke: "#2c5687", "stroke-width": 1.5, "stroke-dasharray": "5 5", fill: "none", opacity: .7 }, tek);
+  maak("rect", { x: spot.x - s, y: spot.y - s, width: 2 * s, height: 2 * s, rx: 4, fill: "none", stroke: "#2c5687", "stroke-width": 2.5 }, tek);
+  const cp = maak("clipPath", { id: "clipM" }, tek);
+  maak("rect", { x: MK.x0, y: MK.y0, width: MK.x1 - MK.x0, height: MK.y1 - MK.y0, rx: 12 }, cp);
+  maak("rect", { x: MK.x0, y: MK.y0, width: MK.x1 - MK.x0, height: MK.y1 - MK.y0, rx: 12, fill: kleur }, tek);
+  const g = maak("g", { "clip-path": "url(#clipM)" }, tek);
+  const boven = maak("g", {}, tek);
+  maak("rect", { x: MK.x0, y: MK.y0, width: MK.x1 - MK.x0, height: MK.y1 - MK.y0, rx: 12, fill: "none", stroke: "#2c5687", "stroke-width": 3 }, boven);
+  maak("text", { x: 675, y: 504, class: "lab-k", "text-anchor": "middle" }, tek, "een model: zo stel je je de deeltjes voor (niet op schaal)");
+  return { g, boven };
+}
+function label(ouder, x, y, tekst, anker = "start", cls = "lab-k") { return maak("text", { x, y, class: cls, "text-anchor": anker }, ouder, tekst); }
+function lijntje(ouder, x1, y1, x2, y2) { return maak("line", { x1, y1, x2, y2, stroke: "#4a5a72", "stroke-width": 1.2 }, ouder); }
+function beker(g, x, y, w, h) {
+  maak("path", { d: `M${x - 6},${y} L${x},${y + 4} L${x},${y + h - 8} Q${x},${y + h} ${x + 8},${y + h} L${x + w - 8},${y + h} Q${x + w},${y + h} ${x + w},${y + h - 8} L${x + w},${y + 4} L${x + w + 6},${y}`,
+    fill: "none", stroke: "#2c5687", "stroke-width": 3.5, "stroke-linejoin": "round" }, g);
+}
+function brander(g, x, y) {                     // brander met vlam; de vlam (terug) flakkert in stap()
+  maak("rect", { x: x - 22, y: y + 70, width: 44, height: 10, rx: 3, fill: "#5b6b7c" }, g);
+  maak("rect", { x: x - 7, y: y + 18, width: 14, height: 54, fill: "#8796a6", stroke: "#4a5a72", "stroke-width": 1.5 }, g);
+  const vlam = maak("path", { d: `M${x},${y - 30} C${x + 14},${y - 8} ${x + 12},${y + 10} ${x},${y + 18} C${x - 12},${y + 10} ${x - 14},${y - 8} ${x},${y - 30} Z`, fill: "url(#gVlam)", opacity: 0 }, g);
+  return vlam;
+}
+function flakker(vlam, aan, x, y) {
+  vlam.setAttribute("opacity", aan ? .95 : 0);
+  if (aan) vlam.setAttribute("transform", `translate(${x} ${y + 18}) scale(${(1 + .08 * Math.sin(performance.now() / 70)).toFixed(3)}) translate(${-x} ${-y - 18})`);
+}
+function druppels(o, ouder, x, y0, yEind, aan, dt) {   // vallende druppels; o.dr = lijst
+  o.dr = o.dr || []; o.drT = (o.drT || 0) - dt;
+  if (aan && o.drT <= 0) { o.drT = .28; o.dr.push({ y: y0, el: maak("ellipse", { cx: x, cy: y0, rx: 3, ry: 4.5, fill: "#8fc0ea" }, ouder) }); }
+  for (const d of o.dr.slice()) {
+    d.y += 260 * dt; d.el.setAttribute("cy", d.y.toFixed(1));
+    if (d.y > yEind) { d.el.remove(); o.dr.splice(o.dr.indexOf(d), 1); }
+  }
+}
+
+/* ---------- uitleg ---------- */
+let uitlegOud = "";
+function zetUitleg(paragrafen) {                 // nieuwe alinea's worden aangevuld, de oude blijven staan
+  const html = paragrafen.map(p => `<p>${p}</p>`).join("");
+  if (html === uitlegOud) return;
+  const oud = uitlegOud; uitlegOud = html;
+  $("uitleg").innerHTML = html;
+  if (oud && html.startsWith(oud.slice(0, -4))) {
+    const ps = $("uitleg").querySelectorAll("p"); if (ps.length) ps[ps.length - 1].classList.add("nieuw");
+  }
+}
+
+/* =====================================================================
+   DE ZEVEN METHODEN
+   Elke methode: titel, verschil (de stofeigenschap), voorbeeld, duur (s),
+   legenda, teksten [[starttijd, html]], bouw() en stap(dt).
+   this.t loopt alleen als de leerling op Start heeft geklikt.
+   ===================================================================== */
+
+/* ---------- Filtreren: zand uit water ---------- */
+const mFiltreren = {
+  id: "filtreren", titel: "Filtreren", verschil: "deeltjesgrootte", voorbeeld: "zand uit water halen met een filter", duur: 27,
+  legenda: [["water", "watermolecuul"], ["zand", "zandkorrel (bestaat zelf uit heel veel deeltjes)"], ["vezel", "vezel van het filtreerpapier"]],
+  teksten: [
+    [0, `Zand en water vormen samen een <b>suspensie</b>. Je giet die door een trechter met filtreerpapier.`],
+    [1.5, `Het filtreerpapier is een netwerk van vezels met kleine gaatjes. Watermoleculen zijn veel kleiner dan de gaatjes: ze gaan erdoorheen.`],
+    [8, `Een zandkorrel bestaat uit heel veel deeltjes en is veel groter dan de gaatjes. De korrels blijven op het papier liggen: het <b>residu</b>. Wat erdoor gaat, heet het <b>filtraat</b>.`],
+    [14.5, `Filtreren berust op een verschil in <b>deeltjesgrootte</b>. Moleculen en ionen van een opgeloste stof zijn klein en gaan wél door het filter.`],
+    [21, `<b>Waarom filtreren?</b> Zo haal je een vaste stof die niet is opgelost uit een vloeistof, zoals zand uit water of koffiedik uit koffie. Het filtraat is helder.`]
+  ],
+  bouw() {
+    const g = nieuweTekening();
+    this.filtraat = maak("rect", { x: 142, width: 136, fill: "#cfe3f7" }, g);
+    beker(g, 140, 360, 140, 140);
+    this.vl = maak("path", { fill: "#b89466", opacity: .8 }, g);
+    this.zl = maak("path", { fill: "#a77d45" }, g);
+    maak("path", { d: "M106,148 L203,283 L217,283 L314,148", fill: "none", stroke: "#e2dac4", "stroke-width": 5, "stroke-linejoin": "round" }, g);
+    maak("path", { d: "M100,146 L200,284 L200,388 M320,146 L220,284 L220,388", fill: "none", stroke: "#2c5687", "stroke-width": 3.5, "stroke-linejoin": "round" }, g);
+    this.dg = maak("g", {}, g);
+    label(g, 210, 128, "zand en water", "middle", "lab");
+    label(g, 318, 196, "trechter met"); label(g, 318, 212, "filtreerpapier");
+    this.lRes = label(g, 236, 300, "residu: zand", "start", "lab"); this.lFil = label(g, 290, 470, "filtraat: water", "start", "lab");
+    this.dr = [];
+    const M = kader({ x: 210, y: 266, r: 15 });
+    this.S = [];
+    for (let x = MK.x0 + 27; x < MK.x1; x += 54) this.S.push(deeltje(M.g, "vezel", x, 300));
+    this.D = [];
+    const zand = [[520, 150], [610, 210], [700, 130], [790, 200], [840, 120], [560, 250]];
+    vul(M.g, this.D, { x0: MK.x0, y0: 110, x1: MK.x1, y1: 284 }, 22.5, (x, y) => zand.some(([a, b]) => Math.hypot(x - a, y - b) < 32) ? null : "water");
+    for (const [x, y] of zand) { const p = deeltje(M.g, "zand", x, y); p.vh *= .3; this.D.push(p); }
+    this.mRes = label(M.boven, 480, 92, "boven het filter", "start", "lab-m");
+    this.mFil = label(M.boven, 480, 470, "filtraat", "start", "lab-m");
+    label(M.boven, 870, 336, "filtreerpapier", "end", "lab-m");
+  },
+  stap(dt) {
+    const t = this.t, aan = t > 0;
+    for (const p of this.D) p.zw = p.soort === "zand" ? (aan ? 700 : 0) : (aan ? 110 : 260);
+    fysica(this.D, this.S, { x0: MK.x0, y0: 40, x1: MK.x1, y1: aan ? MK.y1 : 284 }, dt, { ruis: 1800, wissel: 3 });
+    this.D.forEach(zet);
+    // macro
+    const xl = y => 104 + (y - 146) * .7, xr = y => 316 - (y - 146) * .7;
+    const yS = 282 - 22 * tussen(t, 2, 14), L = 160 + 104 * tussen(t, 1, 20);
+    this.zl.setAttribute("d", `M${xl(yS)},${yS} L${xr(yS)},${yS} L${xr(282)},282 L${xl(282)},282 Z`);
+    this.vl.setAttribute("d", L < yS ? `M${xl(L)},${L} L${xr(L)},${L} L${xr(yS)},${yS} L${xl(yS)},${yS} Z` : "");
+    const h = 80 * tussen(t, 2, 21);
+    this.filtraat.setAttribute("y", 498 - h); this.filtraat.setAttribute("height", h);
+    druppels(this, this.dg, 210, 392, 498 - h, t > 1.5 && t < 20.5, dt);
+    this.lRes.setAttribute("opacity", t >= 8 ? 1 : 0); this.lFil.setAttribute("opacity", t >= 8 ? 1 : 0);
+    this.mRes.textContent = t >= 8 ? "residu: zandkorrels op het filter" : "boven het filter";
+    this.mFil.setAttribute("opacity", t >= 8 ? 1 : 0);
+  }
+};
+
+/* ---------- Bezinken: modderwater ---------- */
+const mBezinken = {
+  id: "bezinken", titel: "Bezinken", verschil: "dichtheid", voorbeeld: "zand laten zakken in modderwater", duur: 27,
+  legenda: [["water", "watermolecuul"], ["zand", "zandkorrel (bestaat zelf uit heel veel deeltjes)"]],
+  teksten: [
+    [0, `Modderwater: zandkorrels zweven door het water. Je laat het glas rustig staan.`],
+    [1.5, `De zandkorrels zakken langzaam naar de bodem: ze <b>bezinken</b>. De watermoleculen bewegen alle kanten op en blijven overal.`],
+    [8, `Zand heeft een grotere <b>dichtheid</b> dan water: in hetzelfde volume zit meer massa. De deeltjes in zand zijn zwaarder en zitten dichter op elkaar.`],
+    [14.5, `Op de bodem ligt nu een laagje: het <b>bezinksel</b>. Het heldere water erboven giet je voorzichtig af: <b>afschenken</b>. Bezinken berust op een verschil in <b>dichtheid</b>.`],
+    [21, `<b>Waarom bezinken?</b> Het kost geen energie en geen apparaten, alleen tijd. Daarom laat het waterleidingbedrijf rivierwater eerst bezinken in grote bassins. Heel kleine korreltjes zakken bijna niet.`]
+  ],
+  bouw() {
+    const g = nieuweTekening();
+    maak("rect", { x: 112, y: 210, width: 196, height: 268, fill: "#d7e7f6" }, g);
+    this.wolk = maak("rect", { x: 112, width: 196, fill: "#b89466", opacity: .75 }, g);
+    this.bez = maak("rect", { x: 112, width: 196, fill: "#a77d45" }, g);
+    beker(g, 110, 180, 200, 300);
+    label(g, 210, 160, "modderwater", "middle", "lab");
+    this.lBez = label(g, 318, 474, "bezinksel", "start", "lab");
+    this.lHel = label(g, 318, 260, "helder water", "start", "lab");
+    const M = kader({ x: 210, y: 452, r: 24 });
+    this.S = []; this.D = [];
+    const zand = [[520, 120], [640, 180], [760, 110], [830, 250], [560, 300], [700, 340], [800, 400]];
+    vul(M.g, this.D, { x0: MK.x0, y0: MK.y0, x1: MK.x1, y1: MK.y1 }, 24, (x, y) => zand.some(([a, b]) => Math.hypot(x - a, y - b) < 33) ? null : "water");
+    for (const [x, y] of zand) { const p = deeltje(M.g, "zand", x, y); p.vh *= .3; this.D.push(p); }
+    maak("rect", { x: MK.x0, y: MK.y1 - 6, width: MK.x1 - MK.x0, height: 6, fill: "#2c5687" }, M.g);
+    label(M.boven, 870, 466, "bodem van het bekerglas", "end", "lab-m");
+  },
+  stap(dt) {
+    const t = this.t;
+    for (const p of this.D) p.zw = p.soort === "zand" ? (t > 0 ? 240 : 0) : 0;
+    fysica(this.D, this.S, { x0: MK.x0, y0: MK.y0, x1: MK.x1, y1: MK.y1 - 6 }, dt, { ruis: 1700, wissel: 3 });
+    this.D.forEach(zet);
+    const b = 26 * tussen(t, 2, 18), top = 210 + (478 - b - 210) * tussen(t, 1.5, 19);
+    this.bez.setAttribute("y", 478 - b); this.bez.setAttribute("height", b);
+    this.wolk.setAttribute("y", top); this.wolk.setAttribute("height", Math.max(0, 478 - b - top));
+    this.wolk.setAttribute("opacity", (.75 - .35 * tussen(t, 8, 19)).toFixed(2));
+    this.lBez.setAttribute("opacity", t >= 14.5 ? 1 : 0); this.lHel.setAttribute("opacity", t >= 14.5 ? 1 : 0);
+  }
+};
+
+/* ---------- Centrifugeren: bloed ---------- */
+const mCentrifugeren = {
+  id: "centrifugeren", titel: "Centrifugeren", verschil: "dichtheid", voorbeeld: "bloedcellen scheiden van bloedplasma", duur: 27,
+  legenda: [["cel", "bloedcel (bestaat zelf uit heel veel deeltjes)"], ["water", "watermolecuul in het bloedplasma"]],
+  teksten: [
+    [0, `Bloed bestaat uit bloedcellen in bloedplasma (vooral water). In een stilstaand buisje zakken de cellen heel langzaam.`],
+    [1.5, `De centrifuge draait heel snel rond. Alles in het buisje wordt dan met een grote kracht naar de bodem van het buisje gedrukt.`],
+    [8, `Bloedcellen hebben een grotere <b>dichtheid</b> dan het plasma. Ze gaan veel sneller naar de bodem dan bij bezinken: in een paar minuten in plaats van uren.`],
+    [14.5, `Onderin zitten de bloedcellen, bovenin het gele bloedplasma. Centrifugeren berust net als bezinken op een verschil in <b>dichtheid</b>: het is versneld bezinken.`],
+    [21, `<b>Waarom centrifugeren?</b> Het gaat snel en werkt ook voor deeltjes die bijna niet bezinken. Zo haalt een zuivelfabriek room uit melk: vetdruppeltjes hebben een kleinere dichtheid en komen juist bovenin.`]
+  ],
+  bouw() {
+    const g = nieuweTekening();
+    // centrifuge, bovenaanzicht
+    maak("circle", { cx: 210, cy: 165, r: 98, fill: "#e4eaf2", stroke: "#2c5687", "stroke-width": 3 }, g);
+    this.rotor = maak("g", {}, g);
+    for (let k = 0; k < 6; k++) {
+      const a = maak("g", { transform: `rotate(${k * 60} 210 165)` }, this.rotor);
+      maak("rect", { x: 236, y: 156, width: 62, height: 18, rx: 9, fill: "#b8323a", stroke: "#5b6b7c", "stroke-width": 2 }, a);
+    }
+    maak("circle", { cx: 210, cy: 165, r: 14, fill: "#5b6b7c" }, g);
+    label(g, 20, 76, "centrifuge", "start", "lab"); label(g, 20, 94, "(van bovenaf)");
+    // buisje, zijaanzicht
+    const cp = maak("clipPath", { id: "buis" }, g);
+    maak("path", { d: "M184,312 L184,470 Q184,492 210,492 Q236,492 236,470 L236,312 Z" }, cp);
+    const b = maak("g", { "clip-path": "url(#buis)" }, g);
+    maak("rect", { x: 180, y: 322, width: 60, height: 175, fill: "#b8323a" }, b);
+    this.plasma = maak("rect", { x: 180, y: 322, width: 60, fill: "#f2d36b" }, b);
+    maak("path", { d: "M180,306 L184,312 L184,470 Q184,492 210,492 Q236,492 236,470 L236,312 L240,306", fill: "none", stroke: "#2c5687", "stroke-width": 3 }, g);
+    label(g, 120, 300, "buisje met bloed", "middle", "lab");
+    this.lPl = label(g, 246, 352, "bloedplasma", "start", "lab"); this.lCel = label(g, 246, 462, "bloedcellen", "start", "lab");
+    const M = kader({ x: 210, y: 440, r: 20 }, "#fdf6dc");
+    this.S = []; this.D = [];
+    const cellen = [[520, 110], [650, 150], [790, 100], [560, 230], [720, 260], [840, 300], [600, 380], [760, 410], [500, 440]];
+    vul(M.g, this.D, { x0: MK.x0, y0: MK.y0, x1: MK.x1, y1: MK.y1 }, 24, (x, y) => cellen.some(([a, c]) => Math.hypot(x - a, y - c) < 34) ? null : "water");
+    for (const [x, y] of cellen) { const p = deeltje(M.g, "cel", x, y); p.vh *= .4; this.D.push(p); }
+    maak("line", { x1: 858, y1: 120, x2: 858, y2: 420, stroke: "#2c5687", "stroke-width": 3, "marker-end": "url(#pijl)" }, M.boven);
+    label(M.boven, 848, 110, "naar de bodem", "end", "lab-m");
+    this.hoek = 0;
+  },
+  stap(dt) {
+    const t = this.t, draai = tussen(t, 1, 3) * (1 - tussen(t, 15, 18));
+    for (const p of this.D) p.zw = p.soort === "cel" ? (t > 0 ? Math.max(40 + 900 * draai, t > 10 ? 500 : 0) : 0) : 0;
+    fysica(this.D, this.S, { x0: MK.x0, y0: MK.y0, x1: MK.x1, y1: MK.y1 }, dt, { ruis: 1700, wissel: 3 });
+    this.D.forEach(zet);
+    this.hoek += draai * 520 * dt;
+    this.rotor.setAttribute("transform", `rotate(${(this.hoek % 360).toFixed(1)} 210 165)`);
+    this.rotor.setAttribute("opacity", (1 - .45 * draai).toFixed(2));
+    const p = tussen(t, 2.5, 15);
+    this.plasma.setAttribute("height", 95 * p);
+    this.lPl.setAttribute("opacity", t >= 14.5 ? 1 : 0); this.lCel.setAttribute("opacity", t >= 14.5 ? 1 : 0);
+  }
+};
+
+/* verdampen: deeltjes aan het oppervlak laten los met een kans per seconde (kans[soort]) */
+function verdamp(D, dt, kans) {
+  const vloei = D.filter(p => !p.uit && !p.vast);
+  if (!vloei.length) return;
+  const ys = vloei.map(p => p.y).sort((a, b) => a - b), opp = ys[Math.min(ys.length - 1, 4)];
+  for (const p of vloei) {
+    const k = kans[p.soort] || 0;
+    if (k && p.y < opp + 24 && Math.random() < k * dt) { p.uit = true; p.wissel = null; p.vy = -rnd(70, 120); p.vx = rnd(-40, 40); }
+  }
+  for (const p of D.slice()) if (p.uit && p.y < MK.y0 - 40) weg(D, p);
+}
+
+/* ---------- Destilleren: ethanol uit wijn ---------- */
+const mDestilleren = {
+  id: "destilleren", titel: "Destilleren", verschil: "kookpunt", voorbeeld: "ethanol (alcohol) uit wijn halen", duur: 27,
+  legenda: [["water", "watermolecuul"], ["ethanol", "ethanolmolecuul"], ["kleur", "kleurstofmolecuul"]],
+  teksten: [
+    [0, `Wijn is een mengsel van vooral water en ethanol (alcohol), met wat kleur- en smaakstoffen. Je verwarmt de wijn in een kolf.`],
+    [1.5, `Ethanol kookt bij 78 °C, water bij 100 °C. Ethanolmoleculen trekken elkaar minder sterk aan dan watermoleculen. Aan het oppervlak laten ze daardoor makkelijker los: ze verdampen.`],
+    [8, `De damp gaat naar de <b>koeler</b>. Daar condenseert hij en druppelt in het opvangvat: het <b>destillaat</b>. Er verdampt ook een beetje water mee.`],
+    [14.5, `De kleurstoffen en de meeste watermoleculen blijven in de kolf: het <b>residu</b>. Destilleren berust op een verschil in <b>kookpunt</b>.`],
+    [21, `<b>Waarom destilleren?</b> Zo scheid je vloeistoffen, of vang je een vloeistof op uit een oplossing, zoals zuiver water uit zeewater. Het kost wel veel energie.`]
+  ],
+  bouw() {
+    const g = nieuweTekening();
+    const cp = maak("clipPath", { id: "kolf" }, g); maak("circle", { cx: 110, cy: 330, r: 58 }, cp);
+    this.wijn = maak("rect", { x: 50, width: 120, height: 130, fill: "#8e2a3a", opacity: .72, "clip-path": "url(#kolf)" }, g);
+    maak("path", { d: "M100,170 L100,276 A60,60 0 1 0 120,276 L120,170", fill: "none", stroke: "#2c5687", "stroke-width": 3.5 }, g);
+    // thermometer
+    maak("line", { x1: 110, y1: 150, x2: 110, y2: 226, stroke: "#8796a6", "stroke-width": 5, "stroke-linecap": "round" }, g);
+    maak("circle", { cx: 110, cy: 230, r: 5, fill: "#c0392b" }, g);
+    this.tT = label(g, 96, 160, "20 °C", "end", "lab");
+    // zijbuis en koeler
+    maak("path", { d: "M120,206 L345,330 L345,404", fill: "none", stroke: "#2c5687", "stroke-width": 3.5, "stroke-linejoin": "round" }, g);
+    maak("path", { d: "M182,232 L198,203 L320,271 L304,300 Z", fill: "#dcebfa", stroke: "#2c5687", "stroke-width": 2.5 }, g);
+    maak("path", { d: "M188,222 L246,254", stroke: "#2c5687", "stroke-width": 2, fill: "none" }, g);
+    maak("path", { d: "M308,292 L318,310 M196,210 L206,192", stroke: "#2c5687", "stroke-width": 6, fill: "none" }, g);
+    label(g, 250, 196, "koeler", "start", "lab");
+    label(g, 324, 318, "koud water in", "start");
+    // opvangvat (erlenmeyer)
+    const ce = maak("clipPath", { id: "erl" }, g); maak("path", { d: "M335,410 L355,410 L355,428 L392,490 L298,490 L335,428 Z" }, ce);
+    this.dest = maak("rect", { x: 290, width: 110, fill: "#cfe3f7", "clip-path": "url(#erl)" }, g);
+    maak("path", { d: "M333,404 L335,410 L335,428 L298,490 L392,490 L355,428 L355,410 L357,404", fill: "none", stroke: "#2c5687", "stroke-width": 3, "stroke-linejoin": "round" }, g);
+    this.lDest = label(g, 398, 474, "destillaat", "end", "lab");
+    this.vlam = brander(g, 110, 400);
+    this.lRes = label(g, 176, 384, "kolf met wijn", "start", "lab");
+    this.dg = maak("g", {}, g);
+    const M = kader({ x: 110, y: 312, r: 16 });
+    this.S = []; this.D = [];
+    vul(M.g, this.D, { x0: MK.x0, y0: 250, x1: MK.x1, y1: MK.y1 }, 25, () => { const r = Math.random(); return r < .27 ? "ethanol" : r < .32 ? "kleur" : "water"; });
+    label(M.boven, 480, 86, "damp", "start", "lab-m");
+    label(M.boven, 480, 470, "wijn in de kolf", "start", "lab-m");
+  },
+  stap(dt) {
+    const t = this.t, aan = t > 0;
+    for (const p of this.D) p.zw = 320;
+    if (t > 1.2 && t < 20) verdamp(this.D, dt, { ethanol: .42, water: .02 });
+    fysica(this.D, this.S, MK, dt, { ruis: aan ? 2600 : 1900, wissel: 3 });
+    this.D.forEach(zet);
+    const T = 20 + 58 * tussen(t, 0, 1.4);
+    this.tT.textContent = `${Math.round(T)} °C`;
+    flakker(this.vlam, aan && t < 21, 110, 400);
+    this.wijn.setAttribute("y", 318 + 8 * tussen(t, 2, 20));
+    const h = 24 * tussen(t, 3.5, 21);
+    this.dest.setAttribute("y", 490 - h); this.dest.setAttribute("height", h);
+    druppels(this, this.dg, 345, 406, 490 - h, t > 3 && t < 20.5, dt);
+    this.lDest.setAttribute("opacity", t >= 8 ? 1 : 0); this.lRes.textContent = t >= 14.5 ? "residu in de kolf" : "kolf met wijn";
+  }
+};
+
+/* ---------- Extraheren: thee zetten ---------- */
+const mExtraheren = {
+  id: "extraheren", titel: "Extraheren", verschil: "oplosbaarheid", voorbeeld: "thee zetten", duur: 27,
+  legenda: [["water", "watermolecuul"], ["smaak", "kleur- of smaakstofmolecuul"], ["blad", "stukje blad (lost niet op)"]],
+  teksten: [
+    [0, `Thee zetten: je hangt een zakje met theeblaadjes in heet water.`],
+    [1.5, `In de blaadjes zitten kleur- en smaakstoffen. Die <b>lossen goed op</b> in heet water: ze raken los van het blad en verspreiden zich tussen de watermoleculen.`],
+    [8, `De rest van het blad lost niet op en blijft in het zakje. Het water heet hier het <b>extractiemiddel</b>; de oplossing die je krijgt het <b>extract</b>.`],
+    [14.5, `Extraheren berust op een verschil in <b>oplosbaarheid</b>: de stof die je wilt hebben lost goed op in het extractiemiddel, de rest niet. Het zakje werkt als filter.`],
+    [21, `<b>Waarom extraheren?</b> Zo haal je een stof uit een vaste stof, zoals koffie uit gemalen koffiebonen of suiker uit suikerbieten.`]
+  ],
+  bouw() {
+    const g = nieuweTekening();
+    maak("path", { d: "M300,280 Q350,280 350,340 Q350,400 300,400", fill: "none", stroke: "#2c5687", "stroke-width": 12 }, g);
+    maak("rect", { x: 112, y: 232, width: 186, height: 244, fill: "#d7e7f6" }, g);
+    const cm = maak("clipPath", { id: "mok" }, g); maak("rect", { x: 112, y: 232, width: 186, height: 244 }, cm);
+    this.thee = maak("rect", { x: 112, y: 232, width: 186, height: 244, fill: "#9c5a1c", opacity: 0 }, g);
+    this.wolk = maak("circle", { cx: 178, cy: 300, fill: "#9c5a1c", opacity: 0, "clip-path": "url(#mok)" }, g);
+    maak("path", { d: "M110,210 L110,466 Q110,480 124,480 L286,480 Q300,480 300,466 L300,210", fill: "none", stroke: "#2c5687", "stroke-width": 4 }, g);
+    maak("path", { d: "M178,262 L190,196 L232,196 L232,230", fill: "none", stroke: "#8796a6", "stroke-width": 1.5 }, g);
+    maak("rect", { x: 220, y: 226, width: 26, height: 22, fill: "#f6c94c", stroke: "#a88d2c" }, g);
+    maak("rect", { x: 150, y: 262, width: 56, height: 72, rx: 4, fill: "#efe6cf", stroke: "#b4aa90", "stroke-width": 2 }, g);
+    for (let i = 0; i < 12; i++) maak("circle", { cx: 160 + (i % 4) * 12, cy: 300 + Math.floor(i / 4) * 10, r: 4, fill: "#5f9440" }, g);
+    this.damp = [0, 1, 2].map(k => maak("path", { d: `M${150 + k * 45},195 q-10,-20 0,-40 q10,-20 0,-40`, fill: "none", stroke: "#b8c4d4", "stroke-width": 3, "stroke-linecap": "round", opacity: .5 }, g));
+    label(g, 205, 60, "theezakje in heet water", "middle", "lab");
+    this.lExt = label(g, 205, 506, "extract: thee", "middle", "lab");
+    const M = kader({ x: 204, y: 300, r: 15 });
+    this.S = []; this.D = []; this.losT = [];
+    for (let c = 0; c < 3; c++) for (let r = 0; r < 10; r++) this.S.push(deeltje(M.g, "blad", 495 + c * 42, 84 + r * 42));
+    maak("line", { x1: 618, y1: MK.y0, x2: 618, y2: MK.y1, stroke: "#b4aa90", "stroke-width": 3, "stroke-dasharray": "3 6" }, M.g);
+    const vak = { x0: 620, y0: MK.y0, x1: MK.x1, y1: MK.y1 };
+    vul(M.g, this.D, vak, 24, () => "water");
+    this.kleur = [];
+    for (let r = 0; r < 9; r++) {                      // smaakstoffen aan en in het blad
+      const p = deeltje(M.g, "smaak", r % 2 ? 600 : 558, 105 + r * 42); p.vast = true; p.spook = true; p.vak = vak;
+      p.los = 1.6 + (r % 2 ? r * .45 : 4 + r * .9); this.kleur.push(p); this.D.push(p);
+    }
+    this.vak = vak;
+    label(M.boven, 480, 86, "blad", "start", "lab-m");
+    label(M.boven, 870, 86, "heet water", "end", "lab-m");
+    label(M.boven, 612, 470, "zakje", "end", "lab-m");
+  },
+  stap(dt) {
+    const t = this.t, aan = t > 0;
+    for (const p of this.kleur) {
+      if (p.vast && aan && t >= p.los) { p.vast = false; p.ax = 900; }
+      if (p.spook && p.x > 640) { p.spook = false; p.ax = 0; }
+    }
+    fysica(this.D, this.S, this.vak, dt, { ruis: 2700, wissel: 3 });
+    for (const p of this.kleur) if (p.spook && !p.vast) p.x = Math.max(p.x, 540);
+    this.D.forEach(zet);
+    const f = tussen(t, 1.5, 22);
+    this.thee.setAttribute("opacity", (.62 * tussen(t, 4, 22)).toFixed(2));
+    this.wolk.setAttribute("r", 30 + 120 * f); this.wolk.setAttribute("opacity", (aan ? .4 * (1 - f) + .05 : 0).toFixed(2));
+    const nu = performance.now() / 1000;
+    this.damp.forEach((d, k) => d.setAttribute("opacity", (.25 + .25 * Math.sin(nu * 1.5 + k * 2)).toFixed(2)));
+    this.lExt.setAttribute("opacity", t >= 8 ? 1 : 0);
+  }
+};
+
+/* ---------- Adsorberen: kleurstof uit water met actieve kool ---------- */
+const mAdsorberen = {
+  id: "adsorberen", titel: "Adsorberen", verschil: "aanhechtingsvermogen", voorbeeld: "kleurstof uit water halen met actieve kool", duur: 27,
+  legenda: [["water", "watermolecuul"], ["kleur", "kleurstofmolecuul"], ["kool", "koolstofdeeltje van de actieve kool"]],
+  teksten: [
+    [0, `Water met een opgeloste kleurstof stroomt door een buis met korrels <b>actieve kool</b>.`],
+    [1.5, `Actieve kool zit vol kleine gaatjes en heeft daardoor een enorm oppervlak: 1 gram heeft een oppervlak van honderden vierkante meters.`],
+    [8, `Kleurstofmoleculen blijven aan het oppervlak van de kool hangen: ze worden <b>geadsorbeerd</b>. Watermoleculen blijven niet hangen en stromen verder.`],
+    [14.5, `Adsorberen berust op een verschil in <b>aanhechtingsvermogen</b>: hoe goed deeltjes aan het oppervlak van een stof blijven hangen. Het water dat eruit komt, is kleurloos.`],
+    [21, `<b>Waarom adsorberen?</b> Zo haal je kleine hoeveelheden opgeloste kleur-, geur- en smaakstoffen uit water of lucht, bijvoorbeeld in een waterfilterkan, een aquariumfilter of de afzuigkap.`]
+  ],
+  bouw() {
+    const g = nieuweTekening();
+    this.boven = maak("rect", { x: 182, width: 56, fill: "#8e44ad", opacity: .5 }, g);
+    for (let y = 212; y < 392; y += 13) for (let x = 188 + (y % 2) * 4; x < 236; x += 13) maak("circle", { cx: x + rnd(-1, 1), cy: y, r: 6.5, fill: "#3c4248" }, g);
+    maak("path", { d: "M180,120 L180,396 L203,418 L203,436 M240,120 L240,396 L217,418 L217,436", fill: "none", stroke: "#2c5687", "stroke-width": 3.5, "stroke-linejoin": "round" }, g);
+    this.opv = maak("rect", { x: 152, width: 116, fill: "#cfe3f7" }, g);
+    beker(g, 150, 440, 120, 60);
+    this.dg = maak("g", {}, g);
+    label(g, 250, 150, "water met kleurstof"); label(g, 250, 300, "actieve kool");
+    this.lUit = label(g, 278, 492, "kleurloos water", "start", "lab");
+    const M = kader({ x: 210, y: 300, r: 15 });
+    this.S = []; this.D = [];
+    const gat = (c, r) => (r >= 4 && r <= 5 && c >= 2) || (r >= 10 && r <= 11 && c >= 1) || (c >= 4 && r >= 7 && r <= 8);
+    for (let c = 0; c < 6; c++) for (let r = 0; r < 17; r++) if (!gat(c, r)) this.S.push(deeltje(M.g, "kool", 482 + c * 25, 70 + r * 25));
+    vul(M.g, this.D, { x0: 614, y0: MK.y0, x1: MK.x1, y1: MK.y1 }, 24, (x, y) => Math.random() < .09 ? "kleur" : "water");
+    this.kleur = this.D.filter(p => p.soort === "kleur");
+    label(M.boven, 482, 86, "actieve kool", "start", "lab-m");
+    maak("line", { x1: 860, y1: 120, x2: 860, y2: 300, stroke: "#2c5687", "stroke-width": 3, "marker-end": "url(#pijl)" }, M.boven);
+    label(M.boven, 850, 110, "stroming", "end", "lab-m");
+  },
+  stap(dt) {
+    const t = this.t, aan = t > 0;
+    for (const p of this.D) p.zw = aan ? 140 : 0;
+    if (t > 1.2) for (const p of this.kleur) {            // kleurstof dichtbij de kool wordt aangetrokken en blijft hangen
+      if (p.vast) continue;
+      let best = null, bd = 1e9;
+      for (const s of this.S) { const d = Math.hypot(s.x - p.x, s.y - p.y); if (d < bd) { bd = d; best = s; } }
+      if (bd < p.r + best.r + 4) { p.vast = true; p.wissel = null; }
+      else if (bd < 160) { p.ax = (best.x - p.x) / bd * 1500; p.ay = (best.y - p.y) / bd * 1500; }
+      else p.ax = p.ay = 0;
+    }
+    fysica(this.D, this.S, MK, dt, { ruis: 1900, wissel: 3, rond: true });
+    for (const p of this.D) {                             // stroming: onderaan eruit, bovenaan komt nieuw water binnen
+      if (p.y > MK.y1 + p.r) { p.y = MK.y0 - p.r; p.x = rnd(625, 860); p.wissel = null; }
+      if (p.y < MK.y0 - 30) p.y = MK.y0 - 30;
+    }
+    this.D.forEach(zet);
+    const L = 130 + 70 * tussen(t, 1, 22);
+    this.boven.setAttribute("y", L); this.boven.setAttribute("height", 208 - L);
+    const h = 40 * tussen(t, 3, 22);
+    this.opv.setAttribute("y", 498 - h); this.opv.setAttribute("height", h);
+    druppels(this, this.dg, 210, 440, 498 - h, t > 2.5 && t < 21, dt);
+    this.lUit.setAttribute("opacity", t >= 8 ? 1 : 0);
+  }
+};
+
+/* ---------- Indampen: zout uit zout water ---------- */
+const mIndampen = {
+  id: "indampen", titel: "Indampen", verschil: "kookpunt", voorbeeld: "zout uit zout water halen", duur: 27,
+  legenda: [["water", "watermolecuul"], ["plus", "natriumion (Na⁺)"], ["min", "chloride-ion (Cl⁻)"]],
+  teksten: [
+    [0, `Zout water: natriumchloride opgelost in water. Je verwarmt de oplossing in een indampschaal.`],
+    [1.5, `Watermoleculen trekken elkaar zwak aan. Aan het oppervlak laten ze los en gaan de lucht in: het water <b>verdampt</b>.`],
+    [8, `De ionen trekken elkaar sterk aan (ionbinding) en verdampen niet: zout kookt pas bij 1465 °C. Er blijft steeds minder water over.`],
+    [14.5, `Als bijna al het water weg is, gaan de ionen in een ionrooster zitten: zoutkristallen. Die blijven achter in de schaal: het <b>residu</b>. Indampen berust op een verschil in <b>kookpunt</b>.`],
+    [21, `<b>Waarom indampen?</b> Zo haal je een opgeloste vaste stof uit een oplossing, als je het water niet hoeft op te vangen. In zoutpannen aan zee doet de zon het werk.`]
+  ],
+  bouw() {
+    const g = nieuweTekening();
+    const cp = maak("clipPath", { id: "schaal" }, g); maak("path", { d: "M114,280 Q210,380 306,280 Z" }, cp);
+    this.vl = maak("rect", { x: 110, width: 200, height: 120, fill: "#cfe3f7", "clip-path": "url(#schaal)" }, g);
+    this.kristal = maak("g", { opacity: 0 }, g);
+    for (let i = 0; i < 9; i++) maak("rect", { x: 172 + i * 9 + rnd(-2, 2), y: 318 + Math.abs(i - 4) * -1.2 + rnd(-2, 1), width: 7, height: 7, fill: "#fff", stroke: "#8796a6", transform: `rotate(${rnd(-20, 20)} ${176 + i * 9} 322)` }, this.kristal);
+    maak("path", { d: "M110,276 Q210,384 310,276", fill: "none", stroke: "#2c5687", "stroke-width": 4 }, g);
+    maak("line", { x1: 120, y1: 334, x2: 300, y2: 334, stroke: "#8796a6", "stroke-width": 4 }, g);
+    maak("path", { d: "M140,334 L118,480 M280,334 L302,480 M210,334 L210,344", stroke: "#5b6b7c", "stroke-width": 5, fill: "none" }, g);
+    this.vlam = brander(g, 210, 390);
+    this.damp = [0, 1, 2].map(k => maak("path", { d: `M${160 + k * 50},262 q-10,-20 0,-40 q10,-20 0,-40`, fill: "none", stroke: "#b8c4d4", "stroke-width": 3, "stroke-linecap": "round", opacity: 0 }, g));
+    label(g, 210, 120, "zout water in een indampschaal", "middle", "lab");
+    this.lDamp = label(g, 300, 170, "waterdamp", "start", "lab");
+    this.lRes = label(g, 318, 312, "residu: zout", "start", "lab");
+    const M = kader({ x: 210, y: 318, r: 16 });
+    this.S = []; this.D = [];
+    const ionen = [];
+    for (let i = 0; i < 16; i++) ionen.push([500 + (i % 8) * 50 + rnd(-6, 6), 270 + Math.floor(i / 8) * 110 + rnd(-10, 10), i % 2 ? "min" : "plus"]);
+    vul(M.g, this.D, { x0: MK.x0, y0: 200, x1: MK.x1, y1: MK.y1 - 6 }, 24, (x, y) => ionen.some(([a, b]) => Math.hypot(x - a, y - b) < 22) ? null : "water");
+    for (const [x, y, s] of ionen) this.D.push(deeltje(M.g, s, x, y));
+    this.ionen = this.D.filter(p => p.soort !== "water");
+    maak("rect", { x: MK.x0, y: MK.y1 - 6, width: MK.x1 - MK.x0, height: 6, fill: "#2c5687" }, M.g);
+    label(M.boven, 480, 86, "lucht", "start", "lab-m");
+    label(M.boven, 870, 466, "bodem van de schaal", "end", "lab-m");
+    this.rooster = false;
+  },
+  stap(dt) {
+    const t = this.t, aan = t > 0;
+    for (const p of this.D) p.zw = 320;
+    const water = this.D.filter(p => p.soort === "water" && !p.uit).length;
+    if (t > 1.2) verdamp(this.D, dt, { water: t > 14 ? 3 : .75 });
+    if (!this.rooster && aan && (t > 15 || water < 18)) {            // de ionen gaan ter plekke in een rooster zitten
+      this.rooster = true;
+      const plekken = [];
+      for (let r = 0; r < 2; r++) for (let c = 0; c < 8; c++) plekken.push({ x: 675 + (c - 3.5) * 29, y: MK.y1 - 6 - 15 - r * 29, s: (r + c) % 2 ? "min" : "plus" });
+      for (const p of this.ionen.slice().sort((a, b) => b.y - a.y)) {
+        let best = null, bd = 1e9;
+        for (const q of plekken) if (!q.bezet && q.s === p.soort) { const d = Math.hypot(q.x - p.x, q.y - p.y); if (d < bd) { bd = d; best = q; } }
+        best.bezet = true; p.doel = best;
+      }
+    }
+    if (this.rooster) for (const p of this.ionen) {
+      p.vast = true; p.wissel = null;
+      const k = Math.min(1, dt * 1.6); p.x += (p.doel.x - p.x) * k; p.y += (p.doel.y - p.y) * k; p.vh = 0;
+    }
+    fysica(this.D, this.S, { x0: MK.x0, y0: MK.y0 - 60, x1: MK.x1, y1: MK.y1 - 6 }, dt, { ruis: aan ? 2500 : 1900, wissel: 3 });
+    this.D.forEach(zet);
+    flakker(this.vlam, aan && t < 21, 210, 390);
+    this.vl.setAttribute("y", 290 + 37 * tussen(t, 1.5, 19));
+    this.kristal.setAttribute("opacity", tussen(t, 13, 17).toFixed(2));
+    const nu = performance.now() / 1000, d = aan && t < 18 ? 1 : 0;
+    this.damp.forEach((p, k) => p.setAttribute("opacity", (d * (.3 + .25 * Math.sin(nu * 1.5 + k * 2))).toFixed(2)));
+    this.lDamp.setAttribute("opacity", aan && t < 18 ? 1 : 0); this.lRes.setAttribute("opacity", t >= 14.5 ? 1 : 0);
+  }
+};
+
+const METHODEN = [mFiltreren, mBezinken, mCentrifugeren, mDestilleren, mExtraheren, mAdsorberen, mIndampen];
+
+/* ===================================================================== OVERZICHT */
+const OVERZICHT = {
+  filtreren: ["deeltjesgrootte", "Kleine moleculen en ionen gaan door de gaatjes van het filter; korrels van een vaste stof zijn te groot.", "Een vaste stof die niet is opgelost uit een vloeistof halen: zand uit water, koffiedik uit koffie."],
+  bezinken: ["dichtheid", "Korrels met een grotere dichtheid dan de vloeistof zakken naar de bodem. Daarna afschenken.", "Grove korrels uit een vloeistof halen als je tijd hebt en geen energie wilt gebruiken: bezinkbassins bij de waterzuivering."],
+  centrifugeren: ["dichtheid", "Door het snelle draaien gaan deeltjes met een grotere dichtheid veel sneller naar de bodem (versneld bezinken).", "Snel scheiden, ook als deeltjes bijna niet bezinken: bloed, room uit melk."],
+  destilleren: ["kookpunt", "De stof met het laagste kookpunt verdampt het eerst: die deeltjes trekken elkaar minder sterk aan. De damp condenseert in de koeler.", "Vloeistoffen scheiden of een vloeistof opvangen: ethanol uit wijn, drinkwater uit zeewater."],
+  extraheren: ["oplosbaarheid", "De ene stof lost goed op in het extractiemiddel, de rest niet.", "Een stof uit een vaste stof halen: thee, koffie, suiker uit suikerbieten."],
+  adsorberen: ["aanhechtingsvermogen", "Sommige deeltjes blijven aan het oppervlak van het adsorptiemiddel (actieve kool) hangen, andere niet.", "Kleine hoeveelheden kleur-, geur- of smaakstoffen uit water of lucht halen: waterfilterkan, afzuigkap."],
+  indampen: ["kookpunt", "Het oplosmiddel verdampt; de opgeloste stof heeft een veel hoger kookpunt en blijft achter.", "Een opgeloste vaste stof winnen als je het oplosmiddel niet hoeft op te vangen: zout uit zeewater."]
+};
+function bouwOverzicht() {
+  let h = `<div class="rij koprij"><div class="kop">Methode</div><div class="kop">Verschil in</div><div class="kop">Op microniveau</div><div class="kop">Gebruik je om …</div></div>`;
+  for (const m of METHODEN) {
+    const [v, micro, gebruik] = OVERZICHT[m.id];
+    h += `<div class="rij"><div class="eig">${m.titel}<br><a data-id="${m.id}" href="#">Bekijk →</a></div>
+      <div class="cel"><span class="cat">Verschil in</span><b>${v}</b></div>
+      <div class="cel"><span class="cat">Op microniveau</span>${micro}</div>
+      <div class="cel"><span class="cat">Gebruik je om …</span>${gebruik}</div></div>`;
+  }
+  $("vergelijk").innerHTML = h;
+  $("vergelijk").querySelectorAll("a[data-id]").forEach(a => a.addEventListener("click", e => { e.preventDefault(); kies("methode", a.dataset.id); }));
+}
+
+/* ===================================================================== SPEL: SCHEID HET MENGSEL
+   Elke vraag is één stap: kies de scheidingsmethode en zet daarna de deeltjes op de goede plek.
+   Een fout (verkeerde methode of verkeerd geplaatste deeltjes) kost een poging. */
+const ZONES = {
+  filtreren: [["Residu", "blijft in het filter"], ["Filtraat", "gaat door het filter"]],
+  bezinken: [["Bezinksel", "zakt naar de bodem"], ["Vloeistof erboven", "giet je af"]],
+  centrifugeren: [["Onderin de buis", "grotere dichtheid"], ["Bovenin de buis", "kleinere dichtheid"]],
+  destilleren: [["Destillaat", "verdampt en condenseert in het opvangvat"], ["Residu", "blijft in de kolf"]],
+  extraheren: [["Extract", "de oplossing in het extractiemiddel"], ["Blijft achter", "lost niet op"]],
+  adsorberen: [["Blijft aan de kool hangen", "wordt geadsorbeerd"], ["Stroomt erlangs", "komt eruit"]],
+  indampen: [["Verdampt", "gaat de lucht in"], ["Residu", "blijft achter in de schaal"]]
+};
+const HINT = {
+  filtreren: n => `Kijk nog eens naar de ${n}: zijn ze groter of kleiner dan de gaatjes in het filter? Denk eraan dat opgeloste deeltjes heel klein zijn.`,
+  bezinken: n => `Kijk nog eens naar de ${n}: zakken ze naar de bodem? Denk aan de dichtheid, en aan of de stof is opgelost.`,
+  centrifugeren: n => `Kijk nog eens naar de ${n}: hebben ze een grotere of een kleinere dichtheid dan de vloeistof eromheen?`,
+  destilleren: n => `Kijk nog eens naar de ${n}: hebben ze een laag of een hoog kookpunt?`,
+  extraheren: n => `Kijk nog eens naar de ${n}: lossen ze op in het extractiemiddel? En waar zit het extractiemiddel zelf na het extraheren?`,
+  adsorberen: n => `Kijk nog eens naar de ${n}: blijven ze aan het oppervlak van de actieve kool hangen?`,
+  indampen: n => `Kijk nog eens naar de ${n}: verdampen ze als je de oplossing verwarmt, of is hun kookpunt veel te hoog?`
+};
+/* waarom een methode hier níet past (als er geen speciale tekst bij de stap staat) */
+const FOUT_ALG = {
+  filtreren: "Filtreren scheidt op deeltjesgrootte: alleen korrels van een vaste stof die niet is opgelost blijven in het filter hangen.",
+  bezinken: "Bezinken scheidt op dichtheid: alleen korrels die niet zijn opgelost en zwaarder zijn dan de vloeistof zakken naar de bodem. Opgeloste deeltjes zakken nooit.",
+  centrifugeren: "Centrifugeren is versneld bezinken (verschil in dichtheid). Opgeloste deeltjes en vaste stoffen zonder vloeistof scheid je er niet mee.",
+  destilleren: "Destilleren scheidt op kookpunt en vangt de damp op. Dat heeft alleen zin als er een vloeistof is die je wilt opvangen.",
+  extraheren: "Extraheren scheidt op oplosbaarheid: je lost één stof uit het mengsel op in een extractiemiddel.",
+  adsorberen: "Adsorberen scheidt op aanhechtingsvermogen: het haalt kleine hoeveelheden opgeloste kleur-, geur- of smaakstoffen weg.",
+  indampen: "Indampen laat het oplosmiddel verdampen; de opgeloste vaste stof blijft achter. Dat werkt alleen bij een oplossing."
+};
+const NAAM = { filtreren: "Filtreren", bezinken: "Bezinken", centrifugeren: "Centrifugeren", destilleren: "Destilleren", extraheren: "Extraheren", adsorberen: "Adsorberen", indampen: "Indampen" };
+const NAAM_D = { water: "watermoleculen", zout: "zout (Na⁺ en Cl⁻)", zand: "zandkorrels", ethanol: "ethanolmoleculen", kleur: "kleurstofmoleculen",
+  smaak: "kleur- en smaakstoffen", blad: "bladresten", koffiedik: "koffiedik", cel: "bloedcellen", vet: "vetdruppeltjes" };
+
+/* mengsels: d = deeltjes in het begin (met eigen namen), stappen met m (methode), doel, in (zone per deeltje), u (uitleg per deeltje),
+   goed (waarom deze methode), fout (waarom een andere methode niet past), verder (welke zone ga je mee verder: 0, 1 of "alles") */
+const MENGSELS = [
+  { id: "strooizout", naam: "Strooizout", wat: "Zand gemengd met keukenzout, zoals het strooizout van de weg. Het is droog.", d: ["zand", "zout"], stappen: [
+    { m: "extraheren", extra: ["water"], doel: "Haal het zout uit het zand. Je mag water gebruiken.",
+      in: { zout: 0, water: 0, zand: 1 },
+      u: { zout: "Zout lost goed op in water: de ionen gaan tussen de watermoleculen zitten.", water: "Water is het extractiemiddel; het zout zit erin opgelost.", zand: "Zand lost niet op in water en blijft achter." },
+      goed: "Zout lost op in water en zand niet: een verschil in <b>oplosbaarheid</b>. Water is het extractiemiddel.",
+      fout: { filtreren: "Het mengsel is droog: zand- en zoutkorrels zijn allebei te groot voor een filter en blijven er allebei in liggen. Welke van de twee stoffen lost op in water?",
+              indampen: "Er is nog niets om in te dampen: het mengsel is droog. Welke van de twee stoffen lost op in water?",
+              bezinken: "Het mengsel is droog; zand en zout zakken in de lucht allebei. Welke van de twee stoffen lost op in water?",
+              destilleren: "Er is geen vloeistof om te verdampen. Welke van de twee stoffen lost op in water?" },
+      verder: "alles", verderTekst: "Het zand en de zoutoplossing zitten nog samen in het bekerglas." },
+    { m: "filtreren", doel: "Haal het zand uit de zoutoplossing. Je wilt een heldere oplossing.",
+      in: { zand: 0, water: 1, zout: 1 },
+      u: { zand: "Zandkorrels zijn veel groter dan de gaatjes in het filter.", water: "Watermoleculen zijn klein en gaan door het filter.", zout: "Het zout is opgelost: de ionen zijn klein en gaan door het filter." },
+      goed: "Zand is niet opgelost en de zandkorrels zijn veel groter dan de gaatjes in het filter: een verschil in <b>deeltjesgrootte</b>.",
+      fout: { bezinken: "Bezinken haalt het meeste zand weg, maar heel fijne korreltjes blijven zweven: de oplossing wordt niet helemaal helder. Welke methode houdt álle korrels tegen?",
+              indampen: "Dan verdampt het water en blijven zand en zout samen achter: dan heb je weer het begin. Je wilt eerst alleen het zand eruit." },
+      verder: 1, verderTekst: "Je gaat verder met het filtraat: de zoutoplossing." },
+    { m: "indampen", doel: "Haal het zout uit de zoutoplossing. Het water hoef je niet op te vangen.",
+      in: { water: 0, zout: 1 },
+      u: { water: "Water heeft een laag kookpunt: de moleculen trekken elkaar zwak aan en verdampen.", zout: "Zout kookt pas bij 1465 °C: de ionen trekken elkaar sterk aan en blijven als kristallen achter." },
+      goed: "Water verdampt en zout niet: een verschil in <b>kookpunt</b>. Je hoeft het water niet op te vangen, dus indampen is het eenvoudigst.",
+      fout: { destilleren: "Destilleren kan wel, maar dan vang je ook het water op. Dat hoeft hier niet: welke eenvoudigere methode laat het water gewoon verdampen?",
+              filtreren: "Het zout is opgelost: de ionen zijn kleiner dan de gaatjes in het filter en gaan er dwars doorheen." } }
+  ] },
+  { id: "zeewater", naam: "Zeewater op een schip", wat: "Op een schip wil je drinkwater maken van zeewater.", d: ["water", "zout"], stappen: [
+    { m: "destilleren", doel: "Maak drinkwater: je wilt het water opvangen, zonder zout.",
+      in: { water: 0, zout: 1 },
+      u: { water: "Water verdampt bij 100 °C, condenseert in de koeler en komt in het opvangvat.", zout: "De ionen trekken elkaar sterk aan en verdampen niet: het zout blijft in de kolf." },
+      goed: "Water heeft een veel lager kookpunt dan zout: een verschil in <b>kookpunt</b>. Bij destilleren vang je de damp op als zuiver water.",
+      fout: { indampen: "Bij indampen gaat het water de lucht in. Je wilt het water juist opvangen om te drinken.",
+              filtreren: "Het zout is opgelost: de ionen zijn kleiner dan de gaatjes in het filter en gaan er dwars doorheen." } }
+  ] },
+  { id: "wijn", naam: "Wijn", wat: "Wijn is vooral water met ethanol (alcohol) en wat kleur- en smaakstoffen.", d: ["water", "ethanol", "kleur"], namen: { kleur: "kleur- en smaakstoffen" }, stappen: [
+    { m: "destilleren", doel: "Haal de ethanol uit de wijn.",
+      in: { ethanol: 0, water: 1, kleur: 1 },
+      u: { ethanol: "Ethanol kookt bij 78 °C: de moleculen trekken elkaar minder sterk aan en verdampen het eerst.", water: "Water kookt bij 100 °C: de meeste watermoleculen blijven in de kolf (een beetje gaat mee).", kleur: "De kleur- en smaakstoffen verdampen niet en blijven in de kolf." },
+      goed: "Ethanol kookt bij 78 °C en water bij 100 °C: een verschil in <b>kookpunt</b>. De ethanol verdampt het eerst en vang je op als destillaat.",
+      fout: { indampen: "Bij indampen gaat de damp de lucht in. Je wilt de ethanol juist opvangen.",
+              filtreren: "Ethanol en water zijn allebei vloeistoffen die door elkaar gemengd zijn: de moleculen zijn klein en gaan allemaal door het filter." } }
+  ] },
+  { id: "thee", naam: "Thee zetten", wat: "Een zakje met theeblaadjes in heet water.", d: ["blad", "smaak", "water"], stappen: [
+    { m: "extraheren", doel: "Haal de kleur- en smaakstoffen uit de theeblaadjes.",
+      in: { smaak: 0, water: 0, blad: 1 },
+      u: { smaak: "Kleur- en smaakstoffen lossen goed op in heet water.", water: "Water is het extractiemiddel: de thee is de oplossing.", blad: "De rest van het blad lost niet op en blijft in het zakje." },
+      goed: "De kleur- en smaakstoffen lossen goed op in heet water en de rest van het blad niet: een verschil in <b>oplosbaarheid</b>.",
+      fout: { filtreren: "Het zakje werkt wel als filter, maar de stoffen moeten eerst uit het blad in het water komen. Welke methode haalt een stof uit een vaste stof met een oplosmiddel?" } }
+  ] },
+  { id: "koffie", naam: "Koffie zetten", wat: "Gemalen koffiebonen met heet water in een kan.", d: ["koffiedik", "smaak", "water"], namen: { smaak: "kleur- en smaakstoffen" }, stappen: [
+    { m: "extraheren", doel: "Haal de kleur- en smaakstoffen uit de gemalen koffie.",
+      in: { smaak: 0, water: 0, koffiedik: 1 },
+      u: { smaak: "Kleur- en smaakstoffen lossen goed op in heet water.", water: "Water is het extractiemiddel: de koffie is de oplossing.", koffiedik: "De rest van de gemalen bonen lost niet op: dat is het koffiedik." },
+      goed: "De smaakstoffen lossen op in heet water en de rest van de bonen niet: een verschil in <b>oplosbaarheid</b>.",
+      verder: "alles", verderTekst: "De koffie en het koffiedik zitten nog samen in de kan." },
+    { m: "filtreren", doel: "Haal het koffiedik uit de koffie.",
+      in: { koffiedik: 0, water: 1, smaak: 1 },
+      u: { koffiedik: "De korrels koffiedik zijn groter dan de gaatjes in het koffiefilter.", water: "Watermoleculen zijn klein en gaan door het filter.", smaak: "De smaakstoffen zijn opgelost: de moleculen zijn klein en gaan door het filter." },
+      goed: "Koffiedik is niet opgelost en de korrels zijn groter dan de gaatjes in het filter: een verschil in <b>deeltjesgrootte</b>.",
+      fout: { bezinken: "Bezinken haalt het grove koffiedik weg, maar fijne korreltjes blijven zweven. Welke methode houdt álle korrels tegen?" } }
+  ] },
+  { id: "bloed", naam: "Bloed in het laboratorium", wat: "Een buisje bloed: bloedcellen in bloedplasma (vooral water).", d: ["cel", "water"], namen: { water: "bloedplasma (vooral water)" }, stappen: [
+    { m: "centrifugeren", doel: "Scheid de bloedcellen snel en goed van het bloedplasma.",
+      in: { cel: 0, water: 1 },
+      u: { cel: "Bloedcellen hebben een grotere dichtheid dan het plasma en gaan naar de bodem.", water: "Het plasma heeft een kleinere dichtheid en blijft bovenin." },
+      goed: "Bloedcellen hebben een grotere <b>dichtheid</b> dan plasma. Centrifugeren is versneld bezinken: het gaat in minuten in plaats van uren.",
+      fout: { bezinken: "Bezinken werkt wel, maar het duurt uren. Je wilt het snel: welke methode versnelt het bezinken?",
+              filtreren: "Bloedcellen zijn zacht en heel klein; ze verstoppen het filter of gaan erdoor. Het verschil dat je hier gebruikt is de dichtheid." } }
+  ] },
+  { id: "melk", naam: "Room uit melk", wat: "Melk bevat kleine vetdruppeltjes in water. In de zuivelfabriek wil je de room (het vet) eruit halen.", d: ["vet", "water"], namen: { water: "water (de rest van de melk)" }, stappen: [
+    { m: "centrifugeren", doel: "Haal de vetdruppeltjes snel uit de melk.",
+      in: { water: 0, vet: 1 },
+      u: { water: "Water heeft een grotere dichtheid dan vet en gaat naar de buitenkant (onderin).", vet: "Vet heeft een kleinere dichtheid dan water: de vetdruppeltjes komen bovenin." },
+      goed: "Vet heeft een kleinere <b>dichtheid</b> dan water. Door het snelle draaien gaat het water naar onderen en komen de vetdruppeltjes bovenin.",
+      fout: { bezinken: "Laat je melk staan, dan komt de room wel langzaam boven, maar dat duurt lang. In de fabriek moet het snel.",
+              filtreren: "De vetdruppeltjes zijn zo klein dat ze door een filter gaan." } }
+  ] },
+  { id: "sloot", naam: "Slootwater zuiveren", wat: "Water uit een sloot: troebel van het zand, met een bruine kleur en een vieze geur.", d: ["zand", "kleur", "water"], namen: { kleur: "geur- en kleurstoffen" }, stappen: [
+    { m: "bezinken", doel: "Haal eerst het meeste zand eruit, in een groot bassin, zonder apparaten en zonder energie.",
+      in: { zand: 0, water: 1, kleur: 1 },
+      u: { zand: "Zand heeft een grotere dichtheid dan water en zakt naar de bodem.", water: "Het water blijft erboven.", kleur: "De geur- en kleurstoffen zijn opgelost en zakken niet." },
+      goed: "Zand heeft een grotere <b>dichtheid</b> dan water en zakt vanzelf. Het kost alleen tijd, geen energie.",
+      fout: { filtreren: "Filtreren kan, maar bij heel veel water raakt een filter snel verstopt. Welke methode werkt vanzelf in een groot bassin?",
+              centrifugeren: "Een centrifuge kost energie en is veel te klein voor zoveel water. Welke methode werkt vanzelf in een groot bassin?" },
+      verder: 1, verderTekst: "Je gaat verder met het water boven het bezinksel." },
+    { m: "adsorberen", doel: "Haal de opgeloste geur- en kleurstoffen uit het water.",
+      in: { kleur: 0, water: 1 },
+      u: { kleur: "Geur- en kleurstoffen blijven aan het oppervlak van de actieve kool hangen.", water: "Watermoleculen blijven niet hangen en stromen erlangs." },
+      goed: "Geur- en kleurstoffen hechten goed aan actieve kool en water niet: een verschil in <b>aanhechtingsvermogen</b>.",
+      fout: { filtreren: "De geur- en kleurstoffen zijn opgelost: de moleculen zijn klein en gaan door het filter.",
+              destilleren: "Destilleren kan wel, maar kost voor zoveel water veel te veel energie. Welke methode haalt kleine hoeveelheden opgeloste stoffen weg zonder te verwarmen?" } }
+  ] },
+  { id: "emmer", naam: "Emmer met zand en water", wat: "Je hebt een emmer water met veel zand erin, en geen filter.", d: ["zand", "water"], stappen: [
+    { m: "bezinken", doel: "Haal het meeste zand eruit. Je mag wachten en daarna het water afgieten.",
+      in: { zand: 0, water: 1 },
+      u: { zand: "Zand heeft een grotere dichtheid dan water en zakt naar de bodem.", water: "Het water blijft erboven en giet je af." },
+      goed: "Zand heeft een grotere <b>dichtheid</b> dan water. Na een tijdje ligt het op de bodem en giet je het water af.",
+      fout: { filtreren: "Je hebt geen filter. Welke methode werkt vanzelf als je even wacht?",
+              centrifugeren: "Een emmer past niet in een centrifuge, en je mag wachten. Welke methode werkt vanzelf?" } }
+  ] },
+  { id: "zoutpan", naam: "Zoutpan aan zee", wat: "In ondiepe bassins aan zee staat zeewater in de zon.", d: ["water", "zout"], stappen: [
+    { m: "indampen", doel: "Win zout uit het zeewater. Het water mag in de lucht verdwijnen.",
+      in: { water: 0, zout: 1 },
+      u: { water: "Water verdampt: de moleculen trekken elkaar zwak aan.", zout: "De ionen trekken elkaar sterk aan en verdampen niet: er blijven zoutkristallen achter." },
+      goed: "Water verdampt en zout niet: een verschil in <b>kookpunt</b>. De zon levert de energie.",
+      fout: { destilleren: "Destilleren kan wel, maar dan vang je ook het water op. Dat hoeft hier niet.",
+              bezinken: "Het zout is opgelost: opgeloste deeltjes zakken nooit naar de bodem." } }
+  ] },
+  { id: "aquarium", naam: "Aquarium", wat: "Het water in een aquarium is helder, maar ruikt vies door opgeloste geurstoffen.", d: ["water", "kleur"], namen: { kleur: "geurstoffen" }, stappen: [
+    { m: "adsorberen", doel: "Haal de opgeloste geurstoffen uit het water. De vissen blijven erin zwemmen.",
+      in: { kleur: 0, water: 1 },
+      u: { kleur: "De geurstoffen blijven aan het oppervlak van de actieve kool in het filter hangen.", water: "Watermoleculen blijven niet hangen en stromen terug het aquarium in." },
+      goed: "Geurstoffen hechten goed aan actieve kool en water niet: een verschil in <b>aanhechtingsvermogen</b>.",
+      fout: { filtreren: "De geurstoffen zijn opgelost: de moleculen zijn klein en gaan door een gewoon filter.",
+              destilleren: "Dan moet je al het water koken: dat kan niet met vissen erin, en kost veel energie." } }
+  ] }
+];
+
+const dNaam = (mg, d) => (mg.namen && mg.namen[d]) || NAAM_D[d];
+function bekerIcoon(ds) {                           // klein bekerglas met de deeltjes van het mengsel
+  const plek = [[-14, 12], [12, 16], [-2, -6], [16, -8], [-18, -12], [2, 22]];
+  let h = `<svg class="bekerico" viewBox="-46 -46 92 92" aria-hidden="true"><path d="M-36,-34 L-36,34 Q-36,40 -30,40 L30,40 Q36,40 36,34 L36,-34" fill="#eef4fb" stroke="#2c5687" stroke-width="3"/>`;
+  plek.forEach(([x, y], i) => {
+    const s = ds[i % ds.length], r = SOORT[s].r, sc = 13 / r;
+    const g = document.createElementNS(NS, "g"); SOORT[s].teken(g);
+    h += `<g transform="translate(${x} ${y}) scale(${sc.toFixed(2)})">${g.innerHTML}</g>`;
+  });
+  return h + `</svg>`;
+}
+
+const spel = { vragen: [], i: 0, punten: [], poging: 1, klaar: false };
+let vorigeMengsels = [];
+function kiesRonde() {
+  // 5 stappen per ronde; kies mengsels zo dat zo veel mogelijk verschillende methoden voorkomen
+  for (let p = 0; p < 60; p++) {
+    const kand = mix(p < 30 ? MENGSELS.filter(m => !vorigeMengsels.includes(m.id)) : MENGSELS);
+    const lijst = [], gebruikt = {}; let over = 5;
+    while (over > 0) {
+      const passend = kand.filter(m => m.stappen.length <= over && !lijst.includes(m));
+      if (!passend.length) break;
+      const score = m => m.stappen.reduce((s, st) => s + (gebruikt[st.m] ? -1.5 : 1), 0) / m.stappen.length + Math.random() * 1.2;
+      const m = passend.map(m => [score(m), m]).sort((a, b) => b[0] - a[0])[0][1];
+      lijst.push(m); over -= m.stappen.length; m.stappen.forEach(st => gebruikt[st.m] = (gebruikt[st.m] || 0) + 1);
+    }
+    if (over === 0 && Object.values(gebruikt).every(n => n <= 2)) { vorigeMengsels = lijst.map(m => m.id); return lijst; }
+  }
+  return [MENGSELS[0], MENGSELS[1], MENGSELS[5]];
+}
+function spelStart() {
+  $("spel").innerHTML = `<div class="kaart start-spel">
+    <h2>Spel: scheid het mengsel</h2>
+    <p>Je krijgt <b>5 vragen</b>. Bij elke vraag zie je een mengsel en een doel. Kies eerst de goede <b>scheidingsmethode</b>. Zet daarna de <b>deeltjes</b> op de plek waar ze na het scheiden terechtkomen (slepen, of tikken op een deeltje en dan op een vak). Sommige mengsels scheid je in meer stappen.</p>
+    <ul><li>Je mag twee keer controleren: een verkeerde methode of verkeerd geplaatste deeltjes kosten een poging.</li>
+      <li>In één keer goed: <b>2 punten</b>. Goed bij de tweede keer: <b>1 punt</b>.</li>
+      <li>Twee keer fout: 0 punten, en je ziet het goede antwoord met uitleg.</li></ul>
+    <button class="groot-knop" id="s-start">▶ Start</button></div>`;
+  $("s-start").addEventListener("click", nieuwSpel);
+}
+function nieuwSpel() {
+  spel.vragen = [];
+  for (const mg of kiesRonde()) mg.stappen.forEach((st, si) => spel.vragen.push({ mg, st, si }));
+  spel.i = 0; spel.punten = []; toonVraag();
+}
+function spelBalk() {
+  const score = spel.punten.reduce((a, b) => a + b, 0);
+  return `<div class="spelbalk"><strong>Vraag ${spel.i + 1} van ${spel.vragen.length}</strong>
+    <div class="voortgang">${spel.vragen.map((_, j) => `<i class="${j < spel.i ? "af" : j === spel.i ? "nu" : ""}"></i>`).join("")}</div>
+    <span>Score: <strong>${score}</strong></span>
+    <span class="pogingslabel">Poging ${spel.poging} van 2 · goed = ${spel.poging === 1 ? 2 : 1} ${spel.poging === 1 ? "punten" : "punt"}</span>
+    <button class="stop" id="s-stop">Stoppen</button></div>`;
+}
+function werkBalk() { $("s-balk").innerHTML = spelBalk(); $("s-stop").addEventListener("click", spelStart); }
+function feedback(soort, html) { const f = $("s-fb"); f.hidden = false; f.className = "feedback " + soort; f.innerHTML = html; }
+function afronden(pnt) {
+  spel.punten.push(pnt); spel.klaar = true; werkBalk();
+  document.querySelectorAll(".dkaart").forEach(k => k.classList.add("klaar"));
+  if ($("s-bakje") && !$("s-bakje").children.length) $("s-bakje").hidden = true;
+  $("s-verder").hidden = false; $("s-verder").focus({ preventScroll: true });
+}
+
+function toonVraag() {
+  spel.poging = 1; spel.klaar = false;
+  const { mg, st, si } = spel.vragen[spel.i], ds = Object.keys(st.in);
+  const vorige = si > 0 ? mg.stappen[si - 1] : null;
+  $("spel").innerHTML = `<div id="s-balk"></div><div class="kaart vraagvak">
+    <div class="mengsel">${bekerIcoon(ds)}<div>
+      <span class="stap">${mg.stappen.length > 1 ? `Stap ${si + 1} van ${mg.stappen.length}` : "Mengsel"}</span>
+      <h3>${mg.naam}</h3>
+      <p>${vorige ? `Na het ${NAAM[vorige.m].toLowerCase()}: ${vorige.verderTekst[0].toLowerCase() + vorige.verderTekst.slice(1)}` : mg.wat}${st.extra ? ` Je voegt ${st.extra.map(d => dNaam(mg, d).replace("moleculen", "")).join(" en ")} toe.` : ""}</p>
+      <p>In het mengsel: ${ds.map(d => dNaam(mg, d)).join(", ")}.</p>
+      <p class="doel"><b>Doel:</b> ${st.doel}</p></div></div>
+    <p class="opdracht" id="s-opdr">Welke scheidingsmethode kies je?</p>
+    <div class="methoden" id="s-meth">${METHODEN.map(m => `<button data-m="${m.id}">${m.titel}</button>`).join("")}</div>
+    <div id="s-plaats" hidden></div>
+    <div class="feedback" id="s-fb" hidden></div>
+    <div class="knoppen"><button class="hoofd" id="s-verder" hidden>${spel.i < spel.vragen.length - 1 ? "Volgende vraag →" : "Bekijk je score →"}</button></div></div>`;
+  werkBalk();
+  $("s-verder").addEventListener("click", () => { spel.i++; spel.i < spel.vragen.length ? toonVraag() : eindScherm(); });
+  $("s-meth").querySelectorAll("button").forEach(b => b.addEventListener("click", () => kiesMethode(b)));
+}
+
+function kiesMethode(b) {
+  if (spel.klaar || b.disabled) return;
+  const { mg, st } = spel.vragen[spel.i], m = b.dataset.m;
+  const alle = $("s-meth").querySelectorAll("button");
+  if (m === st.m) {
+    b.classList.add("goed"); alle.forEach(x => x.disabled = true);
+    feedback("goed", `<p><b>Goed: ${NAAM[m].toLowerCase()}!</b> ${st.goed}</p>`);
+    toonPlaatsen(false);
+  } else {
+    b.classList.add("fout"); b.disabled = true;
+    const waarom = (st.fout && st.fout[m]) || `${FOUT_ALG[m]} Past dat bij dit mengsel en dit doel?`;
+    if (spel.poging === 1) {
+      feedback("fout", `<p><b>${NAAM[m]} past hier niet.</b> ${waarom}</p><p>Kijk naar het doel: welk verschil in stofeigenschap tussen de deeltjes kun je gebruiken? Probeer het nog een keer.</p>`);
+      spel.poging = 2; werkBalk();
+    } else {
+      alle.forEach(x => { x.disabled = true; if (x.dataset.m === st.m) x.classList.add("goed"); });
+      feedback("fout", `<p><b>${NAAM[m]} past hier ook niet.</b> ${waarom}</p><p>Het goede antwoord is <b>${NAAM[st.m].toLowerCase()}</b>. ${st.goed}</p>` + plaatsUitleg(mg, st));
+      toonPlaatsen(true);
+      afronden(0);
+    }
+  }
+}
+function plaatsUitleg(mg, st) {
+  const z = ZONES[st.m];
+  return `<ul>${Object.keys(st.in).map(d => `<li><b>${dNaam(mg, d)}</b> → ${z[st.in[d]][0].toLowerCase()}: ${st.u[d]}</li>`).join("")}</ul>`;
+}
+function kaartHtml(mg, d) { return `<div class="dkaart" data-d="${d}" tabindex="0" role="button">${icoon(d, "")}<span>${dNaam(mg, d)}</span></div>`; }
+
+function toonPlaatsen(opgelost) {
+  const { mg, st } = spel.vragen[spel.i], z = ZONES[st.m], ds = mix(Object.keys(st.in));
+  const p = $("s-plaats"); p.hidden = false;
+  $("s-opdr").hidden = true;
+  $("s-meth").querySelectorAll("button").forEach(b => b.hidden = !b.classList.contains("goed") && !b.classList.contains("fout"));
+  p.innerHTML = `<p class="plaats-vraag">Je gaat ${NAAM[st.m].toLowerCase()}. Waar komen de deeltjes terecht? Sleep ze naar het goede vak.</p>
+    <div class="bakje" id="s-bakje">${opgelost ? "" : ds.map(d => kaartHtml(mg, d)).join("")}</div>
+    <div class="zones">${z.map(([t, s], i) => `<div class="zone" data-z="${i}" role="button" tabindex="0"><span class="z-titel">${t}</span><span class="z-sub">${s}</span><div class="z-in">${opgelost ? ds.filter(d => st.in[d] === i).map(d => kaartHtml(mg, d)).join("") : ""}</div></div>`).join("")}</div>
+    <div class="knoppen"${opgelost ? " hidden" : ""}><button class="hoofd" id="s-contr" disabled>Controleer</button></div>`;
+  if (opgelost) { p.querySelectorAll(".dkaart").forEach(k => k.classList.add("goed", "klaar")); return; }
+  koppelSlepen();
+  $("s-contr").addEventListener("click", controleer);
+}
+
+function koppelSlepen() {
+  let gekozen = null;
+  const bakje = $("s-bakje"), knop = $("s-contr");
+  const bijwerken = () => { knop.disabled = bakje.children.length > 0; };
+  const leg = (kaart, doel) => {
+    (doel.classList.contains("zone") ? doel.querySelector(".z-in") : doel).appendChild(kaart);
+    kaart.classList.remove("fout", "gekozen"); gekozen = null; bijwerken();
+  };
+  const onder = (x, y, kaart) => {
+    kaart.style.pointerEvents = "none";
+    const el = document.elementFromPoint(x, y); kaart.style.pointerEvents = "";
+    return el && (el.closest(".zone") || el.closest(".bakje"));
+  };
+  document.querySelectorAll("#s-plaats .dkaart").forEach(kaart => {
+    let s = null;
+    kaart.addEventListener("pointerdown", e => {
+      if (spel.klaar || kaart.classList.contains("goed")) return;
+      e.preventDefault();
+      s = { x: e.clientX, y: e.clientY, bewogen: false }; kaart.setPointerCapture(e.pointerId);
+    });
+    kaart.addEventListener("pointermove", e => {
+      if (!s) return;
+      const dx = e.clientX - s.x, dy = e.clientY - s.y;
+      if (!s.bewogen && Math.hypot(dx, dy) < 6) return;
+      if (!s.bewogen) { s.bewogen = true; kaart.classList.add("sleep"); const kb = kaart.getBoundingClientRect(); kaart.style.transformOrigin = `${s.x - kb.left}px ${s.y - kb.top}px`; }
+      kaart.style.transform = `translate(${dx}px, ${dy}px) scale(.6)`;
+      const z = onder(e.clientX, e.clientY, kaart);
+      document.querySelectorAll(".zone").forEach(x => x.classList.toggle("boven", x === z));
+    });
+    const los = e => {
+      if (!s) return;
+      const bewogen = s.bewogen; s = null;
+      kaart.classList.remove("sleep"); kaart.style.transform = "";
+      document.querySelectorAll(".zone").forEach(x => x.classList.remove("boven"));
+      if (bewogen) { const z = onder(e.clientX, e.clientY, kaart); if (z) leg(kaart, z); }
+      else {                                       // tikken: kies dit deeltje, tik daarna op een vak
+        document.querySelectorAll(".dkaart.gekozen").forEach(k => k !== kaart && k.classList.remove("gekozen"));
+        kaart.classList.toggle("gekozen"); gekozen = kaart.classList.contains("gekozen") ? kaart : null;
+      }
+    };
+    kaart.addEventListener("pointerup", los);
+    kaart.addEventListener("pointercancel", () => { s = null; kaart.classList.remove("sleep"); kaart.style.transform = ""; });
+    kaart.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); kaart.classList.toggle("gekozen"); gekozen = kaart.classList.contains("gekozen") ? kaart : null; } });
+  });
+  for (const doel of [...document.querySelectorAll(".zone"), bakje]) {
+    doel.addEventListener("pointerup", e => { if (gekozen && !e.target.closest(".dkaart") && !spel.klaar) leg(gekozen, doel); });
+    doel.addEventListener("keydown", e => { if ((e.key === "Enter" || e.key === " ") && gekozen && e.target === doel) { e.preventDefault(); leg(gekozen, doel); } });
+  }
+}
+
+function controleer() {
+  if (spel.klaar) return;
+  const { mg, st } = spel.vragen[spel.i], z = ZONES[st.m];
+  const fout = [];
+  document.querySelectorAll(".zone").forEach(zone => zone.querySelectorAll(".dkaart").forEach(k => {
+    if (st.in[k.dataset.d] === +zone.dataset.z) k.classList.add("goed"); else fout.push(k);
+  }));
+  if (!fout.length) {
+    feedback("goed", `<p><b>Goed!</b> ${st.goed}</p>` + plaatsUitleg(mg, st));
+    afronden(spel.poging === 1 ? 2 : 1);
+    $("s-contr").hidden = true;
+    return;
+  }
+  const hints = fout.map(k => `<li>${HINT[st.m](dNaam(mg, k.dataset.d))}</li>`).join("");
+  if (spel.poging === 1) {
+    fout.forEach(k => { k.classList.add("fout"); $("s-bakje").appendChild(k); });
+    $("s-contr").disabled = true;
+    feedback("fout", `<p><b>Nog niet goed.</b> ${fout.length === 1 ? "Eén deeltje staat" : `${fout.length} deeltjes staan`} op de verkeerde plek; ${fout.length === 1 ? "het staat" : "ze staan"} weer in de bak. De groene staan goed.</p><ul>${hints}</ul><p>Probeer het nog een keer.</p>`);
+    spel.poging = 2; werkBalk();
+  } else {
+    fout.forEach(k => { k.classList.remove("fout"); k.classList.add("goed"); document.querySelector(`.zone[data-z="${st.in[k.dataset.d]}"] .z-in`).appendChild(k); });
+    feedback("fout", `<p><b>Helaas, ook niet goed.</b> Zo komen de deeltjes terecht bij ${NAAM[st.m].toLowerCase()}:</p>` + plaatsUitleg(mg, st));
+    $("s-contr").hidden = true;
+    afronden(0);
+  }
+}
+
+function eindScherm() {
+  const tot = spel.punten.reduce((a, b) => a + b, 0), max = spel.vragen.length * 2;
+  const sterren = tot >= 9 ? 3 : tot >= 6 ? 2 : tot >= 3 ? 1 : 0;
+  $("spel").innerHTML = `<div class="kaart resultaat"><h2>Klaar!</h2>
+    <div class="sterren">${"★".repeat(sterren)}${"☆".repeat(3 - sterren)}</div>
+    <div class="totaal">${tot} / ${max}</div><p>punten</p>
+    <ol>${spel.vragen.map((q, j) => `<li><span class="f">${j + 1}</span><br>${q.mg.naam}<br><i>${NAAM[q.st.m].toLowerCase()}</i><br><span class="pnt ${spel.punten[j] === 2 ? "vol" : spel.punten[j] === 1 ? "half" : "nul"}">${spel.punten[j]} ${spel.punten[j] === 1 ? "punt" : "punten"}</span></li>`).join("")}</ol>
+    <div class="rij"><button class="groot-knop" id="s-weer">↺ Opnieuw spelen</button><button class="groot-knop licht" id="s-menu">Spelregels</button></div></div>`;
+  $("s-weer").addEventListener("click", nieuwSpel);
+  $("s-menu").addEventListener("click", spelStart);
+}
+
+/* ===================================================================== NAVIGATIE */
+let cat = "methode", deel = mFiltreren, speelt = false;
+const rustig = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+function kies(c, d) {
+  cat = c; speelt = false;
+  document.querySelectorAll(".tabs button").forEach(b => b.setAttribute("aria-selected", b.dataset.cat === c));
+  const ov = c === "overzicht", sp = c === "spel";
+  $("app").hidden = ov || sp; $("vergelijk").hidden = !ov; $("spel").hidden = !sp;
+  if (ov) { $("delen").innerHTML = ""; bouwOverzicht(); return; }
+  if (sp) { $("delen").innerHTML = ""; spelStart(); return; }
+  deel = METHODEN.find(x => x.id === d) || deel;
+  $("delen").innerHTML = METHODEN.map(x => `<button data-id="${x.id}" aria-pressed="${x === deel}">${x.titel}</button>`).join("");
+  $("delen").querySelectorAll("button[data-id]").forEach(b => b.addEventListener("click", () => kies("methode", b.dataset.id)));
+  toonDeel();
+}
+function toonDeel() {
+  uitlegOud = ""; speelt = false; deel.t = 0;
+  $("bed-titel").textContent = deel.titel;
+  $("bediening").innerHTML = `<p class="voorbeeld">Voorbeeld: <b>${deel.voorbeeld}</b></p>
+    <div class="chips"><span>berust op een verschil in ${deel.verschil}</span></div>
+    <div class="knoppen"><button id="v-start" class="hoofd"></button><button id="v-opnieuw">↺ Opnieuw</button></div>
+    <div class="legenda">${deel.legenda.map(([s, t]) => `<div>${icoon(s)}${t}</div>`).join("")}</div>`;
+  $("v-start").addEventListener("click", () => {
+    if (deel.t >= deel.duur) { toonDeel(); speelt = true; knop(); return; }
+    speelt = !speelt; knop();
+  });
+  $("v-opnieuw").addEventListener("click", toonDeel);
+  tek.setAttribute("aria-label", `${deel.titel}: ${deel.voorbeeld}`);
+  deel.bouw(); deel.stap(0); tekst(); knop();
+}
+function knop() { $("v-start").textContent = speelt ? "⏸ Pauzeer" : deel.t > 0 && deel.t < deel.duur ? "▶ Verder" : "▶ Start"; }
+function tekst() {
+  const t = deel.t, p = deel.teksten.filter(([s]) => t >= s && (s > 0 || true)).filter(([s]) => s === 0 || t > 0).map(x => x[1]);
+  if (t === 0) p[0] += ` Klik op <b>Start</b>.`;
+  zetUitleg(p);
+}
+document.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click", () => kies(b.dataset.cat, deel.id)));
+
+let laatst = performance.now();
+function lus(nu) {
+  const dt = Math.max(0, Math.min(.05, (nu - laatst) / 1000)); laatst = nu;   // het eerste beeld kan iets vóór 'laatst' liggen
+  if (!$("app").hidden) {
+    if (speelt) { deel.t = Math.min(deel.duur, deel.t + dt); if (deel.t >= deel.duur) { speelt = false; knop(); } }
+    // vóór de start en na afloop bewegen de deeltjes gewoon door (niet bij 'beperk beweging')
+    if (speelt || (!rustig && (deel.t === 0 || deel.t >= deel.duur))) deel.stap(dt);
+    tekst();
+  }
+  requestAnimationFrame(lus);
+}
+const q = new URLSearchParams(location.search);
+const qDeel = q.get("deel");
+kies(["methode", "overzicht", "spel"].includes(q.get("tab")) ? q.get("tab") : "methode", qDeel);
+requestAnimationFrame(lus);
+</script>
+</body>
+</html>

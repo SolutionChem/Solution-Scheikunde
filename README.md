@@ -38,6 +38,9 @@ materialen/           Eigen animaties en bestanden, per leerjaar en hoofdstuk
                           ?tab=zout|metaal|moleculair|vergelijk|spel opent dat tabblad, &deel=<onderdeel> een onderdeel
                           (zout: rooster, bros, geleiding · metaal: geleiding, vervormen · moleculair: krachten);
                           &verdieping=1 zet de verdieping bij moleculaire stoffen (en in het spel) meteen aan
+  3hv/h3/scheidingsmethoden/  Simulatie: zeven scheidingsmethoden, macro- en microniveau naast elkaar, met overzicht en spel (§3.4);
+                          ?tab=methode|overzicht|spel opent dat tabblad, &deel=filtreren|bezinken|centrifugeren|destilleren|
+                          extraheren|adsorberen|indampen opent die methode
 ```
 
 De pagina's worden automatisch opgebouwd uit `assets/js/data.js`. **Je past dus alleen dat bestand aan.**

@@ -764,7 +764,7 @@ const mGeleiding = {
     const b = this.g, tijd = performance.now() / 1000;
     const Tbij = x => this.T[Math.max(0, Math.min(11, Math.floor((x - b.x0) / (b.x1 - b.x0) * 12)))];
     if (this.modus === "warmte") {
-      {                                     // warmte verspreidt zich snel: de vrije elektronen nemen hem mee
+      {                                     // de energie verspreidt zich snel: de vrije elektronen geven hem door
         const n = this.T.slice(), k = 2.2;
         for (let i = 0; i < 12; i++) {
           const l = i === 0 ? (this.aan ? 1 : this.T[0] * .9) : this.T[i - 1], r = i === 11 ? this.T[i] : this.T[i + 1];
@@ -795,16 +795,16 @@ const mGeleiding = {
   },
   tekst() {
     const M = METALEN[this.metaal], p = [];
-    p.push(`Een metaal bestaat uit <b>positieve metaalionen</b> (${M.sym}${sup[M.v]}) in een <b>zee van vrije elektronen</b>. De vrije elektronen bewegen door het hele metaal.`);
+    p.push(`Een metaal bestaat uit <b>positieve metaalionen</b> (${M.sym}${sup[M.v]}) in een <b>zee van vrije elektronen</b>.` + (this.modus === "stroom" ? ` De vrije elektronen bewegen door het hele metaal.` : ""));
     if (this.modus === "stroom") {
       p.push(this.aan
         ? `De vrije elektronen bewegen nu naar de <b>pluspool</b>. Aan de andere kant komen er via de draad nieuwe elektronen bij. Bewegende geladen deeltjes: er loopt stroom. <b>Metalen geleiden stroom</b>, vast én vloeibaar.`
         : `Zet de schakelaar aan en kijk wat de vrije elektronen doen.`);
     } else {
       p.push(this.aan
-        ? `Links wordt het metaal verwarmd. Daar trillen de ionen harder en bewegen de vrije elektronen sneller. De snelle elektronen nemen de warmte mee door het hele metaal: metalen zijn <b>goede warmtegeleiders</b>.`
-        : `Zet de warmtebron aan en kijk hoe de warmte door het metaal gaat.`,
-        `Zouten en moleculaire stoffen hebben geen vrije elektronen: daar gaat warmte veel langzamer.`);
+        ? `Links krijgen de deeltjes <b>energie</b> van de warmtebron: de ionen trillen harder en de vrije elektronen bewegen sneller. De vrije elektronen bewegen door het hele metaal en geven die energie door aan de ionen verderop. Zo gaat de energie snel door het metaal: metalen <b>geleiden warmte goed</b>.`
+        : `Zet de warmtebron aan en kijk hoe de energie door het metaal gaat.`,
+        `Zouten en moleculaire stoffen hebben geen vrije elektronen: alleen trillende deeltjes geven de energie door aan hun buren. Dat gaat veel langzamer: <b>slechte warmtegeleiders</b>.`);
     }
     zetUitleg(p);
   }
@@ -875,11 +875,10 @@ const mVervorm = {
       const amp = 1.5;
       o.x = o.hx + (o.boven ? this.u : 0) + amp * Math.sin(tijd * 10 + o.fx); o.y = o.hy + amp * Math.sin(tijd * 10.7 + o.fy); plaats(o);
     }
-    const band = boven => {
-      const l = this.ionen.filter(o => o.boven === boven);
-      return { x0: Math.min(...l.map(o => o.x)) - 46, x1: Math.max(...l.map(o => o.x)) + 46, y0: Math.min(...l.map(o => o.y)) - 46, y1: Math.max(...l.map(o => o.y)) + 46 };
-    };
-    const B = band(true), O = band(false);
+    // de zee volgt de ruststand van het hele blok; het bovenste deel schuift alleen mee als je duwt
+    const X0 = Math.min(...this.ionen.map(o => o.hx)) - 46, X1 = Math.max(...this.ionen.map(o => o.hx)) + 46;
+    const Y0 = Math.min(...this.ionen.map(o => o.hy)) - 46, Y1 = Math.max(...this.ionen.map(o => o.hy)) + 46;
+    const B = { x0: X0 + this.u, x1: X1 + this.u, y0: Y0, y1: this.vlak }, O = { x0: X0, x1: X1, y0: this.vlak, y1: Y1 };
     // één doorlopende elektronenzee om beide delen: bovenste deel kan opgeschoven zijn
     const r = 30, m = this.vlak;
     this.zee.setAttribute("d", `M${B.x0},${m} V${B.y0 + r} Q${B.x0},${B.y0} ${B.x0 + r},${B.y0} H${B.x1 - r} Q${B.x1},${B.y0} ${B.x1},${B.y0 + r} V${m}` +
@@ -1080,7 +1079,7 @@ const VERGELIJK = [
   ["Smeltpunt en kookpunt", ["Hoog", "Sterke ionbinding. Natriumchloride: 801 °C en 1465 °C.", "zout/rooster"], ["Meestal hoog", "Sterke metaalbinding. IJzer: 1538 °C en 2861 °C.", ""], ["Laag", "De moleculen trekken elkaar zwak aan. Water: 0 °C en 100 °C.", "moleculair/krachten"]],
   ["Stroom geleiden, vast", ["Nee", "De ionen zitten vast in het rooster.", "zout/geleiding"], ["Ja", "Vrije elektronen bewegen.", "metaal/geleiding"], ["Nee", "Geen geladen deeltjes.", "moleculair/krachten"]],
   ["Stroom geleiden, vloeibaar of opgelost", ["Ja", "Gesmolten of opgelost: de ionen kunnen bewegen.", "zout/geleiding"], ["Ja (vloeibaar)", "Vrije elektronen bewegen.", "metaal/geleiding"], ["Nee", "Geen geladen deeltjes.", "moleculair/krachten"]],
-  ["Warmte geleiden", ["Slecht", "Geen vrije elektronen.", ""], ["Goed", "Snelle vrije elektronen nemen de warmte mee.", "metaal/geleiding"], ["Slecht", "Geen vrije elektronen.", ""]],
+  ["Warmte geleiden", ["Slecht", "Geen vrije elektronen: alleen trillende ionen geven de energie door aan hun buren.", ""], ["Goed", "Vrije elektronen geven de energie snel door het hele metaal door.", "metaal/geleiding"], ["Slecht", "Geen vrije elektronen: alleen trillende moleculen geven de energie door aan hun buren.", ""]],
   ["Oplosbaarheid in water", ["Veel zouten lossen goed op: hydrofiel", "Watermoleculen trekken de ionen los.", "zout/geleiding"], ["Lost niet op", "Er zijn geen losse deeltjes die watermoleculen kunnen omringen.", ""], ["Hydrofiel of hydrofoob", "Hydrofiel: lost op in water (ethanol, suiker). Hydrofoob: lost niet op in water (hexaan, olie).", ""]],
   ["Dichtheid", ["Middelgroot", "Natriumchloride: 2,16 g/cm³.", ""], ["Meestal groot", "IJzer: 7,87 g/cm³. Aluminium: 2,70 g/cm³.", ""], ["Meestal klein", "Water: 1,00 g/cm³. Hexaan: 0,66 g/cm³.", ""]],
   ["Vervormen", ["Bros: breekt", "Gelijke ladingen komen tegenover elkaar.", "zout/bros"], ["Vervormbaar", "Lagen ionen schuiven; de elektronenzee blijft.", "metaal/vervormen"], ["Vast: vaak zacht of bros", "Bijvoorbeeld kaarsvet of suiker.", ""]]
@@ -1139,12 +1138,12 @@ function kaartEigenschappen(s) {
     if (s.oplos) L.push({ t: "Lost goed op in water; de oplossing geleidt stroom", u: "watermoleculen trekken de ionen los en losse ionen kunnen bewegen", g: "a" });
     L.push({ t: "Breekt als je erop slaat", u: "bij verschuiven komen gelijke ladingen tegenover elkaar en die stoten elkaar af", g: "b" });
     L.push({ t: `Dichtheid ${fmt(s.d)} g/cm³`, u: "zouten hebben een middelgrote dichtheid" });
-    L.push({ t: "Geleidt warmte slecht", u: "er zijn geen vrije elektronen" });
+    L.push({ t: "Geleidt warmte slecht", u: "er zijn geen vrije elektronen; alleen trillende deeltjes geven de energie door aan hun buren, en dat gaat langzaam" });
   } else if (s.cat === "metaal") {
     L.push({ t: smp, u: s.vloeibaar ? "kwik is een uitzondering: het is al vloeibaar bij kamertemperatuur" : "meestal hoog bij metalen, door de sterke metaalbinding" });
     L.push({ t: `Kookpunt ${fmt(s.kp)} °C`, u: "hoog, door de sterke metaalbinding" });
     L.push({ t: s.vloeibaar ? "Geleidt stroom" : "Geleidt stroom als vaste stof", u: "de vrije elektronen kunnen bewegen", g: "a" });
-    L.push({ t: "Geleidt warmte goed", u: "snelle vrije elektronen nemen de warmte mee" });
+    L.push({ t: "Geleidt warmte goed", u: "de vrije elektronen geven de energie snel door het hele metaal door" });
     if (s.vloeibaar) L.push({ t: "Is vloeibaar bij kamertemperatuur", u: "het smeltpunt is lager dan 20 °C" });
     else L.push({ t: "Je kunt het buigen en pletten zonder dat het breekt", u: "de lagen ionen schuiven over elkaar en de elektronenzee houdt ze bij elkaar" });
     L.push({ t: "Lost niet op in water", u: "metalen lossen niet op in water" });
@@ -1156,7 +1155,7 @@ function kaartEigenschappen(s) {
     if (s.oplos === true) L.push({ t: "Lost goed op in water, maar de oplossing geleidt geen stroom", u: "de moleculen blijven heel en zijn niet geladen", g: "a" });
     if (s.oplos === false) L.push({ t: "Lost niet op in water (hydrofoob)", u: "hydrofobe stoffen mengen niet met water" });
     if (s.oplos === true) L.push({ t: "Is hydrofiel", u: "hydrofiele stoffen lossen goed op in water" });
-    L.push({ t: "Geleidt warmte slecht", u: "er zijn geen vrije elektronen" });
+    L.push({ t: "Geleidt warmte slecht", u: "er zijn geen vrije elektronen; alleen trillende deeltjes geven de energie door aan hun buren, en dat gaat langzaam" });
     L.push({ t: `Dichtheid ${fmt(s.d)} g/cm³`, u: s.zwaar ? "jood is een uitzondering: een grote dichtheid voor een moleculaire stof" : "moleculaire stoffen hebben meestal een kleine dichtheid" });
   }
   return L;
@@ -1222,11 +1221,11 @@ const REDENEER = [
     ["In de zoutoplossing bewegen vrije elektronen.", 0, "Vrije elektronen heeft alleen een metaal. Welke geladen deeltjes zitten in een zoutoplossing?"]],
     u: "Opgelost zout bestaat uit losse ionen die kunnen bewegen: dat is stroom. Opgeloste suiker bestaat uit moleculen. Die zijn niet geladen." },
   { cat: "metaal", v: "Waarom geleidt een metalen pan de warmte goed?", o: [
-    ["Snelle vrije elektronen nemen de warmte mee door het metaal.", 1],
+    ["De vrije elektronen geven de energie snel door het hele metaal door.", 1],
     ["De metaalionen stromen naar de koude kant.", 0, "De metaalionen zitten vast in het rooster; ze trillen alleen harder."],
-    ["Metalen hebben een hoog smeltpunt.", 0, "Het smeltpunt zegt niets over hoe snel warmte zich verplaatst."],
+    ["Metalen hebben een hoog smeltpunt.", 0, "Het smeltpunt zegt niets over hoe snel de energie door de stof wordt doorgegeven."],
     ["Een metaal bestaat uit snelle moleculen.", 0, "Een metaal bestaat niet uit moleculen, maar uit metaalionen en vrije elektronen."]],
-    u: "Aan de warme kant gaan de vrije elektronen sneller bewegen. Ze bewegen door het hele metaal en nemen de warmte mee. Daarom geleiden metalen warmte goed." },
+    u: "Aan de warme kant krijgen de deeltjes meer energie: de ionen trillen harder en de vrije elektronen bewegen sneller. De vrije elektronen bewegen door het hele metaal en geven hun energie door aan ionen verderop. Zo wordt de energie snel doorgegeven: metalen geleiden warmte goed." },
   { cat: "moleculair", v: "Wat gebeurt er met de watermoleculen als water kookt?", o: [
     ["De moleculen komen los van elkaar, maar blijven zelf heel.", 1],
     ["De moleculen vallen uit elkaar in waterstofatomen en zuurstofatomen.", 0, "Bij koken blijven de moleculen heel. Wat moet er dan losraken?"],
@@ -1457,7 +1456,7 @@ document.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click
 
 let laatst = performance.now();
 function lus(nu) {
-  const dt = Math.min(.05, (nu - laatst) / 1000); laatst = nu;
+  const dt = Math.max(0, Math.min(.05, (nu - laatst) / 1000)); laatst = nu;   // het eerste beeld kan iets vóór 'laatst' liggen
   if (!pauze && !$("app").hidden) deel.stap(dt);
   requestAnimationFrame(lus);
 }

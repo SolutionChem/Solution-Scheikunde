@@ -111,9 +111,14 @@
       <div class="kaart stof">
         <h2>Kies een stof</h2>
         <select id="stof" aria-label="Stof">
-          <option value="water">Water (H₂O)</option>
-          <option value="ethanol">Ethanol, alcohol (C₂H₆O)</option>
-          <option value="co2">Koolstofdioxide (CO₂)</option>
+          <optgroup label="Zuivere stoffen">
+            <option value="water">Water (H₂O)</option>
+            <option value="ethanol">Ethanol, alcohol (C₂H₆O)</option>
+            <option value="co2">Koolstofdioxide (CO₂)</option>
+          </optgroup>
+          <optgroup label="Mengsel">
+            <option value="alcoholwater">Water met ethanol</option>
+          </optgroup>
         </select>
         <div class="stofinfo">
           <svg id="mol-voorbeeld" viewBox="-38 -30 76 60" aria-hidden="true"></svg>
@@ -196,6 +201,20 @@ const STOFFEN = {
     hoek: (c, r) => (r % 2 ? Math.PI : 0) + (c % 2 ? .15 : -.15),
     kleurVast: "#f1f4f8", randVast: "#a9b6c6", kleurVloei: "rgba(150,185,225,.36)"
   },
+  /* Mengsel van twee vloeistoffen: water met 40 volumeprocent ethanol (zoals wodka). Alleen het kooktraject:
+     het koken begint bij ± 84 °C; de damp bevat veel ethanol, de vloeistof krijgt steeds meer water,
+     tot er (bijna) alleen water over is dat kookt bij 100 °C. Stollen begint pas bij ± −23 °C; dat zit er niet in. */
+  alcoholwater: {
+    naam: "water met ethanol", deeltjes: "moleculen", mengsel: true, startFase: "l", Tlaagst: -23,
+    vloei: "water met ethanol", gas: "damp (water en ethanol)", vast: "",
+    soorten: [["ethanol", .13], ["water", .87]],          // aantalverhouding van de moleculen bij 40 vol% ethanol
+    grenzen: [{ T: 84, T2: 100, L: 80, van: "l", naar: "g" }],
+    Tmin: -10, Tmax: 125, Tstart: 20, drijft: false,
+    atomen: [["O", 0, -2, 11], ["H", -9.5, 7, 7], ["H", 9.5, 7, 7]],
+    d: 38, rooster: { rows: 4, dx: 40, dy: 34, hex: true },
+    hoek: () => 0,
+    kleurVast: "#f1f4f8", randVast: "#a9b6c6", kleurVloei: "rgba(120,170,225,.40)"
+  },
   co2: {
     naam: "koolstofdioxide", formule: "CO₂", deeltjes: "koolstofdioxidemoleculen", molecuul: "koolstofdioxidemolecuul",
     vast: "droogijs", vloei: "vloeibaar koolstofdioxide", gas: "koolstofdioxidegas",
@@ -228,25 +247,25 @@ const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
 
 function totaalH(stof) {
   let h = 0, T = stof.Tmin;
-  for (const g of stof.grenzen) { h += g.T - T + g.L; T = g.T; }
+  for (const g of stof.grenzen) { h += g.T - T + g.L; T = g.T2 ?? g.T; }
   return h + stof.Tmax - T;
 }
 function Hbij(stof, Tdoel) {                    // warmte bij een temperatuur buiten een overgang
   let h = 0, T = stof.Tmin;
   for (const g of stof.grenzen) {
     if (Tdoel <= g.T) return h + Tdoel - T;
-    h += g.T - T + g.L; T = g.T;
+    h += g.T - T + g.L; T = g.T2 ?? g.T;
   }
   return h + Tdoel - T;
 }
-function toestand(h) {
-  let T = st.Tmin, rest = h, fase = "s";
-  for (const g of st.grenzen) {
+function toestand(h, stof = st) {
+  let T = stof.Tmin, rest = h, fase = stof.startFase || "s";
+  for (const g of stof.grenzen) {
     const dT = g.T - T;
     if (rest <= dT) return { T: T + rest, f: { [fase]: 1 }, op: null, fase };
     rest -= dT; T = g.T;
-    if (rest < g.L) { const x = rest / g.L; return { T, f: { [g.van]: 1 - x, [g.naar]: x }, op: g, x }; }
-    rest -= g.L; fase = g.naar;
+    if (rest < g.L) { const x = rest / g.L; return { T: T + ((g.T2 ?? T) - T) * x, f: { [g.van]: 1 - x, [g.naar]: x }, op: g, x }; }
+    rest -= g.L; fase = g.naar; T = g.T2 ?? g.T;
   }
   return { T: T + rest, f: { [fase]: 1 }, op: null, fase };
 }
@@ -254,8 +273,9 @@ function relatief(T) { return Math.max(0, Math.min(1, (T - st.Tmin) / (st.Tmax -
 function bereik(fase) {                          // temperatuurgebied van een fase, voor de beweeglijkheid
   const gr = st.grenzen;
   if (fase === "s") return [st.Tmin, gr[0].T];
-  if (fase === "g") return [gr[gr.length - 1].T, st.Tmax];
-  return [gr[0].T, gr[1].T];
+  if (fase === "g") return [gr[gr.length - 1].T2 ?? gr[gr.length - 1].T, st.Tmax];
+  if (gr[0].van === "l") return [st.Tmin, gr[0].T];      // mengsel zonder vaste fase
+  return [gr[0].T2 ?? gr[0].T, gr[1].T];
 }
 function binnenFase(fase, T) { const [a, b] = bereik(fase); return Math.max(0, Math.min(1, (T - a) / (b - a))); }
 
@@ -415,10 +435,13 @@ function vrijeRijSite(van, bovenaan) {          // lege plek in de rij waar het 
   return best;
 }
 
-function nieuwDeeltje() {
-  const p = { x: W / 2, y: BODEM - 40, vx: 0, vy: 0, hoek: Math.random() * 6.28, vh: 0, st: "weg", site: -1,
+function nieuwDeeltje(soort) {                   // soort: alleen bij een mengsel ("water" of "ethanol")
+  const p = { x: W / 2, y: BODEM - 40, vx: 0, vy: 0, hoek: Math.random() * 6.28, vh: 0, st: "weg", site: -1, soort,
               vertrek: false, binnen: true, fx: Math.random() * 6.28, fy: Math.random() * 6.28, fr: .8 + Math.random() * .5 };
-  p.el = tekenMolecuul(E.deeltjes, st);
+  if (soort === "ethanol") {                        // in het mengsel iets kleiner getekend, zodat de moleculen even groot botsen
+    p.el = maak("g", {}, E.deeltjes);
+    tekenMolecuul(p.el, STOFFEN.ethanol).setAttribute("transform", "scale(.8)");
+  } else p.el = tekenMolecuul(E.deeltjes, soort ? STOFFEN[soort] : st);
   return p;
 }
 
@@ -436,7 +459,11 @@ function tel() {
 function plaatsBegin() {
   E.deeltjes.innerHTML = "";
   P = [];
-  for (let i = 0; i < N; i++) P.push(nieuwDeeltje());
+  if (st.mengsel) {                                 // moleculen van beide stoffen, door elkaar
+    const nE = Math.round(st.soorten[0][1] * N);
+    const lijst = Array.from({ length: N }, (_, i) => i < nE ? "ethanol" : "water").sort(() => Math.random() - .5);
+    for (const s of lijst) P.push(nieuwDeeltje(s));
+  } else for (let i = 0; i < N; i++) P.push(nieuwDeeltje());
   const d = doelen(toestand(Hwarmte).f);
   const volg = sites.map((s, i) => i).sort((a, b) => sites[a].r - sites[b].r || Math.abs(sites[a].x - W / 2) - Math.abs(sites[b].x - W / 2));
   let i = 0;
@@ -502,10 +529,21 @@ function overgangen(tst, dt) {
     } else if (c.l > d.nL) {                              // verdampen: bovenste molecuul uit de vloeistof
       let p = null;
       for (const q of P) if (q.st === "l" && (!p || q.y < p.y)) p = q;
+      if (st.mengsel) {                                   // ethanol verdampt makkelijker: kans op ethanol groter dan het aandeel in de vloeistof
+        const v = P.filter(q => q.st === "l"), e = v.filter(q => q.soort === "ethanol"), x = e.length / v.length, a = 6;
+        const bovenlaag = q => q.y < p.y + st.d * 2.2;
+        const kies = l => l.filter(bovenlaag).sort((m, n) => m.y - n.y)[0];
+        const wil = Math.random() < a * x / (1 + (a - 1) * x) ? "ethanol" : "water";
+        p = kies(v.filter(q => q.soort === wil)) || p;
+      }
       p.wissel = null; p.st = "g"; p.vx = (Math.random() - .5) * 160; p.vy = -280; p.vertrek = c.zicht >= d.zicht;
     } else if (c.l < d.nL) {                              // condenseren
       let p = null;
       for (const q of zichtbaarGas) if (!p || q.y > p.y) p = q;
+      if (p && st.mengsel) {                              // bij condenseren wordt vooral water eerst vloeibaar
+        const w = zichtbaarGas.filter(q => q.soort === "water");
+        if (w.length && Math.random() < .7) p = w.reduce((m, q) => q.y > m.y ? q : m);
+      }
       if (p) p.st = "l";
       else { p = P.find(q => q.st === "weg" || (q.st === "g" && q.vertrek)); if (p) binnenkomen(p, "l"); }
     }
@@ -527,7 +565,7 @@ function overgangen(tst, dt) {
 function natuurkunde(tst, dt) {
   const T = tst.T, D = st.d;
   const sS = binnenFase("s", T), sG = relatief(T);
-  const sL = st.grenzen.length > 1 ? binnenFase("l", T) : 0;
+  const sL = st.grenzen.length > 1 || st.grenzen[0].van === "l" ? binnenFase("l", T) : 0;
   const vg = 130 + 380 * sG;
   const c = tel();
 
@@ -652,7 +690,12 @@ function tekenMicro(tst) {
   }
   const c = tel();
   const wegTekst = c.weg + (c.g - c.zicht) > 0 ? ` · ${c.weg + c.g - c.zicht} buiten beeld` : "";
-  E.telTekst.textContent = `${N} moleculen${wegTekst}`;
+  let samen = "";
+  if (st.mengsel) {                                 // samenstelling van de vloeistof
+    const v = P.filter(p => p.st === "l"), e = v.filter(p => p.soort === "ethanol").length;
+    samen = v.length ? `vloeistof: ${e} ethanol, ${v.length - e} water` : `${N} moleculen`;
+  }
+  E.telTekst.textContent = st.mengsel ? samen : `${N} moleculen${wegTekst}`;
 
   // naam van de faseovergang
   let tekst = "";
@@ -735,6 +778,15 @@ function tekenMacro(tst, dt) {
 function tekenStreepjes() {
   E.streepjes.innerHTML = "";
   const yT = T => 466 - relatief(T) * 240;
+  if (st.mengsel) {                                 // mengsel: geen punt maar een traject
+    st.grenzen.forEach(g => {
+      const y1 = yT(g.T2), y2 = yT(g.T);
+      maak("rect", { x: 26, y: y1, width: 28, height: y2 - y1, fill: "rgba(194,124,14,.28)", stroke: "#c27c0e", "stroke-width": 1.5 }, E.streepjes);
+      maak("text", { x: 57, y: (y1 + y2) / 2 - 2, "font-size": 11, fill: "#4a5a72" }, E.streepjes, g.naar === "l" ? "smelttraject" : "kooktraject");
+      maak("text", { x: 57, y: (y1 + y2) / 2 + 11, "font-size": 11, "font-weight": 700, fill: "#11264a" }, E.streepjes, `${fmt(g.T)} tot ${fmt(g.T2)} °C`);
+    });
+    return;
+  }
   st.grenzen.forEach(g => {
     const y = yT(g.T);
     maak("line", { x1: 28, x2: 52, y1: y, y2: y, stroke: "#11264a", "stroke-width": 2 }, E.streepjes);
@@ -756,7 +808,12 @@ function bouwGrafiek() {
   gx1 = grafBreed - 8; gy1 = grafHoog - 24;
   const yT = T => gy1 - relatief(T) * (gy1 - gy0);
   maak("rect", { x: gx0, y: gy0, width: gx1 - gx0, height: gy1 - gy0, fill: "#f6f9fd", stroke: "#c9d8ea" }, graf);
-  st.grenzen.forEach(g => {
+  if (st.mengsel) st.grenzen.forEach(g => {        // mengsel: het traject als band
+    const y1 = yT(g.T2), y2 = yT(g.T);
+    maak("rect", { x: gx0, y: y1, width: gx1 - gx0, height: y2 - y1, fill: "rgba(194,124,14,.16)" }, graf);
+    maak("text", { x: gx1 - 4, y: y1 - 3, "text-anchor": "end", "font-size": 11, fill: "#7a4d06" }, graf, (g.naar === "l" ? "smelttraject " : "kooktraject ") + `${fmt(g.T)} tot ${fmt(g.T2)} °C`);
+  });
+  else st.grenzen.forEach(g => {
     const y = yT(g.T);
     maak("line", { x1: gx0, x2: gx1, y1: y, y2: y, stroke: "#2c5687", "stroke-dasharray": "4 4", opacity: .6 }, graf);
     const naam = g.naar === "l" ? "smeltpunt" : g.van === "l" ? "kookpunt" : "sublimatiepunt";
@@ -771,12 +828,36 @@ function bouwGrafiek() {
 function tekenGrafiek() {
   const yT = T => gy1 - relatief(T) * (gy1 - gy0);
   const t0 = Math.max(0, grafTijd - VENSTER);
-  grafLijn.setAttribute("points", metingen.filter(m => m.t >= t0)
-    .map(m => `${(gx0 + (m.t - t0) / VENSTER * (gx1 - gx0)).toFixed(1)},${yT(m.T).toFixed(1)}`).join(" "));
+  const lijn = k => metingen.filter(m => m.t >= t0 && m[k] != null)
+    .map(m => `${(gx0 + (m.t - t0) / VENSTER * (gx1 - gx0)).toFixed(1)},${yT(m[k]).toFixed(1)}`).join(" ");
+  grafLijn.setAttribute("points", lijn("T"));
 }
 
 /* ---------- uitleg (hangt af van de stof, de fase en of je verwarmt of koelt) ---------- */
+/* mengsel van twee vloeistoffen (water met ethanol): geen kookpunt, maar een kooktraject */
+function uitlegMengsel(tst) {
+  const T = fmt(tst.T), kk = st.grenzen[0];
+  const v = P.filter(p => p.st === "l"), e = v.filter(p => p.soort === "ethanol").length;
+  const zuiver = ` Vergelijk met de <b>zuivere stoffen</b>: ethanol kookt bij 78 °C en water bij 100 °C; daar blijft de temperatuur tijdens het koken gelijk.`;
+  const richting = { warm: " Je verwarmt: de moleculen gaan steeds sneller bewegen.", koud: " Je koelt: de moleculen gaan steeds langzamer bewegen.", uit: "" }[modus];
+  let html;
+  if (tst.op) {
+    if (modus === "warm") html = `<b>Kooktraject</b> (nu ${T} °C): ethanolmoleculen trekken elkaar minder sterk aan dan watermoleculen en verdampen makkelijker. De damp bevat dus veel ethanol; in de vloeistof blijft steeds meer water over (nu ${e} ethanol- en ${v.length - e} watermoleculen). Daardoor moet het steeds warmer worden om te koken. Het koken begon bij ± ${fmt(kk.T)} °C en eindigt bij ${fmt(kk.T2)} °C, als er alleen water over is.`;
+    else if (modus === "koud") html = `<b>Condenseren</b> (nu ${T} °C): de damp wordt weer vloeibaar. Watermoleculen condenseren het makkelijkst, dus eerst ontstaat een vloeistof met veel water; hoe meer ethanol er condenseert, hoe lager de temperatuur. Bij ± ${fmt(kk.T)} °C is alle damp vloeibaar.`;
+    else html = `Bij ${T} °C bestaan de vloeistof en de damp naast elkaar. Verwarm om verder te koken of koel om te condenseren.`;
+    html += zuiver;
+  } else if (tst.fase === "l") {
+    html = `<b>Vloeibaar</b>: water met ethanol is een <b>mengsel</b> van twee vloeistoffen (40 % ethanol, zoals in wodka). De watermoleculen en ethanolmoleculen zitten door elkaar en bewegen langs elkaar heen. Een mengsel heeft geen kookpunt, maar een <b>kooktraject</b> (± ${fmt(kk.T)} tot ${fmt(kk.T2)} °C).`
+      + (modus === "uit" ? " Klik op <b>Verwarmen</b> en kijk naar de temperatuur in de grafiek." : richting);
+  } else {
+    html = `<b>Gas</b> (damp van water en ethanol): de moleculen zitten heel ver uit elkaar en vliegen alle kanten op. Damp kun je niet zien.` + richting;
+  }
+  if (limiet === "max") html += " <b>Warmer kan niet in deze simulatie.</b>";
+  if (limiet === "min") html += ` <b>Kouder kan niet in deze simulatie.</b> Dit mengsel wordt pas vast ver onder 0 °C: het stollen begint bij ± ${fmt(st.Tlaagst)} °C.`;
+  return html;
+}
 function uitleg(tst) {
+  if (st.mengsel) return uitlegMengsel(tst);
   const T0 = tst.op ? fmt(tst.op.T) : "";
   const richting = { warm: " Je verwarmt: de moleculen gaan steeds sneller bewegen.", koud: " Je koelt: de moleculen gaan steeds langzamer bewegen.", uit: "" }[modus];
   let html;
@@ -813,7 +894,7 @@ function uitleg(tst) {
   return html;
 }
 function werkUitlegBij(tst) {
-  const sleutel = [st.naam, tst.op ? tst.op.van + tst.op.naar : tst.fase, modus, limiet].join("|");
+  const sleutel = [st.naam, tst.op ? tst.op.van + tst.op.naar : tst.fase, modus, limiet, st.mengsel && tst.op ? Math.round(tst.T) : ""].join("|");
   if (sleutel === sleutelOud) return;
   sleutelOud = sleutel;
   $("onderschrift").innerHTML = uitleg(tst);
@@ -840,9 +921,14 @@ function kiesStof(id) {
   tekenStreepjes(); bouwGrafiek();
   const vb = $("mol-voorbeeld"); vb.innerHTML = "";
   ["gO", "gH", "gC"].forEach(id => { const el = document.getElementById(id); if (el) vb.appendChild(el.cloneNode(true)); });
-  tekenMolecuul(vb, st).setAttribute("transform", "scale(1.05)");
   const gr = st.grenzen;
-  $("stofinfo").innerHTML = `Een ${st.molecuul} bestaat uit ${st.bouw}.<br>` + (gr.length > 1
+  if (st.mengsel) {
+    tekenMolecuul(vb, STOFFEN.water).setAttribute("transform", "translate(-20 4) scale(.75)");
+    tekenMolecuul(vb, STOFFEN.ethanol).setAttribute("transform", "translate(14 -2) scale(.6)");
+    $("stofinfo").innerHTML = `Water met ethanol is een <b>mengsel</b> van twee vloeistoffen: 40 % ethanol, zoals in wodka.<br>`
+      + `<span class="pt">Kooktraject ± ${fmt(gr[0].T)} tot ${fmt(gr[0].T2)} °C</span> (zuivere ethanol: kookpunt 78 °C, zuiver water: 100 °C)`;
+  } else tekenMolecuul(vb, st).setAttribute("transform", "scale(1.05)");
+  if (!st.mengsel) $("stofinfo").innerHTML = `Een ${st.molecuul} bestaat uit ${st.bouw}.<br>` + (gr.length > 1
     ? `<span class="pt">Smeltpunt ${fmt(gr[0].T)} °C · kookpunt ${fmt(gr[1].T)} °C</span>`
     : `<span class="pt">Sublimatiepunt ${fmt(gr[0].T)} °C</span> (bij gewone luchtdruk nooit vloeibaar)`);
   const tst = toestand(Hwarmte);

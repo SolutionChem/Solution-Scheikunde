@@ -874,7 +874,7 @@ function stap(dt) {
 
 let laatst = performance.now();
 function frame(nu) {
-  const dt = Math.min(.05, (nu - laatst) / 1000); laatst = nu;
+  const dt = Math.max(0, Math.min(.05, (nu - laatst) / 1000)); laatst = nu;
   let tst;
   if (!pauze) tst = stap(dt);
   else tst = toestand(Hwarmte);

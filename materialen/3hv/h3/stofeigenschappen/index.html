@@ -53,8 +53,8 @@
   label.schuif input { width: 100%; accent-color: var(--navy2); }
   label.optie { display: flex; gap: 8px; align-items: center; font-size: .9rem; margin-top: 8px; cursor: pointer; }
   label.optie input { width: 17px; height: 17px; accent-color: var(--navy2); }
-  .stoflijst { display: grid; gap: 4px; }
-  .stoflijst button { display: flex; justify-content: space-between; gap: 8px; text-align: left; padding: 4px 10px; border-radius: 7px;
+  .stoflijst { display: grid; gap: 3px; }
+  .stoflijst button { display: flex; justify-content: space-between; gap: 8px; text-align: left; padding: 2px 10px; border-radius: 7px;
                       border: 1px solid var(--rand); background: #fff; font-size: .88rem; }
   .stoflijst button span:last-child { font-weight: 700; color: var(--navy); white-space: nowrap; }
   .stoflijst button[aria-pressed="true"] { border-color: var(--navy2); box-shadow: inset 0 0 0 1px var(--navy2); background: var(--licht); }
@@ -121,7 +121,7 @@
   .kaartplek { display: flex; justify-content: center; margin-bottom: 14px; min-height: 150px; }
   .stofkaart { width: min(100%, 420px); background: #fffdf5; border: 2px solid var(--navy3); border-radius: 12px; padding: 12px 16px; cursor: grab;
                touch-action: none; user-select: none; -webkit-user-select: none; box-shadow: 0 3px 8px rgba(11,26,51,.15); position: relative; z-index: 2; }
-  .stofkaart.sleep { cursor: grabbing; box-shadow: 0 10px 24px rgba(11,26,51,.3); transition: none; }
+  .stofkaart.sleep { cursor: grabbing; box-shadow: 0 10px 24px rgba(11,26,51,.3); transition: none; opacity: .92; }
   .stofkaart:not(.sleep) { transition: transform .25s; }
   .stofkaart.weg { opacity: .55; cursor: default; }
   .stofkaart h3 { margin: 0 0 6px; font-family: var(--kop); letter-spacing: .06em; color: var(--navy); font-size: 1.15rem; }
@@ -271,7 +271,7 @@ const MOL = {
   water: [["H", -9.5, 7, 7], ["H", 9.5, 7, 7], ["O", 0, -2, 11]],
   co2: [["C", 0, 0, 10], ["O", -17, 0, 10.5], ["O", 17, 0, 10.5]],
   methaan: [["H", -15, 0, 7], ["H", 15, 0, 7], ["H", 0, -15, 7], ["H", 0, 15, 7], ["C", 0, 0, 11]],
-  propaan: alkaan(3), butaan: alkaan(4), hexaan: alkaan(6),
+  propaan: alkaan(3), butaan: alkaan(4),
   propanon: [...alkaan(3, true), ["O", 0, -24, 11]],
   ethanol: [["H", -24, -2, 6], ["H", -19, 13, 6], ["H", -13, -9, 6], ["H", -3, -15, 6], ["H", 9, -14, 6], ["H", 26, -3, 5.5],
             ["C", -14, 3, 9.5], ["C", 2, -4, 9.5], ["O", 17, 3, 9.5]]
@@ -333,7 +333,30 @@ function maakElektron(ouder, x, y) {
 /* deeltjes in een vloeistof: afstoten, beetje plakken, trillen; optioneel een elektrisch veld */
 function vloeistofStap(D, vak, dt, opt = {}) {
   const K = opt.ruis || 2400, zw = opt.zwaarte || 0, veld = opt.veld || 0;
+  // in een vloeistof ruilen buren voortdurend van plek: ze schuiven in een boogje langs elkaar heen
+  if (opt.wissel) {
+    D.wacht = (D.wacht || 0) - dt;
+    if (D.wacht <= 0) {
+      D.wacht = 1 / opt.wissel;
+      const vrij = D.filter(p => !p.vast && !p.wissel);
+      const a = vrij[Math.floor(Math.random() * vrij.length)];
+      const buren = a ? vrij.filter(b => b !== a && (b.x - a.x) ** 2 + (b.y - a.y) ** 2 < ((a.r + b.r) * 1.5) ** 2) : [];
+      if (buren.length) {
+        const b = buren[Math.floor(Math.random() * buren.length)], kant = Math.random() < .5 ? 1 : -1;
+        a.wissel = { x0: a.x, y0: a.y, x1: b.x, y1: b.y, t: 0, duur: .9, kant, r: a.r + b.r };
+        b.wissel = { x0: b.x, y0: b.y, x1: a.x, y1: a.y, t: 0, duur: .9, kant, r: a.r + b.r };
+      }
+    }
+  }
   for (const p of D) {
+    if (p.wissel) {
+      const w = p.wissel; w.t += dt;
+      const f = Math.min(1, w.t / w.duur), e = ease(f), dx = w.x1 - w.x0, dy = w.y1 - w.y0, l = Math.hypot(dx, dy) || 1;
+      const boog = Math.sin(Math.PI * f) * w.r * .55 * w.kant;
+      p.x = w.x0 + dx * e - dy / l * boog; p.y = w.y0 + dy * e + dx / l * boog; p.vx = p.vy = 0;
+      if (f >= 1) p.wissel = null;
+      continue;
+    }
     if (p.vast) continue;
     p.vx += ((Math.random() - .5) * 2 * K + (p.q ? -p.q * veld : 0)) * dt;
     p.vy += ((Math.random() - .5) * 2 * K + zw) * dt;
@@ -343,22 +366,23 @@ function vloeistofStap(D, vak, dt, opt = {}) {
   for (let it = 0; it < 2; it++) {
     for (let i = 0; i < D.length; i++) for (let j = i + 1; j < D.length; j++) {
       const a = D[i], b = D[j];
-      if (a.vast && b.vast) continue;
+      const av = a.vast || !!a.wissel, bv = b.vast || !!b.wissel;
+      if (av && bv) continue;
       const dmin = (a.r + b.r) * (opt.ruimte || 1.12);
       let dx = b.x - a.x, dy = b.y - a.y; const d2 = dx * dx + dy * dy;
       if (d2 > dmin * dmin * 2.2) continue;
       const d = Math.sqrt(d2) || .01, nx = dx / d, ny = dy / d;
       if (d < dmin) {
-        const wa = a.vast ? 0 : 1, wb = b.vast ? 0 : 1, s = wa + wb, ov = dmin - d;
+        const wa = av ? 0 : 1, wb = bv ? 0 : 1, s = wa + wb, ov = dmin - d;
         a.x -= nx * ov * wa / s; a.y -= ny * ov * wa / s; b.x += nx * ov * wb / s; b.y += ny * ov * wb / s;
       } else if (it === 0 && opt.plak && a.q && b.q && a.q * b.q < 0) {   // tegengestelde ladingen trekken elkaar aan
         const f = opt.plak * dt;
-        if (!a.vast) { a.vx += nx * f; a.vy += ny * f; }
-        if (!b.vast) { b.vx -= nx * f; b.vy -= ny * f; }
+        if (!av) { a.vx += nx * f; a.vy += ny * f; }
+        if (!bv) { b.vx -= nx * f; b.vy -= ny * f; }
       }
     }
     for (const p of D) {
-      if (p.vast) continue;
+      if (p.vast || p.wissel) continue;
       if (p.x < vak.x0 + p.r) { p.x = vak.x0 + p.r; p.vx = Math.abs(p.vx) * .3; }
       if (p.x > vak.x1 - p.r) { p.x = vak.x1 - p.r; p.vx = -Math.abs(p.vx) * .3; }
       if (p.y < vak.y0 + p.r) { p.y = vak.y0 + p.r; p.vy = Math.abs(p.vy) * .3; }
@@ -469,10 +493,11 @@ const zRooster = {
     const sS = Math.min(1, T / Z.smp);
     if (vloei) {
       this.ionen.forEach(o => o.vast = false);
-      vloeistofStap(this.ionen, this.vak, dt, { ruis: 2600, zwaarte: 900, plak: 500, ruimte: 1.18 });
+      vloeistofStap(this.ionen, this.vak, dt, { ruis: 2600, zwaarte: 900, plak: 500, ruimte: 1.18, wissel: 7 });
     } else {
       const amp = 1 + 6 * sS * sS, w = 9;
       for (const o of this.ionen) {
+        o.wissel = null;
         const tx = o.hx + amp * Math.sin(performance.now() / 1000 * w + o.fx), ty = o.hy + amp * Math.sin(performance.now() / 1000 * w * 1.1 + o.fy);
         const k = Math.min(1, dt * 4); o.x += (tx - o.x) * k; o.y += (ty - o.y) * k; o.vx = o.vy = 0;
       }
@@ -576,15 +601,15 @@ const zGeleiding = {
     tek.innerHTML = ""; defs();
     const Z = ZOUTEN.nacl, t = this.toestand;
     this.t = 0;
-    this.vak = { x0: 226, x1: 674, y0: 228, y1: 470 };
+    this.vak = { x0: 142, x1: 758, y0: 214, y1: 494 };
     // bak, vloeistof, elektroden, stroomkring
-    if (t !== "vast") maak("rect", { x: 196, y: 222, width: 508, height: 254, fill: t === "opgelost" ? "#dcebfa" : "#f6ead8" }, tek);
-    maak("path", { d: "M190,170 L190,480 L710,480 L710,170", fill: "none", stroke: "#2c5687", "stroke-width": 4, "stroke-linejoin": "round" }, tek);
-    this.draad = maak("path", { d: "M207,160 L207,70 L405,70 M445,70 L590,70 M626,70 L693,70 L693,160", fill: "none", stroke: "#11264a", "stroke-width": 3 }, tek);
-    maak("rect", { x: 200, y: 150, width: 14, height: 312, fill: "#7d8a99", stroke: "#3e4955", "stroke-width": 2 }, tek);
-    maak("rect", { x: 686, y: 150, width: 14, height: 312, fill: "#7d8a99", stroke: "#3e4955", "stroke-width": 2 }, tek);
-    maak("text", { x: 207, y: 142, class: "groot", "text-anchor": "middle", fill: "#11264a" }, tek, "−");
-    maak("text", { x: 693, y: 142, class: "groot", "text-anchor": "middle" }, tek, "+");
+    if (t !== "vast") maak("rect", { x: 106, y: 206, width: 688, height: 294, fill: t === "opgelost" ? "#dcebfa" : "#f6ead8" }, tek);
+    maak("path", { d: "M100,150 L100,502 L800,502 L800,150", fill: "none", stroke: "#2c5687", "stroke-width": 4, "stroke-linejoin": "round" }, tek);
+    this.draad = maak("path", { d: "M127,140 L127,70 L405,70 M445,70 L590,70 M626,70 L773,70 L773,140", fill: "none", stroke: "#11264a", "stroke-width": 3 }, tek);
+    maak("rect", { x: 120, y: 130, width: 14, height: 350, fill: "#7d8a99", stroke: "#3e4955", "stroke-width": 2 }, tek);
+    maak("rect", { x: 766, y: 130, width: 14, height: 350, fill: "#7d8a99", stroke: "#3e4955", "stroke-width": 2 }, tek);
+    maak("text", { x: 108, y: 126, class: "groot", "text-anchor": "middle", fill: "#11264a" }, tek, "−");
+    maak("text", { x: 792, y: 126, class: "groot", "text-anchor": "middle" }, tek, "+");
     // batterij: korte dikke streep = minpool, lange dunne = pluspool
     maak("line", { x1: 410, x2: 410, y1: 56, y2: 84, stroke: "#11264a", "stroke-width": 7 }, tek);
     maak("line", { x1: 440, x2: 440, y1: 44, y2: 96, stroke: "#11264a", "stroke-width": 3 }, tek);
@@ -593,22 +618,22 @@ const zGeleiding = {
     maak("circle", { cx: 608, cy: 70, r: 18, fill: "#fff", stroke: "#11264a", "stroke-width": 3 }, tek);
     maak("path", { d: "M597,78 L602,62 L608,76 L614,62 L619,78", fill: "none", stroke: "#11264a", "stroke-width": 2 }, tek);
     this.lampTekst = maak("text", { x: 608, y: 122, class: "lab-z", "text-anchor": "middle" }, tek);
-    this.tLabel = maak("text", { x: 450, y: 515, class: "lab", "text-anchor": "middle" }, tek);
+    this.tLabel = maak("text", { x: 450, y: 528, class: "lab", "text-anchor": "middle" }, tek);
     // water op de achtergrond
     this.water = [];
     const laag = maak("g", { opacity: .5 }, tek);
-    if (t === "opgelost") for (let i = 0; i < 30; i++) {
+    if (t === "opgelost") for (let i = 0; i < 40; i++) {
       const m = maakMolecuul(laag, "water", .8);
-      m.x = rnd(240, 660); m.y = rnd(240, 462); m.hoek = rnd(0, 6.3); m.vh = rnd(-1, 1);
+      m.x = rnd(156, 744); m.y = rnd(226, 484); m.hoek = rnd(0, 6.3); m.vh = rnd(-1, 1);
       m.vx = rnd(-30, 30); m.vy = rnd(-30, 30);
       this.water.push(m); plaatsMol(m);
     }
     // ionen: eerst als rooster op de bodem
     const g = maak("g", {}, tek), sp = 46, opg = t === "opgelost", nk = opg ? 4 : 6, nr = opg ? 3 : 4;   // opgelost: minder ionen, zodat de watermantels passen
-    this.ionen = rooster(g, Z, nk, nr, sp, 450 - (nk - 1) / 2 * sp, 470 - Z.rn - 2);
+    this.ionen = rooster(g, Z, nk, nr, sp, 450 - (nk - 1) / 2 * sp, 494 - Z.rn - 2);
     this.ionen.forEach(o => { o.vast = true; o.mantel = null; });
     if (t === "opgelost") {
-      const mid = { x: 450, y: 470 - (nr - 1) / 2 * sp - Z.rn };
+      const mid = { x: 450, y: 494 - (nr - 1) / 2 * sp - Z.rn };
       this.ionen.sort((a, b) => Math.hypot(b.x - mid.x, b.y - mid.y) - Math.hypot(a.x - mid.x, a.y - mid.y));
       this.ionen.forEach((o, i) => {
         o.los = .6 + i * .35;
@@ -632,7 +657,7 @@ const zGeleiding = {
         if (o.vast && this.t >= o.los) o.vast = false;
         if (o.vast) { o.x = o.hx + 2 * Math.sin(tijd * 9 + o.fx); o.y = o.hy + 2 * Math.sin(tijd * 9.7 + o.fy); }
       }
-      vloeistofStap(this.ionen, this.vak, dt, { ruis: 2600, veld: t === "opgelost" ? 220 : 420, ruimte: t === "opgelost" ? 1.02 : 1.15, plak: t === "gesmolten" ? 250 : 0 });
+      vloeistofStap(this.ionen, this.vak, dt, { ruis: 2600, veld: t === "opgelost" ? 220 : 420, ruimte: t === "opgelost" ? 1.02 : 1.15, plak: t === "gesmolten" ? 250 : 0, wissel: t === "gesmolten" ? 5 : 0 });
     }
     this.ionen.forEach(o => {
       plaats(o);
@@ -651,8 +676,8 @@ const zGeleiding = {
     for (const m of this.water) {
       m.vx += rnd(-1, 1) * 400 * dt; m.vy += rnd(-1, 1) * 400 * dt; m.vx *= .98; m.vy *= .98;
       m.x += m.vx * dt; m.y += m.vy * dt; m.hoek += m.vh * dt;
-      if (m.x < 236 || m.x > 664) m.vx *= -1; if (m.y < 238 || m.y > 462) m.vy *= -1;
-      m.x = Math.min(664, Math.max(236, m.x)); m.y = Math.min(462, Math.max(238, m.y));
+      if (m.x < 152 || m.x > 748) m.vx *= -1; if (m.y < 224 || m.y > 486) m.vy *= -1;
+      m.x = Math.min(748, Math.max(152, m.x)); m.y = Math.min(486, Math.max(224, m.y));
       plaatsMol(m);
     }
     const vrij = this.ionen.filter(o => !o.vast).length;
@@ -804,8 +829,7 @@ const mVervorm = {
     const sp = 74, cols = 9, rows = 5, x0 = 450 - (cols - .5) * sp / 2, y0 = 300 - (rows - 1) * sp * .88 / 2;
     this.sp = sp; this.duwen = 0; this.u = 0; this.uDoel = 0; this.anim = null; this.botsing = 0;
     this.vlak = y0 + 1.5 * sp * .88;                 // tussen rij 1 en rij 2
-    this.zeeB = maak("rect", { rx: 30, fill: "#cfe3f6" }, tek);
-    this.zeeO = maak("rect", { rx: 30, fill: "#cfe3f6" }, tek);
+    this.zee = maak("path", { fill: "#cfe3f6", stroke: "#9fc0e3", "stroke-width": 2 }, tek);
     const eLaag = maak("g", {}, tek), iLaag = maak("g", {}, tek);
     this.ionen = []; this.E = [];
     const ander = new Set(["1,1", "1,4", "1,7", "2,2", "2,6", "3,3", "0,5", "4,1", "4,6"]);
@@ -856,8 +880,10 @@ const mVervorm = {
       return { x0: Math.min(...l.map(o => o.x)) - 46, x1: Math.max(...l.map(o => o.x)) + 46, y0: Math.min(...l.map(o => o.y)) - 46, y1: Math.max(...l.map(o => o.y)) + 46 };
     };
     const B = band(true), O = band(false);
-    const zet = (r, b) => { r.setAttribute("x", b.x0); r.setAttribute("y", b.y0); r.setAttribute("width", b.x1 - b.x0); r.setAttribute("height", b.y1 - b.y0); };
-    zet(this.zeeB, { ...B, y1: B.y1 + 14 }); zet(this.zeeO, { ...O, y0: O.y0 - 14 });
+    // één doorlopende elektronenzee om beide delen: bovenste deel kan opgeschoven zijn
+    const r = 30, m = this.vlak;
+    this.zee.setAttribute("d", `M${B.x0},${m} V${B.y0 + r} Q${B.x0},${B.y0} ${B.x0 + r},${B.y0} H${B.x1 - r} Q${B.x1},${B.y0} ${B.x1},${B.y0 + r} V${m}` +
+      ` H${O.x1} V${O.y1 - r} Q${O.x1},${O.y1} ${O.x1 - r},${O.y1} H${O.x0 + r} Q${O.x0},${O.y1} ${O.x0},${O.y1 - r} V${m} Z`);
     // elektronen blijven in hun eigen band, maar mogen over de grens tussen de banden (de zee is één geheel)
     elektronenStap(this.E, this.ionen, e => e.y < this.vlak ? { ...B, y1: O.y1 } : { ...O, y0: B.y0 }, dt);
   },
@@ -895,7 +921,7 @@ const TEKST_STOF = {
   co2: `<b>Koolstofdioxide</b> is een recht, symmetrisch molecuul, ongeveer even groot als propaan. Er werkt alleen de <b>vanderwaalsbinding</b> (tijdelijke dipolen). Vast koolstofdioxide (droogijs) wordt bij gewone luchtdruk niet vloeibaar: het <b>sublimeert</b> bij −78 °C.`,
   propaan: `<b>Propaan</b> (kampeergas) is groter dan methaan en heeft meer elektronen. De <b>tijdelijke dipolen</b> (δ− en δ+) zijn sterker, dus de <b>vanderwaalsbinding</b> is sterker: propaan kookt bij −42 °C. Bij kamertemperatuur is het een gas.`,
   butaan: `<b>Butaan</b> zit ook in kampeergas. Het is nog groter dan propaan: sterkere <b>vanderwaalsbinding</b>, hoger kookpunt (−0,5 °C). Als het vriest, verdampt butaan slecht. Daarom zit er in kampeergas voor de winter vooral propaan.`,
-  propanon: `<b>Propanon</b> (aceton, in nagellakremover) is ongeveer even groot als butaan. Het O-atoom trekt de elektronen iets naar zich toe: de O-kant is <b>altijd</b> een beetje negatief (δ−), de C-kant een beetje positief (δ+). Dat is een <b>blijvende dipool</b>. δ− en δ+ van buurmoleculen trekken elkaar aan: de <b>dipool-dipoolbinding</b>. Daardoor kookt propanon pas bij 56 °C, butaan al bij −0,5 °C.`,
+  propanon: `<b>Propanon</b> (aceton) is ongeveer even groot als butaan. Het O-atoom trekt de elektronen iets naar zich toe: de O-kant is <b>altijd</b> een beetje δ−, de C-kant δ+. Dat is een <b>blijvende dipool</b>. δ− en δ+ van buurmoleculen trekken elkaar aan: de <b>dipool-dipoolbinding</b>. Daardoor kookt propanon pas bij 56&nbsp;°C, butaan al bij −0,5&nbsp;°C.`,
   water: `<b>Water</b> is ongeveer even groot als methaan, maar kookt pas bij 100 °C. De H-atomen zijn sterk δ+ en het O-atoom sterk δ−. Een H-atoom van het ene molecuul trekt het O-atoom van een ander molecuul aan: een <b>waterstofbrug</b>, de sterkste binding tussen moleculen.`
 };
 
@@ -926,14 +952,14 @@ const vKrachten = {
     const S = STOFFEN.find(s => s.id === this.stof);
     this.S = S; this.t = 0;
     maak("text", { x: 280, y: 40, class: "lab", "text-anchor": "middle" }, tek, verdieping ? `${S.naam} (${S.formule}): ${SOORT[S.soort][0]}` : `${S.naam} (${S.formule})`);
-    if (verdieping) maak("text", { x: 10, y: 24, class: "lab-z", "font-weight": 700, fill: "#c27c0e", "letter-spacing": "2" }, tek, "VERDIEPING");
+    if (verdieping) maak("text", { x: 280, y: 14, class: "lab-z", "text-anchor": "middle", "font-weight": 700, fill: "#c27c0e", "letter-spacing": "2" }, tek, "VERDIEPING");
     this.lijnen = maak("g", {}, tek);
     this.wolken = maak("g", {}, tek);
     const laag = maak("g", {}, tek);
     this.labels = maak("g", {}, tek);
     this.mol = [];
     const sch = S.id === "water" ? 2.6 : S.id === "methaan" ? 2.6 : S.id === "co2" ? 2.4 : 2;
-    const plekken = !verdieping ? [[150, 270, 0], [410, 270, 0]] : S.soort === "hbrug" ? [[120, 340, -1.01], [290, 270, -.22], [450, 340, .4]]
+    const plekken = !verdieping ? [[150, 270, 0], [410, 270, 0]] : S.soort === "hbrug" ? this.waterPlekken(sch)
       : S.soort === "dipool" ? [[170, 230, Math.PI / 2], [350, 320, Math.PI / 2]] : [[150, 270, 0], [410, 270, 0]];
     for (const [x, y, h] of plekken) {
       const m = maakMolecuul(laag, S.id, sch); m.bx = m.x = x; m.by = m.y = y; m.hoek = m.bh = h; m.f = rnd(0, 6.3); this.mol.push(m); plaatsMol(m);
@@ -959,6 +985,20 @@ const vKrachten = {
     });
     this.tekst();
   },
+  /* drie watermoleculen: H van het ene molecuul wijst recht naar O van het volgende (O–H···O op één lijn) */
+  waterPlekken(sch) {
+    const L = Math.hypot(9.5, 9) * sch + 7 * sch + 11 * sch + 58;     // O–H-binding + afstand H···O
+    const hoekOH = Math.atan2(9, 9.5);                                 // richting O→H in het molecuul
+    const plek = (ox, oy, h) => [ox - (Math.sin(h) * 2) * sch, oy + (Math.cos(h) * 2) * sch, h];   // middelpunt uit plek van O
+    // Een waterstofbrug komt bij het O-atoom binnen aan de kant zónder H-atomen (in het molecuul: "boven" het O).
+    // a (linksboven) geeft een H aan b; b (midden, rechtop) geeft een H aan c (rechtsonder).
+    const Ob = [295, 280], hb = 0;
+    const f1 = 55 * Math.PI / 180;                     // richting van H(a) naar O(b): schuin naar beneden, dus b's O krijgt hem van boven
+    const f2 = hb + hoekOH;                            // richting van H(b) naar O(c)
+    const ha = f1 - hoekOH, hc = f2 + 1.5 * Math.PI;   // c draait zijn H-vrije kant naar b
+    const Oa = [Ob[0] - L * Math.cos(f1), Ob[1] - L * Math.sin(f1)], Oc = [Ob[0] + L * Math.cos(f2), Ob[1] + L * Math.sin(f2)];
+    return [plek(...Oa, ha), plek(...Ob, hb), plek(...Oc, hc)];
+  },
   grafiek() {
     const x = 640, y0 = 70, y1 = 450, Tmin = -180, Tmax = 120, yT = T => y1 - (T - Tmin) / (Tmax - Tmin) * (y1 - y0);
     maak("text", { x: x - 20, y: 44, class: "lab", "text-anchor": "start" }, tek, "kookpunt (°C)");
@@ -979,7 +1019,8 @@ const vKrachten = {
   },
   stap(dt) {
     this.t += dt; const t = this.t, S = this.S;
-    this.mol.forEach((m, i) => { m.x = m.bx + 3 * Math.sin(t * 1.3 + m.f); m.y = m.by + 3 * Math.sin(t * 1.1 + m.f * 2); m.hoek = m.bh + .05 * Math.sin(t + m.f); plaatsMol(m); });
+    const beweeg = !(verdieping && S.soort === "hbrug");
+    this.mol.forEach((m, i) => { m.x = m.bx + (beweeg ? 3 * Math.sin(t * 1.3 + m.f) : 0); m.y = m.by + (beweeg ? 3 * Math.sin(t * 1.1 + m.f * 2) : 0); m.hoek = m.bh + (beweeg ? .05 * Math.sin(t + m.f) : 0); plaatsMol(m); });
     if (!verdieping) return;
     if (S.soort === "vdw") {
       const s = Math.sin(t * 2.1) * 9, sterk = Math.abs(s) / 9;
@@ -1008,10 +1049,11 @@ const vKrachten = {
         const [a, b, c] = this.mol;
         for (const m of this.mol) { const o = p(m, 0, -2), h1 = p(m, -9.5, 7), h2 = p(m, 9.5, 7);
           delta(o[0], o[1] - 40, "δ−", "#c0392b"); delta(h1[0] - 4, h1[1] + 26, "δ+", "#2f6fb5"); delta(h2[0] + 4, h2[1] + 26, "δ+", "#2f6fb5"); }
-        const brug = (m1, hx, m2) => { const h = p(m1, hx, 7), o = p(m2, 0, -2);
-          const dx = o[0] - h[0], dy = o[1] - h[1], l = Math.hypot(dx, dy);
-          maak("line", { x1: h[0] + dx / l * 18, y1: h[1] + dy / l * 18, x2: o[0] - dx / l * 30, y2: o[1] - dy / l * 30, stroke: SOORT.hbrug[1], "stroke-width": 4, "stroke-dasharray": "4 6" }, this.lijnen); };
-        brug(a, 9.5, b); brug(b, 9.5, c);
+        const brug = (m1, m2) => {                     // van de rand van het H-atoom tot de rand van het O-atoom
+          const h = p(m1, 9.5, 7), o = p(m2, 0, -2);
+          const dx = o[0] - h[0], dy = o[1] - h[1], l = Math.hypot(dx, dy), rh = 7 * this.sch + 3, ro = 11 * this.sch + 3;
+          maak("line", { x1: h[0] + dx / l * rh, y1: h[1] + dy / l * rh, x2: o[0] - dx / l * ro, y2: o[1] - dy / l * ro, stroke: SOORT.hbrug[1], "stroke-width": 4, "stroke-dasharray": "4 5", "stroke-linecap": "round" }, this.lijnen); };
+        brug(a, b); brug(b, c);
       }
     }
   },
@@ -1028,136 +1070,7 @@ const vKrachten = {
       return;
     }
     zetUitleg([TEKST_STOF[this.stof],
-      `Bindingen tussen moleculen zijn veel zwakker dan ionbinding en metaalbinding: <b>lage smelt- en kookpunten</b>. Moleculen zijn niet geladen en er zijn geen vrije elektronen: <b>geen stroomgeleiding</b>.`]);
-  }
-};
-
-/* ---- Moleculair 2: oplossen in water (hydrofiel en hydrofoob) ---- */
-const vOplossen = {
-  id: "oplossen", titel: "Hydrofiel en hydrofoob", eig: ["oplosbaarheid", "hydrofiel", "hydrofoob", "dichtheid"],
-  stof: "ethanol", bruggen: true,
-  paneel() {
-    return verdiepingHtml() + groep("o-stof", [["ethanol", "Ethanol (alcohol)"], ["hexaan", "Hexaan (lijkt op olie)"]], this.stof) +
-      knoppenHtml([["o-roer", "🥄 Roer", "hoofd"], ["o-opnieuw", "↺ Opnieuw"]]) +
-      (verdieping ? `<label class="optie"><input type="checkbox" id="o-bruggen" checked> Toon de waterstofbruggen</label>` : "") +
-      legenda([["#ff9a8c", "watermolecuul"], ["#7a828d", this.stof === "ethanol" ? "ethanolmolecuul" : "hexaanmolecuul"], ...(verdieping ? [["#c27c0e", "waterstofbrug", true]] : [])]);
-  },
-  koppel() {
-    koppelVerdieping();
-    bijGroep("o-stof", w => { this.stof = w; toonDeel(); });
-    $("o-roer").addEventListener("click", () => this.roer());
-    $("o-opnieuw").addEventListener("click", () => this.bouw());
-    if (verdieping) {
-      $("o-bruggen").checked = this.bruggen;
-      $("o-bruggen").addEventListener("change", e => this.bruggen = e.target.checked);
-    }
-  },
-  bouw() {
-    tek.innerHTML = ""; defs();
-    this.fase = "begin"; this.t = 0;
-    const C = 10, R = 6, X0 = 170, Y0 = 150, DX = 62, DY = 54;
-    this.slot = (c, r) => ({ x: X0 + DX / 2 + c * DX, y: Y0 + DY / 2 + r * DY });
-    this.C = C; this.R = R; this.DX = DX;
-    maak("rect", { x: X0 - 6, y: Y0 - 6, width: C * DX + 12, height: R * DY + 12, fill: "#eef5fc" }, tek);
-    maak("path", { d: `M${X0 - 10},${Y0 - 50} L${X0 - 10},${Y0 + R * DY + 10} L${X0 + C * DX + 10},${Y0 + R * DY + 10} L${X0 + C * DX + 10},${Y0 - 50}`,
-      fill: "none", stroke: "#2c5687", "stroke-width": 4, "stroke-linejoin": "round" }, tek);
-    this.pad = maak("path", { fill: "none", stroke: "#c27c0e", "stroke-width": 2.5, "stroke-dasharray": "3 4", opacity: .85 }, tek);
-    const laag = maak("g", {}, tek);
-    this.D = [];
-    const hex = this.stof === "hexaan";
-    // begin: de stof drijft als laag op het water (beide hebben een kleinere dichtheid dan water)
-    const plekken = [];
-    for (let r = 0; r < R; r++) for (let c = 0; c < C; c++) plekken.push([c, r]);
-    if (hex) {
-      for (let i = 0; i < 8; i++) { const r = Math.floor(i / 4), c = (i % 4) * 2 + (r ? 1 : 0); this.voeg(laag, "hexaan", [[c, r], [c + 1, r]]); }
-      plekken.filter(([c, r]) => r >= 2).slice(0, 40).forEach(p => this.voeg(laag, "water", [p]));
-    } else {
-      plekken.filter(([c, r]) => r === 0).forEach(p => this.voeg(laag, "ethanol", [p]));
-      plekken.filter(([c, r]) => r >= 1).slice(0, 40).forEach(p => this.voeg(laag, "water", [p]));
-    }
-    this.D.forEach(d => { const h = this.thuis(d); d.x = h.x; d.y = h.y; plaatsMol(d); });
-    this.tLabel = maak("text", { x: 480, y: 120, class: "lab", "text-anchor": "middle" }, tek);
-    this.tekst();
-  },
-  voeg(laag, soort, slots) {
-    const m = maakMolecuul(laag, soort, soort === "hexaan" ? .9 : soort === "ethanol" ? 1 : 1.05);
-    m.slots = slots; m.f = rnd(0, 6.3); m.ox = rnd(-9, 9); m.oy = rnd(-8, 8); m.hoek = soort === "hexaan" ? 0 : rnd(-1, 1); m.wissel = null;
-    this.D.push(m); return m;
-  },
-  thuis(m) { const s = m.slots.map(([c, r]) => this.slot(c, r)); return { x: s.reduce((a, p) => a + p.x, 0) / s.length, y: s.reduce((a, p) => a + p.y, 0) / s.length }; },
-  verdeel(gemengd) {                             // nieuwe plekken: gemengd of in lagen
-    const vrij = new Set(); for (let r = 0; r < this.R; r++) for (let c = 0; c < this.C; c++) vrij.add(`${c},${r}`);
-    const neem = (c, r) => vrij.delete(`${c},${r}`);
-    const hex = this.D.filter(m => m.soort === "hexaan"), rest = this.D.filter(m => m.soort !== "hexaan");
-    if (hex.length) {
-      const paren = [];
-      for (let r = 0; r < this.R; r++) for (let c = 0; c < this.C - 1; c += 2) paren.push([c + (r % 2), r]);
-      const kies = gemengd ? paren.filter(([c]) => c + 1 < this.C).sort(() => Math.random() - .5) : paren.filter(([c, r]) => r < 2 && c + 1 < this.C);
-      hex.forEach((m, i) => { const [c, r] = kies[i]; m.slots = [[c, r], [c + 1, r]]; neem(c, r); neem(c + 1, r); });
-      const over = [...vrij].map(s => s.split(",").map(Number)).filter(([c, r]) => gemengd || r >= 2).sort(() => Math.random() - .5);
-      rest.forEach((m, i) => { m.slots = [over[i]]; });
-    } else {
-      const over = [...vrij].map(s => s.split(",").map(Number)).sort(() => Math.random() - .5);
-      rest.forEach((m, i) => { m.slots = [over[i]]; });
-    }
-    this.D.forEach(m => { m.van = { x: m.x, y: m.y }; m.reis = 0; m.reisDuur = rnd(.9, 1.6) + (gemengd ? 0 : rnd(0, 2.5)); m.wissel = null; });
-  },
-  roer() { this.verdeel(true); this.fase = "roeren"; this.t = 0; this.tekst(); },
-  stap(dt) {
-    this.t += dt;
-    const tijd = performance.now() / 1000;
-    if (this.fase === "roeren" && this.t > 2.2) {
-      if (this.stof === "hexaan") { this.verdeel(false); this.fase = "ontmengen"; }
-      else this.fase = "gemengd";
-      this.t = 0; this.tekst();
-    }
-    if (this.fase === "ontmengen" && this.t > 5) { this.fase = "lagen"; this.tekst(); }
-    // in een vloeistof wisselen buren steeds van plek (niet de grote hexaanmoleculen)
-    if (this.fase !== "roeren" && Math.random() < dt * 5) {
-      const l = this.D.filter(m => m.slots.length === 1 && !m.wissel && !(m.reis < m.reisDuur));
-      const a = l[Math.floor(Math.random() * l.length)];
-      const b = a && l.find(o => o !== a && Math.abs(o.slots[0][0] - a.slots[0][0]) + Math.abs(o.slots[0][1] - a.slots[0][1]) === 1 &&
-        (this.stof !== "hexaan" || true));
-      if (b) { const s = a.slots; a.slots = b.slots; b.slots = s; [a, b].forEach(m => { m.van = { x: m.x, y: m.y }; m.reis = 0; m.reisDuur = 1; }); }
-    }
-    for (const m of this.D) {
-      const h = this.thuis(m);
-      let x = h.x, y = h.y;
-      if (m.reis !== undefined && m.reis < m.reisDuur) {
-        m.reis += dt; const f = ease(m.reis / m.reisDuur);
-        const boog = this.fase === "roeren" ? Math.sin(Math.PI * f) * 60 : Math.sin(Math.PI * f) * 14;
-        x = m.van.x + (h.x - m.van.x) * f + boog * Math.cos(m.f); y = m.van.y + (h.y - m.van.y) * f + boog * Math.sin(m.f);
-      }
-      m.x = x + m.ox + 4 * Math.sin(tijd * 3 + m.f); m.y = y + m.oy + 4 * Math.sin(tijd * 2.6 + m.f * 2);
-      if (m.soort !== "hexaan") m.hoek += Math.sin(tijd * .8 + m.f) * dt * .8;
-      plaatsMol(m);
-    }
-    let d = "";
-    if (verdieping && this.bruggen) {
-      const P = this.D.filter(m => m.soort !== "hexaan");
-      for (let i = 0; i < P.length; i++) for (let j = i + 1; j < P.length; j++) {
-        const a = P[i], b = P[j], dd = (a.x - b.x) ** 2 + (a.y - b.y) ** 2;
-        if (dd < 64 * 64 && (i + j) % 2 === 0) d += `M${a.x.toFixed(0)} ${a.y.toFixed(0)}L${b.x.toFixed(0)} ${b.y.toFixed(0)}`;
-      }
-    }
-    this.pad.setAttribute("d", d);
-  },
-  tekst() {
-    const hex = this.stof === "hexaan", f = this.fase, p = [];
-    this.tLabel.textContent = f === "begin" ? (hex ? "hexaan drijft op water" : "ethanol drijft op water") : f === "roeren" ? "roeren…" :
-      hex ? (f === "lagen" ? "twee lagen: hexaan lost niet op" : "de lagen scheiden weer") : "één vloeistof: ethanol is opgelost";
-    if (verdieping) p.push(`Watermoleculen trekken elkaar sterk aan via <b>waterstofbruggen</b> (oranje stippellijnen).`);
-    if (!hex) {
-      p.push(f === "begin" ? `Ethanol heeft een kleinere dichtheid dan water en ligt er eerst bovenop. Klik op <b>Roer</b>.`
-        : verdieping ? `Een ethanolmolecuul heeft een OH-groep. Daarmee vormt het waterstofbruggen met watermoleculen. De moleculen blijven door elkaar: <b>ethanol lost op in water</b>. Ethanol is <b>hydrofiel</b> (waterlievend).`
-        : `Na het roeren blijven de ethanolmoleculen en de watermoleculen door elkaar: <b>ethanol lost op in water</b>. Ethanol is <b>hydrofiel</b> (waterlievend).`);
-    } else {
-      p.push(f === "begin" ? `Hexaan lijkt op olie. Het heeft een kleinere dichtheid dan water (0,66 g/cm³ tegen 1,00 g/cm³) en drijft erop. Klik op <b>Roer</b>.`
-        : verdieping ? `Hexaan kan geen waterstofbruggen vormen. De watermoleculen houden elkaar vast en drukken de hexaanmoleculen eruit. Na het roeren ontstaan weer <b>twee lagen</b>: hexaan lost niet op in water. Hexaan is <b>hydrofoob</b> (waterafstotend).`
-        : `Watermoleculen trekken elkaar sterk aan en drukken de hexaanmoleculen eruit. Na het roeren ontstaan weer <b>twee lagen</b>: hexaan lost niet op in water. Hexaan is <b>hydrofoob</b> (waterafstotend).`);
-      if (f === "lagen") p.push(`De hexaanlaag ligt bovenop, omdat de <b>dichtheid</b> van hexaan kleiner is dan die van water.`);
-    }
-    zetUitleg(p);
+      `Bindingen tussen moleculen zijn veel zwakker dan ionbinding en metaalbinding: <b>lage smelt- en kookpunten</b>. Geen geladen deeltjes en geen vrije elektronen: <b>geen stroomgeleiding</b>.`]);
   }
 };
 
@@ -1168,8 +1081,8 @@ const VERGELIJK = [
   ["Stroom geleiden, vast", ["Nee", "De ionen zitten vast in het rooster.", "zout/geleiding"], ["Ja", "Vrije elektronen bewegen.", "metaal/geleiding"], ["Nee", "Geen geladen deeltjes.", "moleculair/krachten"]],
   ["Stroom geleiden, vloeibaar of opgelost", ["Ja", "Gesmolten of opgelost: de ionen kunnen bewegen.", "zout/geleiding"], ["Ja (vloeibaar)", "Vrije elektronen bewegen.", "metaal/geleiding"], ["Nee", "Geen geladen deeltjes.", "moleculair/krachten"]],
   ["Warmte geleiden", ["Slecht", "Geen vrije elektronen.", ""], ["Goed", "Snelle vrije elektronen nemen de warmte mee.", "metaal/geleiding"], ["Slecht", "Geen vrije elektronen.", ""]],
-  ["Oplosbaarheid in water", ["Veel zouten lossen goed op: hydrofiel", "Watermoleculen trekken de ionen los.", "zout/geleiding"], ["Lost niet op", "Er zijn geen losse deeltjes die watermoleculen kunnen omringen.", ""], ["Hydrofiel of hydrofoob", "Hydrofiel: lost op in water (ethanol, suiker). Hydrofoob: lost niet op in water (hexaan, olie).", "moleculair/oplossen"]],
-  ["Dichtheid", ["Middelgroot", "Natriumchloride: 2,16 g/cm³.", ""], ["Meestal groot", "IJzer: 7,87 g/cm³. Aluminium: 2,70 g/cm³.", ""], ["Meestal klein", "Water: 1,00 g/cm³. Hexaan: 0,66 g/cm³.", "moleculair/oplossen"]],
+  ["Oplosbaarheid in water", ["Veel zouten lossen goed op: hydrofiel", "Watermoleculen trekken de ionen los.", "zout/geleiding"], ["Lost niet op", "Er zijn geen losse deeltjes die watermoleculen kunnen omringen.", ""], ["Hydrofiel of hydrofoob", "Hydrofiel: lost op in water (ethanol, suiker). Hydrofoob: lost niet op in water (hexaan, olie).", ""]],
+  ["Dichtheid", ["Middelgroot", "Natriumchloride: 2,16 g/cm³.", ""], ["Meestal groot", "IJzer: 7,87 g/cm³. Aluminium: 2,70 g/cm³.", ""], ["Meestal klein", "Water: 1,00 g/cm³. Hexaan: 0,66 g/cm³.", ""]],
   ["Vervormen", ["Bros: breekt", "Gelijke ladingen komen tegenover elkaar.", "zout/bros"], ["Vervormbaar", "Lagen ionen schuiven; de elektronenzee blijft.", "metaal/vervormen"], ["Vast: vaak zacht of bros", "Bijvoorbeeld kaarsvet of suiker.", ""]]
 ];
 function bouwVergelijk() {
@@ -1266,67 +1179,67 @@ const KAART_FOUT = {
 };
 /* redeneervragen: [antwoord, goed?, feedback bij fout] */
 const REDENEER = [
-  { v: "Waarom geleidt vast natriumchloride geen stroom?", o: [
+  { cat: "zout", v: "Waarom geleidt vast natriumchloride geen stroom?", o: [
     ["De ionen zitten vast in het ionrooster en kunnen niet bewegen.", 1],
     ["Natriumchloride heeft geen geladen deeltjes.", 0, "Natriumchloride bestaat juist uit geladen deeltjes: ionen. Maar kunnen die in een vaste stof bewegen?"],
     ["De vrije elektronen zitten vast.", 0, "Vrije elektronen heeft een metaal, geen zout. Welke geladen deeltjes zitten in een zout?"],
     ["Het smeltpunt is te hoog.", 0, "Het smeltpunt zegt hoe sterk de deeltjes elkaar aantrekken. Voor stroom moeten geladen deeltjes kunnen bewegen."]],
     u: "Stroom is een stroom van bewegende geladen deeltjes. In vast zout zitten de ionen vast in het rooster. Gesmolten of opgelost kunnen ze wel bewegen." },
-  { v: "Waarom geleidt een metaal stroom, ook als het vast is?", o: [
+  { cat: "metaal", v: "Waarom geleidt een metaal stroom, ook als het vast is?", o: [
     ["De vrije elektronen kunnen door het hele metaal bewegen.", 1],
     ["De metaalionen bewegen naar de pluspool.", 0, "De metaalionen zitten vast in het rooster; ze trillen alleen. Welke deeltjes kunnen wel bewegen?"],
     ["Een metaal bestaat uit geladen moleculen.", 0, "Een metaal bestaat niet uit moleculen, maar uit metaalionen en vrije elektronen."],
     ["Metalen hebben een hoog smeltpunt.", 0, "Het smeltpunt heeft niets met stroom te maken. Stroom is een stroom van bewegende geladen deeltjes."]],
     u: "In een metaal bewegen de vrije elektronen door het hele metaal. Bewegende geladen deeltjes zijn een elektrische stroom." },
-  { v: "Je slaat met een hamer op een zoutkristal. Waarom breekt het?", o: [
+  { cat: "zout", v: "Je slaat met een hamer op een zoutkristal. Waarom breekt het?", o: [
     ["De lagen ionen verschuiven, gelijke ladingen komen tegenover elkaar en stoten elkaar af.", 1],
     ["De ionbinding is zwak.", 0, "De ionbinding is juist sterk (daarom is het smeltpunt hoog). Wat gebeurt er met de ladingen als een laag verschuift?"],
     ["Het zout smelt door de klap.", 0, "Door een klap smelt een zout niet. Denk aan de ladingen van de ionen na het verschuiven."],
     ["De vrije elektronen worden weggeslagen.", 0, "Een zout heeft geen vrije elektronen; die zitten in een metaal."]],
     u: "Als een laag ionen een stukje verschuift, zitten positieve ionen tegenover positieve en negatieve tegenover negatieve. Die stoten elkaar af: het kristal breekt. Zouten zijn bros." },
-  { v: "Waarom kun je van koper een draad trekken zonder dat het breekt?", o: [
+  { cat: "metaal", v: "Waarom kun je van koper een draad trekken zonder dat het breekt?", o: [
     ["De lagen ionen schuiven over elkaar en de elektronenzee houdt ze bij elkaar.", 1],
     ["Koperionen stoten elkaar niet af.", 0, "Positieve ionen stoten elkaar wel af. Wat zit er tussen de ionen dat ze bij elkaar houdt?"],
     ["Koper heeft een laag smeltpunt.", 0, "Koper smelt pas bij 1085 °C. Het gaat om wat er gebeurt als de lagen verschuiven."],
     ["Koper bestaat uit moleculen die langs elkaar glijden.", 0, "Een metaal bestaat niet uit moleculen, maar uit metaalionen en vrije elektronen."]],
     u: "In een metaal kunnen lagen ionen over elkaar schuiven. De elektronenzee zit overal tussen de ionen, dus de metaalbinding blijft. Metalen zijn vervormbaar." },
-  { v: "Waarom is brons (koper met een beetje tin) harder dan zuiver koper?", o: [
+  { cat: "metaal", v: "Waarom is brons (koper met een beetje tin) harder dan zuiver koper?", o: [
     ["De tinatomen hebben een andere grootte en verstoren het rooster: de lagen schuiven moeilijker.", 1],
     ["Brons heeft meer vrije elektronen.", 0, "Meer vrije elektronen maken een metaal niet harder. Denk aan de lagen ionen die over elkaar moeten schuiven."],
     ["Tin is een niet-metaal, dus er ontstaat ionbinding.", 0, "Tin is een metaal. In een legering zitten metalen, geen ionbinding."],
     ["Tin is zelf veel harder dan koper.", 0, "Tin is juist zachter dan koper. Het gaat om de verschillende grootte van de atomen in het rooster."]],
     u: "In een legering zitten atomen met een andere grootte. Het rooster is verstoord, zodat de lagen niet makkelijk over elkaar schuiven. Een legering is daardoor harder." },
-  { v: "Waarom heeft natriumchloride een hoog smeltpunt?", o: [
+  { cat: "zout", v: "Waarom heeft natriumchloride een hoog smeltpunt?", o: [
     ["Positieve en negatieve ionen trekken elkaar sterk aan (ionbinding).", 1],
     ["De moleculen van natriumchloride zijn erg zwaar.", 0, "Natriumchloride bestaat niet uit moleculen, maar uit ionen."],
     ["Er zijn veel vrije elektronen.", 0, "Een zout heeft geen vrije elektronen. Welke deeltjes trekken elkaar aan in een zout?"],
     ["Gelijke ladingen stoten elkaar af.", 0, "Afstoting houdt een rooster niet bij elkaar. Welke ladingen zitten naast elkaar in het ionrooster?"]],
     u: "In een ionrooster zit elk ion naast ionen met de tegengestelde lading. Die trekken elkaar sterk aan. Je moet veel verwarmen voordat de ionen los raken." },
-  { v: "Een zoutoplossing geleidt stroom, een suikeroplossing niet. Waarom?", o: [
+  { cat: "zout", v: "Een zoutoplossing geleidt stroom, een suikeroplossing niet. Waarom?", o: [
     ["In de zoutoplossing bewegen ionen; suiker bestaat uit moleculen zonder lading.", 1],
     ["Suiker lost niet op in water.", 0, "Suiker lost wel goed op. Maar welke deeltjes zitten er dan in het water?"],
     ["Suikermoleculen vallen in water uit elkaar in atomen.", 0, "Bij oplossen blijven de moleculen heel."],
     ["In de zoutoplossing bewegen vrije elektronen.", 0, "Vrije elektronen heeft alleen een metaal. Welke geladen deeltjes zitten in een zoutoplossing?"]],
     u: "Opgelost zout bestaat uit losse ionen die kunnen bewegen: dat is stroom. Opgeloste suiker bestaat uit moleculen. Die zijn niet geladen." },
-  { v: "Waarom geleidt een metalen pan de warmte goed?", o: [
+  { cat: "metaal", v: "Waarom geleidt een metalen pan de warmte goed?", o: [
     ["Snelle vrije elektronen nemen de warmte mee door het metaal.", 1],
     ["De metaalionen stromen naar de koude kant.", 0, "De metaalionen zitten vast in het rooster; ze trillen alleen harder."],
     ["Metalen hebben een hoog smeltpunt.", 0, "Het smeltpunt zegt niets over hoe snel warmte zich verplaatst."],
     ["Een metaal bestaat uit snelle moleculen.", 0, "Een metaal bestaat niet uit moleculen, maar uit metaalionen en vrije elektronen."]],
     u: "Aan de warme kant gaan de vrije elektronen sneller bewegen. Ze bewegen door het hele metaal en nemen de warmte mee. Daarom geleiden metalen warmte goed." },
-  { v: "Wat gebeurt er met de watermoleculen als water kookt?", o: [
+  { cat: "moleculair", v: "Wat gebeurt er met de watermoleculen als water kookt?", o: [
     ["De moleculen komen los van elkaar, maar blijven zelf heel.", 1],
     ["De moleculen vallen uit elkaar in waterstofatomen en zuurstofatomen.", 0, "Bij koken blijven de moleculen heel. Wat moet er dan losraken?"],
     ["De moleculen worden groter.", 0, "Moleculen worden niet groter. Wat verandert er wel bij een gas?"],
     ["Er ontstaan ionen.", 0, "Bij koken ontstaan geen ionen; de moleculen blijven hetzelfde."]],
     u: "Bij koken raken de moleculen los van elkaar en komen ze ver uit elkaar te zitten. De atomen in een molecuul blijven aan elkaar vast." },
-  { v: "Waarom hebben moleculaire stoffen meestal een laag smeltpunt en kookpunt?", o: [
+  { cat: "moleculair", v: "Waarom hebben moleculaire stoffen meestal een laag smeltpunt en kookpunt?", o: [
     ["De moleculen trekken elkaar maar zwak aan.", 1],
     ["De atomen in een molecuul zitten los aan elkaar.", 0, "De atomen in een molecuul zitten juist stevig aan elkaar; bij smelten en koken blijven moleculen heel. Wat moet er dan losraken?"],
     ["Moleculen zijn geladen.", 0, "Moleculen zijn niet geladen."],
     ["Er zijn weinig vrije elektronen.", 0, "Moleculaire stoffen hebben helemaal geen vrije elektronen. Dat heeft met stroom te maken, niet met het smeltpunt."]],
     u: "Bij smelten en koken komen de moleculen los van elkaar. De moleculen trekken elkaar zwak aan, dus daar is weinig warmte voor nodig." },
-  { v: "Hexaan mengt niet met water: er ontstaan twee lagen. Welk woord past bij hexaan?", o: [
+  { cat: "moleculair", v: "Hexaan mengt niet met water: er ontstaan twee lagen. Welk woord past bij hexaan?", o: [
     ["Hydrofoob", 1],
     ["Hydrofiel", 0, "Hydrofiel betekent waterlievend: zo'n stof lost juist goed op in water."],
     ["Bros", 0, "Bros betekent dat een vaste stof breekt als je erop slaat. Het gaat hier om mengen met water."],
@@ -1357,7 +1270,7 @@ const REDENEER = [
     ["Een ion dat even geladen is.", 0, "Bij een dipool ontstaan geen ionen; het molecuul als geheel is niet geladen."],
     ["Twee moleculen die een atoombinding vormen.", 0, "Bij de vanderwaalsbinding ontstaan geen atoombindingen tussen moleculen."]],
     u: "De elektronen in een molecuul bewegen. Soms zitten er even meer aan één kant: een tijdelijke dipool. Die maakt in het buurmolecuul ook een dipool, en ze trekken elkaar aan: de vanderwaalsbinding." },
-  { verd: 1, v: "Waarom lost ethanol wel op in water en hexaan niet?", o: [
+  { verd: 1, cat: "moleculair", v: "Waarom lost ethanol wel op in water en hexaan niet?", o: [
     ["Ethanol vormt met zijn OH-groep waterstofbruggen met water; hexaan niet.", 1],
     ["Hexaan heeft een kleinere dichtheid.", 0, "De dichtheid bepaalt welke laag bovenop ligt, niet of de stof oplost."],
     ["Ethanol bestaat uit ionen.", 0, "Ethanol is een moleculaire stof."],
@@ -1380,10 +1293,14 @@ function spelStart() {
 }
 let laatsteStoffen = [];
 function nieuwSpel() {
-  const stoffen = mix(KAARTSTOFFEN.filter(s => !laatsteStoffen.includes(s.naam))).slice(0, 3);
+  // elke ronde: één zout, één metaal en één moleculaire stof (in willekeurige volgorde), niet dezelfde als de vorige ronde
+  const stoffen = mix(["zout", "metaal", "moleculair"].map(c => mix(KAARTSTOFFEN.filter(s => s.cat === c && !laatsteStoffen.includes(s.naam)))[0]));
   laatsteStoffen = stoffen.map(s => s.naam);
+  // twee redeneervragen over twee verschillende soorten stof; met verdieping is er één een verdiepingsvraag
   const basis = mix(REDENEER.filter(r => !r.verd)), verd = mix(REDENEER.filter(r => r.verd));
-  const red = spel.verdieping ? [verd[0], mix([verd[1], basis[0]])[0]] : basis.slice(0, 2);
+  let red;
+  if (spel.verdieping) { const v = verd[0]; red = [v, basis.find(r => r.cat !== "moleculair")]; }
+  else { const a = basis[0]; red = [a, basis.find(r => r.cat !== a.cat)]; }
   const k = stoffen.map(maakKaart), r = mix(red).map(x => ({ soort: "keuze", ...x, o: mix(x.o) }));
   spel.vragen = [k[0], r[0], k[1], r[1], k[2]];
   spel.i = 0; spel.punten = []; toonVraag();
@@ -1425,11 +1342,14 @@ function koppelKaart(q) {
   let sleep = null;
   kaart.addEventListener("pointerdown", e => {
     if (spel.klaar) return;
+    const kb = kaart.getBoundingClientRect();
+    kaart.style.transformOrigin = `${e.clientX - kb.left}px ${e.clientY - kb.top}px`;   // krimpen rond de vinger of muis
     sleep = { x: e.clientX, y: e.clientY, id: e.pointerId }; kaart.setPointerCapture(e.pointerId); kaart.classList.add("sleep");
+    kaart.style.transform = "scale(.4)";
   });
   kaart.addEventListener("pointermove", e => {
     if (!sleep) return;
-    kaart.style.transform = `translate(${e.clientX - sleep.x}px, ${e.clientY - sleep.y}px) rotate(2deg)`;
+    kaart.style.transform = `translate(${e.clientX - sleep.x}px, ${e.clientY - sleep.y}px) scale(.4) rotate(2deg)`;
     const bak = bakOnder(e.clientX, e.clientY);
     document.querySelectorAll(".bak").forEach(b => b.classList.toggle("boven", b === bak));
   });
@@ -1505,7 +1425,7 @@ function eindScherm() {
 }
 
 /* ===================================================================== NAVIGATIE */
-const DELEN = { zout: [zRooster, zBros, zGeleiding], metaal: [mGeleiding, mVervorm], moleculair: [vKrachten, vOplossen] };
+const DELEN = { zout: [zRooster, zBros, zGeleiding], metaal: [mGeleiding, mVervorm], moleculair: [vKrachten] };
 let cat = "zout", deel = zRooster, pauze = false;
 
 function kies(c, d) {

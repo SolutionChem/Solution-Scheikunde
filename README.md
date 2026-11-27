@@ -36,7 +36,7 @@ materialen/           Eigen animaties en bestanden, per leerjaar en hoofdstuk
   3hv/h3/faseovergangen/  Simulatie: deeltjesmodel en faseovergangen, macro- en microniveau naast elkaar (§3.2)
   3hv/h3/stofeigenschappen/  Simulatie: stofeigenschappen van zouten, metalen en moleculaire stoffen (§3.1–§3.2);
                           ?tab=zout|metaal|moleculair|vergelijk|spel opent dat tabblad, &deel=<onderdeel> een onderdeel
-                          (zout: rooster, bros, geleiding · metaal: geleiding, vervormen · moleculair: krachten, oplossen);
+                          (zout: rooster, bros, geleiding · metaal: geleiding, vervormen · moleculair: krachten);
                           &verdieping=1 zet de verdieping bij moleculaire stoffen (en in het spel) meteen aan
 ```
 

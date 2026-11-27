@@ -269,12 +269,6 @@ function toestand(h, stof = st) {
   }
   return { T: T + rest, f: { [fase]: 1 }, op: null, fase };
 }
-/* ter vergelijking bij een mengsel: de temperatuur van een zuivere stof bij dezelfde toegevoerde warmte
-   (gelijk gezet bij de begintemperatuur) */
-function Tzuiver(h, id) {
-  const z = STOFFEN[id], hz = h - Hbij(st, st.Tstart) + Hbij(z, st.Tstart);
-  return hz < 0 ? z.Tmin + hz : toestand(hz, z).T;
-}
 function relatief(T) { return Math.max(0, Math.min(1, (T - st.Tmin) / (st.Tmax - st.Tmin))); }
 function bereik(fase) {                          // temperatuurgebied van een fase, voor de beweeglijkheid
   const gr = st.grenzen;
@@ -805,7 +799,7 @@ function tekenStreepjes() {
 /* ---------- grafiek ---------- */
 const graf = $("grafiek"), VENSTER = 60;
 let gx0 = 40, gx1 = 632, gy0 = 10, gy1 = 116, grafBreed = 0, grafHoog = 0;
-let grafLijn, grafZuiver, grafEthanol;
+let grafLijn;
 function bouwGrafiek() {
   graf.innerHTML = "";
   const vak = graf.getBoundingClientRect();     // 1 eenheid = 1 pixel: letters blijven even groot
@@ -829,17 +823,7 @@ function bouwGrafiek() {
   [st.Tmin, st.Tmax].forEach(T => maak("text", { x: gx0 - 4, y: yT(T) + 4, "text-anchor": "end", "font-size": 11, fill: "#4a5a72" }, graf, fmt(T)));
   maak("text", { x: 4, y: 10, "font-size": 11, fill: "#4a5a72" }, graf, "°C");
   maak("text", { x: gx1, y: grafHoog - 6, "text-anchor": "end", "font-size": 11, fill: "#4a5a72" }, graf, "tijd →");
-  grafEthanol = maak("polyline", { fill: "none", stroke: "#2f6fb5", "stroke-width": 2, "stroke-dasharray": "1 4", "stroke-linecap": "round", "stroke-linejoin": "round" }, graf);
-  grafZuiver = maak("polyline", { fill: "none", stroke: "#8796a6", "stroke-width": 2, "stroke-dasharray": "5 4", "stroke-linejoin": "round" }, graf);
   grafLijn = maak("polyline", { fill: "none", stroke: "#c0392b", "stroke-width": 2.5, "stroke-linejoin": "round" }, graf);
-  if (st.mengsel) {                                 // legenda
-    maak("line", { x1: gx0 + 8, x2: gx0 + 30, y1: gy0 + 12, y2: gy0 + 12, stroke: "#c0392b", "stroke-width": 2.5 }, graf);
-    maak("text", { x: gx0 + 35, y: gy0 + 16, "font-size": 11, fill: "#11264a", "font-weight": 600 }, graf, "water met ethanol (mengsel)");
-    maak("line", { x1: gx0 + 8, x2: gx0 + 30, y1: gy0 + 28, y2: gy0 + 28, stroke: "#8796a6", "stroke-width": 2, "stroke-dasharray": "5 4" }, graf);
-    maak("text", { x: gx0 + 35, y: gy0 + 32, "font-size": 11, fill: "#4a5a72" }, graf, "zuiver water");
-    maak("line", { x1: gx0 + 8, x2: gx0 + 30, y1: gy0 + 44, y2: gy0 + 44, stroke: "#2f6fb5", "stroke-width": 2, "stroke-dasharray": "1 4", "stroke-linecap": "round" }, graf);
-    maak("text", { x: gx0 + 35, y: gy0 + 48, "font-size": 11, fill: "#4a5a72" }, graf, "zuivere ethanol");
-  }
 }
 function tekenGrafiek() {
   const yT = T => gy1 - relatief(T) * (gy1 - gy0);
@@ -847,8 +831,6 @@ function tekenGrafiek() {
   const lijn = k => metingen.filter(m => m.t >= t0 && m[k] != null)
     .map(m => `${(gx0 + (m.t - t0) / VENSTER * (gx1 - gx0)).toFixed(1)},${yT(m[k]).toFixed(1)}`).join(" ");
   grafLijn.setAttribute("points", lijn("T"));
-  grafZuiver.setAttribute("points", st.mengsel ? lijn("Tz") : "");
-  grafEthanol.setAttribute("points", st.mengsel ? lijn("Te") : "");
 }
 
 /* ---------- uitleg (hangt af van de stof, de fase en of je verwarmt of koelt) ---------- */
@@ -856,7 +838,7 @@ function tekenGrafiek() {
 function uitlegMengsel(tst) {
   const T = fmt(tst.T), kk = st.grenzen[0];
   const v = P.filter(p => p.st === "l"), e = v.filter(p => p.soort === "ethanol").length;
-  const zuiver = ` Vergelijk met de <b>zuivere stoffen</b> in de grafiek: ethanol kookt bij 78 °C en water bij 100 °C; daar blijft de temperatuur tijdens het koken gelijk.`;
+  const zuiver = ` Vergelijk met de <b>zuivere stoffen</b>: ethanol kookt bij 78 °C en water bij 100 °C; daar blijft de temperatuur tijdens het koken gelijk.`;
   const richting = { warm: " Je verwarmt: de moleculen gaan steeds sneller bewegen.", koud: " Je koelt: de moleculen gaan steeds langzamer bewegen.", uit: "" }[modus];
   let html;
   if (tst.op) {
@@ -950,7 +932,7 @@ function kiesStof(id) {
     ? `<span class="pt">Smeltpunt ${fmt(gr[0].T)} °C · kookpunt ${fmt(gr[1].T)} °C</span>`
     : `<span class="pt">Sublimatiepunt ${fmt(gr[0].T)} °C</span> (bij gewone luchtdruk nooit vloeibaar)`);
   const tst = toestand(Hwarmte);
-  metingen.push({ t: 0, T: tst.T, Tz: st.mengsel ? Tzuiver(Hwarmte, "water") : null, Te: st.mengsel ? Tzuiver(Hwarmte, "ethanol") : null });
+  metingen.push({ t: 0, T: tst.T });
   tekenMacro(tst, 0); tekenMicro(tst); tekenGrafiek(); werkUitlegBij(tst); werkMeterBij(tst);
 }
 
@@ -972,7 +954,7 @@ function stap(dt) {
   overgangen(tst, dt * snel);
   natuurkunde(tst, dt);
   grafTijd += dt * snel;                          // simulatietijd: bij Sneller blijft de helling van de lijn gelijk
-  if (grafTijd >= volgendeMeting) { metingen.push({ t: grafTijd, T: tst.T, Tz: st.mengsel ? Tzuiver(Hwarmte, "water") : null, Te: st.mengsel ? Tzuiver(Hwarmte, "ethanol") : null }); volgendeMeting = grafTijd + .2; if (metingen.length > 600) metingen.shift(); tekenGrafiek(); }
+  if (grafTijd >= volgendeMeting) { metingen.push({ t: grafTijd, T: tst.T }); volgendeMeting = grafTijd + .2; if (metingen.length > 600) metingen.shift(); tekenGrafiek(); }
   return tst;
 }
 

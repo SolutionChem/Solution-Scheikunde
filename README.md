@@ -34,7 +34,7 @@ materialen/           Eigen animaties en bestanden, per leerjaar en hoofdstuk
   3hv/h2/bindingen/       Simulatie: ionbinding (§2.2), metaalbinding (§2.3, ?tab=metaal), atoombinding (§2.4, ?tab=covalent)
                           en het spel Bouw een molecuul (§2.4, ?tab=spel)
   3hv/h3/faseovergangen/  Simulatie: deeltjesmodel en faseovergangen, macro- en microniveau naast elkaar (§3.2); met het mengsel
-                          water met ethanol: kooktraject naast de lijnen van zuiver water en zuivere ethanol (§3.3)
+                          water met ethanol: kooktraject in plaats van kookpunt (§3.3)
   3hv/h3/stofeigenschappen/  Simulatie: stofeigenschappen van zouten, metalen en moleculaire stoffen (§3.1–§3.2);
                           ?tab=zout|metaal|moleculair|vergelijk|spel opent dat tabblad, &deel=<onderdeel> een onderdeel
                           (zout: rooster, bros, geleiding · metaal: geleiding, vervormen · moleculair: krachten);

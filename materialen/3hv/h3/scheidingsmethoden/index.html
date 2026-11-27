@@ -176,6 +176,8 @@
   .mengsel h3 { margin: 0 0 2px; font-family: var(--kop); letter-spacing: .05em; color: var(--navy); font-size: 1.15rem; }
   .mengsel p { margin: 2px 0; font-size: .92rem; }
   .mengsel .stap { font-size: .8rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--zacht); }
+  .mengsel .gegevens { font-size: .86rem; color: var(--zacht); }
+  .mengsel .gegevens b { color: var(--navy2); }
   .mengsel .doel { background: var(--licht); border-radius: 8px; padding: 6px 10px; margin-top: 6px; }
   .methoden { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin-bottom: 12px; }
   .methoden button { padding: 9px 6px; border-radius: 8px; border: 1px solid var(--rand); background: #fff; font-weight: 600; color: var(--navy2); }
@@ -308,6 +310,10 @@ const SOORT = {
     maak("circle", { r: 20, fill: "#fbe9a6", stroke: "#c9a640", "stroke-width": 2 }, g);
     maak("circle", { cx: -6, cy: -7, r: 5, fill: "#fff", opacity: .8 }, g);
   } },
+  klei:    { r: 13, teken(g) { maak("path", { d: "M-12,-4 L-5,-12 L8,-10 L13,1 L6,11 L-8,10 Z", fill: "#a89a86", stroke: "#6b5f4e", "stroke-width": 1.5 }, g); } },
+  gist:    { r: 17, teken(g) { maak("ellipse", { rx: 17, ry: 13, fill: "#f1dfa8", stroke: "#a88d2c", "stroke-width": 2 }, g);
+                               maak("circle", { cx: 4, cy: -2, r: 4, fill: "#c9a640" }, g); } },
+  suiker:  { r: 15, teken(g) { for (const [x, y] of [[-6, 0], [7, 0]]) maak("path", { d: `M${x - 7},${y} L${x - 3.5},${y - 6} L${x + 3.5},${y - 6} L${x + 7},${y} L${x + 3.5},${y + 6} L${x - 3.5},${y + 6} Z`, fill: "#fbf7ec", stroke: "#8a7f66", "stroke-width": 1.6 }, g); } },
   vezel:   { r: 15, teken(g) { maak("circle", { r: 15, fill: "#ece6d6", stroke: "#b4aa90", "stroke-width": 2 }, g); } },
   kool:    { r: 12, teken(g) { maak("circle", { r: 12, fill: "#3c4248", stroke: "#1b1e22", "stroke-width": 1.5 }, g); } },
   blad:    { r: 19, teken(g) { maak("rect", { x: -18, y: -18, width: 36, height: 36, rx: 7, fill: "#5f9440", stroke: "#3c6626", "stroke-width": 2 }, g);
@@ -457,19 +463,21 @@ function vul(ouder, D, gebied, afst, kies) {
 /* ---------- tekening: macro links, micro rechts ---------- */
 const MK = { x0: 470, y0: 50, x1: 880, y1: 530 };      // micro-kader
 function nieuweTekening() { tek.innerHTML = ""; return maak("g", {}, tek); }
-function kader(spot, kleur = "#fbfdff") {
-  maak("text", { x: 225, y: 34, class: "kopje" }, tek, "MACRONIVEAU");
-  maak("text", { x: 675, y: 34, class: "kopje" }, tek, "MICRONIVEAU");
+function kader(spot, kleur = "#fbfdff", K = MK, n = 0) {   // K = vlak op microniveau (er kunnen er meer zijn)
+  if (!n) {
+    maak("text", { x: 225, y: 34, class: "kopje" }, tek, "MACRONIVEAU");
+    maak("text", { x: 675, y: 34, class: "kopje" }, tek, "MICRONIVEAU");
+    maak("text", { x: 675, y: 556, class: "lab-k", "text-anchor": "middle" }, tek, "een model: zo stel je je de deeltjes voor (niet op schaal)");
+  }
   const s = spot.r;
-  maak("path", { d: `M${spot.x + s},${spot.y - s} L${MK.x0},${MK.y0} M${spot.x + s},${spot.y + s} L${MK.x0},${MK.y1}`, stroke: "#2c5687", "stroke-width": 1.5, "stroke-dasharray": "5 5", fill: "none", opacity: .7 }, tek);
+  maak("path", { d: `M${spot.x + s},${spot.y - s} L${K.x0},${K.y0} M${spot.x + s},${spot.y + s} L${K.x0},${K.y1}`, stroke: "#2c5687", "stroke-width": 1.5, "stroke-dasharray": "5 5", fill: "none", opacity: .7 }, tek);
   maak("rect", { x: spot.x - s, y: spot.y - s, width: 2 * s, height: 2 * s, rx: 4, fill: "none", stroke: "#2c5687", "stroke-width": 2.5 }, tek);
-  const cp = maak("clipPath", { id: "clipM" }, tek);
-  maak("rect", { x: MK.x0, y: MK.y0, width: MK.x1 - MK.x0, height: MK.y1 - MK.y0, rx: 12 }, cp);
-  maak("rect", { x: MK.x0, y: MK.y0, width: MK.x1 - MK.x0, height: MK.y1 - MK.y0, rx: 12, fill: kleur }, tek);
-  const g = maak("g", { "clip-path": "url(#clipM)" }, tek);
+  const cp = maak("clipPath", { id: "clipM" + n }, tek);
+  maak("rect", { x: K.x0, y: K.y0, width: K.x1 - K.x0, height: K.y1 - K.y0, rx: 12 }, cp);
+  maak("rect", { x: K.x0, y: K.y0, width: K.x1 - K.x0, height: K.y1 - K.y0, rx: 12, fill: kleur }, tek);
+  const g = maak("g", { "clip-path": `url(#clipM${n})` }, tek);
   const boven = maak("g", {}, tek);
-  maak("rect", { x: MK.x0, y: MK.y0, width: MK.x1 - MK.x0, height: MK.y1 - MK.y0, rx: 12, fill: "none", stroke: "#2c5687", "stroke-width": 3 }, boven);
-  maak("text", { x: 675, y: 556, class: "lab-k", "text-anchor": "middle" }, tek, "een model: zo stel je je de deeltjes voor (niet op schaal)");
+  maak("rect", { x: K.x0, y: K.y0, width: K.x1 - K.x0, height: K.y1 - K.y0, rx: 12, fill: "none", stroke: "#2c5687", "stroke-width": 3 }, boven);
   return { g, boven };
 }
 function label(ouder, x, y, tekst, anker = "start", cls = "lab-k") { return maak("text", { x, y, class: cls, "text-anchor": anker }, ouder, tekst); }
@@ -603,11 +611,11 @@ const mBezinken = {
     for (const p of this.D) p.zw = p.soort === "zand" ? (t > 0 ? 125 : 0) : 0;
     fysica(this.D, this.S, { x0: MK.x0, y0: MK.y0, x1: MK.x1, y1: MK.y1 - 6 }, dt, { ruis: 1700, wissel: 3, zakken: true });
     this.D.forEach(zet);
-    const b = 26 * tussen(t, 2, 18), top = 210 + (478 - b - 210) * tussen(t, 1.5, 19);
+    const b = 26 * tussen(t, .5, 10.5), top = 210 + (478 - b - 210) * tussen(t, .3, 10.5);   // gelijk op met het microniveau
     this.bez.setAttribute("y", 478 - b); this.bez.setAttribute("height", b);
     this.wolk.setAttribute("y", top); this.wolk.setAttribute("height", Math.max(0, 478 - b - top));
-    this.wolk.setAttribute("opacity", (.75 - .35 * tussen(t, 8, 19)).toFixed(2));
-    this.lBez.setAttribute("opacity", t >= 14.5 ? 1 : 0); this.lHel.setAttribute("opacity", t >= 14.5 ? 1 : 0);
+    this.wolk.setAttribute("opacity", (.75 - .35 * tussen(t, 4, 10.5)).toFixed(2));
+    this.lBez.setAttribute("opacity", t >= 10 ? 1 : 0); this.lHel.setAttribute("opacity", t >= 10 ? 1 : 0);
   }
 };
 
@@ -652,29 +660,30 @@ const mCentrifugeren = {
     this.hoek = 0;
   },
   stap(dt) {
-    const t = this.t, draai = tussen(t, 1, 3) * (1 - tussen(t, 15, 18));
+    const t = this.t, draai = tussen(t, .5, 2) * (1 - tussen(t, 10, 13));
     for (const p of this.D) p.zw = p.soort === "cel" ? (t > 0 ? Math.max(40 + 900 * draai, t > 10 ? 500 : 0) : 0) : 0;
     fysica(this.D, this.S, { x0: MK.x0, y0: MK.y0, x1: MK.x1, y1: MK.y1 }, dt, { ruis: 1700, wissel: 3, zakken: true });
     this.D.forEach(zet);
     this.hoek += draai * 520 * dt;
     this.rotor.setAttribute("transform", `rotate(${(this.hoek % 360).toFixed(1)} 210 165)`);
     this.rotor.setAttribute("opacity", (1 - .45 * draai).toFixed(2));
-    const p = tussen(t, 2.5, 15);
+    const p = tussen(t, 1, 6.5);                       // gelijk op met het microniveau
     this.plasma.setAttribute("height", 95 * p);
-    this.lPl.setAttribute("opacity", t >= 14.5 ? 1 : 0); this.lCel.setAttribute("opacity", t >= 14.5 ? 1 : 0);
+    this.lPl.setAttribute("opacity", t >= 7 ? 1 : 0); this.lCel.setAttribute("opacity", t >= 7 ? 1 : 0);
   }
 };
 
 /* verdampen: deeltjes aan het oppervlak laten los met een kans per seconde (kans[soort]) */
-function verdamp(D, dt, kans) {
-  const vloei = D.filter(p => !p.uit && !p.vast);
-  if (!vloei.length) return;
+function verdamp(D, dt, kans, top = MK.y0) {      // geeft de deeltjes terug die het beeld uit zijn gevlogen
+  const vloei = D.filter(p => !p.uit && !p.vast), weg_ = [];
+  if (!vloei.length) return weg_;
   const ys = vloei.map(p => p.y).sort((a, b) => a - b), opp = ys[Math.min(ys.length - 1, 4)];
   for (const p of vloei) {
     const k = kans[p.soort] || 0;
     if (k && p.y < opp + 24 && Math.random() < k * dt) { p.uit = true; p.wissel = null; p.vy = -rnd(70, 120); p.vx = rnd(-40, 40); }
   }
-  for (const p of D.slice()) if (p.uit && p.y < MK.y0 - 40) weg(D, p);
+  for (const p of D.slice()) if (p.uit && p.y < top - 40) { weg(D, p); weg_.push(p); }
+  return weg_;
 }
 
 /* ---------- Destilleren: ethanol uit wijn ---------- */
@@ -684,7 +693,7 @@ const mDestilleren = {
   teksten: [
     [0, `Wijn is een mengsel van vooral water en ethanol (alcohol), met wat kleur- en smaakstoffen. Je verwarmt de wijn in een kolf.`],
     [1.5, `Ethanol kookt bij 78 °C, water bij 100 °C. Ethanolmoleculen trekken elkaar minder sterk aan dan watermoleculen. Aan het oppervlak laten ze daardoor makkelijker los: ze verdampen.`],
-    [8, `De damp gaat naar de <b>koeler</b>. Daar condenseert hij en druppelt in het opvangvat: het <b>destillaat</b>. Er verdampt ook een beetje water mee.`],
+    [8, `In de <b>koeler</b> koelt de damp af: de moleculen komen weer dicht bij elkaar, de damp <b>condenseert</b> (onderste vlak). Dit <b>destillaat</b> is vooral ethanol, met een beetje water.`],
     [14.5, `De kleurstoffen en de meeste watermoleculen blijven in de kolf: het <b>residu</b>. Destilleren berust op een verschil in <b>kookpunt</b>.`],
     [21, `<b>Waarom destilleren?</b> Zo scheid je vloeistoffen, of vang je een vloeistof op uit een oplossing, zoals zuiver water uit zeewater. Het kost wel veel energie.`]
   ],
@@ -748,18 +757,31 @@ const mDestilleren = {
     lijntje(g, 160, 340, 172, 346);
     this.lRes = label(g, 176, 352, "kolf met wijn", "start", "lab");
     this.dg = maak("g", {}, g);
-    const M = kader({ x: 115, y: 330, r: 15 });
-    this.S = []; this.D = [];
-    vul(M.g, this.D, { x0: MK.x0, y0: 290, x1: MK.x1, y1: MK.y1 }, 25, () => { const r = Math.random(); return r < .27 ? "ethanol" : r < .32 ? "kleur" : "water"; });
-    label(M.boven, 480, 76, "damp", "start", "lab-m");
-    label(M.boven, 480, MK.y1 - 10, "wijn in de kolf", "start", "lab-m");
+    // twee vlakken: boven de kolf (verdampen), onder de erlenmeyer (condenseren)
+    this.K1 = { x0: MK.x0, y0: MK.y0, x1: MK.x1, y1: 282 }; this.K2 = { x0: MK.x0, y0: 300, x1: MK.x1, y1: MK.y1 };
+    const M = kader({ x: 115, y: 330, r: 15 }, "#fbfdff", this.K1, 0);
+    this.M2 = kader({ x: ex, y: 500, r: 13 }, "#fbfdff", this.K2, 1);
+    this.S = []; this.D = []; this.D2 = []; this.onderweg = [];
+    vul(M.g, this.D, { x0: MK.x0, y0: 168, x1: MK.x1, y1: this.K1.y1 }, 25, () => { const r = Math.random(); return r < .3 ? "ethanol" : r < .36 ? "kleur" : "water"; });
+    label(M.boven, 480, 72, "kolf: de wijn verdampt", "start", "lab-m");
+    label(M.boven, 870, 72, "damp", "end", "lab-m");
+    label(this.M2.boven, 480, 322, "erlenmeyer: de damp condenseert", "start", "lab-m");
   },
   stap(dt) {
     const t = this.t, aan = t > 0;
     for (const p of this.D) p.zw = 320;
-    if (t > 1.2 && t < 20) verdamp(this.D, dt, { ethanol: .42, water: .02 });
-    fysica(this.D, this.S, MK, dt, { ruis: aan ? 2600 : 1900, wissel: 3 });
-    this.D.forEach(zet);
+    if (t > 1.2 && t < 20)                                    // verdampte moleculen gaan via de koeler naar de erlenmeyer
+      for (const p of verdamp(this.D, dt, { ethanol: .5, water: .03 }, this.K1.y0)) this.onderweg.push({ soort: p.soort, t: t + rnd(1.5, 3) });
+    for (const o of this.onderweg.slice()) if (t >= o.t) {
+      this.onderweg.splice(this.onderweg.indexOf(o), 1);
+      const q = deeltje(this.M2.g, o.soort, rnd(495, 855), this.K2.y0 - 20);
+      q.uit = true; q.damp = true; q.vy = rnd(70, 110); q.vx = rnd(-30, 30); q.zw = 320; this.D2.push(q);
+    }
+    const ys = this.D2.filter(p => !p.uit).map(p => p.y).sort((a, b) => a - b), opp = ys.length > 3 ? ys[3] : this.K2.y1;
+    for (const p of this.D2) if (p.damp && p.y > opp - p.r - 6) { p.uit = false; p.damp = false; p.vy = 30; }   // condenseren: in de vloeistof
+    fysica(this.D, this.S, this.K1, dt, { ruis: aan ? 2600 : 1900, wissel: 14, meng: "ethanol" });
+    fysica(this.D2, this.S, this.K2, dt, { ruis: 1900, wissel: 3 });
+    this.D.forEach(zet); this.D2.forEach(zet);
     const T = 20 + 58 * tussen(t, 0, 1.4);
     this.tT.textContent = `${Math.round(T)} °C`;
     const yK = 200 - (T - 20) / 80 * 120;
@@ -1023,7 +1045,7 @@ function bouwOverzicht() {
 const ZONES = {
   filtreren: [["Residu", "blijft in het filter"], ["Filtraat", "gaat door het filter"]],
   bezinken: [["Bezinksel", "zakt naar de bodem"], ["Vloeistof erboven", "giet je af"]],
-  centrifugeren: [["Onderin de buis", "grotere dichtheid"], ["Bovenin de buis", "kleinere dichtheid"]],
+  centrifugeren: [["Onderin de buis", "grootste dichtheid"], ["Bovenin de buis", "kleinste dichtheid"]],
   destilleren: [["Destillaat", "verdampt en condenseert in het opvangvat"], ["Residu", "blijft in de kolf"]],
   extraheren: [["Extract", "de oplossing in het extractiemiddel"], ["Blijft achter", "lost niet op"]],
   adsorberen: [["Blijft aan de kool hangen", "wordt geadsorbeerd"], ["Stroomt erlangs", "komt eruit"]],
@@ -1031,12 +1053,12 @@ const ZONES = {
 };
 const HINT = {
   filtreren: n => `Kijk nog eens naar de ${n}: zijn ze groter of kleiner dan de gaatjes in het filter? Denk eraan dat opgeloste deeltjes heel klein zijn.`,
-  bezinken: n => `Kijk nog eens naar de ${n}: zakken ze naar de bodem? Denk aan de dichtheid, en aan of de stof is opgelost.`,
-  centrifugeren: n => `Kijk nog eens naar de ${n}: hebben ze een grotere of een kleinere dichtheid dan de vloeistof eromheen?`,
-  destilleren: n => `Kijk nog eens naar de ${n}: hebben ze een laag of een hoog kookpunt?`,
+  bezinken: n => `Kijk nog eens naar de ${n}: zakken ze naar de bodem? Kijk bij de gegevens, en denk eraan dat opgeloste deeltjes nooit zakken.`,
+  centrifugeren: n => `Kijk nog eens naar de ${n}: kijk bij de gegevens naar de dichtheid. Wat komt onderin: de stof met de grootste of met de kleinste dichtheid?`,
+  destilleren: n => `Kijk nog eens naar de ${n}: kijk bij de gegevens naar het kookpunt. Welke stof verdampt het eerst?`,
   extraheren: n => `Kijk nog eens naar de ${n}: lossen ze op in het extractiemiddel? En waar zit het extractiemiddel zelf na het extraheren?`,
   adsorberen: n => `Kijk nog eens naar de ${n}: blijven ze aan het oppervlak van de actieve kool hangen?`,
-  indampen: n => `Kijk nog eens naar de ${n}: verdampen ze als je de oplossing verwarmt, of is hun kookpunt veel te hoog?`
+  indampen: n => `Kijk nog eens naar de ${n}: verdampen ze als je de oplossing verwarmt? Kijk bij de gegevens naar het kookpunt.`
 };
 /* waarom een methode hier níet past (als er geen speciale tekst bij de stap staat) */
 const FOUT_ALG = {
@@ -1050,27 +1072,31 @@ const FOUT_ALG = {
 };
 const NAAM = { filtreren: "Filtreren", bezinken: "Bezinken", centrifugeren: "Centrifugeren", destilleren: "Destilleren", extraheren: "Extraheren", adsorberen: "Adsorberen", indampen: "Indampen" };
 const NAAM_D = { water: "watermoleculen", zout: "zout (Na⁺ en Cl⁻)", zand: "zandkorrels", ethanol: "ethanolmoleculen", kleur: "kleurstofmoleculen",
-  smaak: "kleur- en smaakstoffen", blad: "bladresten", koffiedik: "koffiedik", cel: "bloedcellen", vet: "vetdruppeltjes" };
+  smaak: "kleur- en smaakstoffen", blad: "bladresten", koffiedik: "koffiedik", cel: "bloedcellen", vet: "vetdruppeltjes",
+  klei: "kleideeltjes", gist: "gistcellen", suiker: "suikermoleculen" };
+/* gegevens die leerlingen niet uit hun hoofd weten (dichtheid, kookpunt) staan bij het mengsel */
+const KP = { water: "kookpunt water: 100 °C", zout: "kookpunt natriumchloride (zout): 1465 °C", ethanol: "kookpunt ethanol: 78 °C" };
 
-/* mengsels: d = deeltjes in het begin (met eigen namen), stappen met m (methode), doel, in (zone per deeltje), u (uitleg per deeltje),
-   goed (waarom deze methode), fout (waarom een andere methode niet past), verder (welke zone ga je mee verder: 0, 1 of "alles") */
+/* mengsels: d = deeltjes in het begin, namen = eigen namen, gegevens = dichtheid/kookpunt, stappen met m (methode), doel,
+   in (zone per deeltje), u (uitleg per deeltje), goed (waarom deze methode), fout (waarom een andere methode niet past),
+   verder (met welke zone ga je verder: 0, 1 of "alles"). Een fout-tekst verklapt nooit de methode van een volgende stap. */
 const MENGSELS = [
-  { id: "strooizout", naam: "Strooizout", wat: "Zand gemengd met keukenzout, zoals het strooizout van de weg. Het is droog.", d: ["zand", "zout"], stappen: [
+  { id: "strooizout", naam: "Strooizout", wat: "Zand gemengd met keukenzout, zoals het strooizout van de weg. Het is droog.", d: ["zand", "zout"],
+    gegevens: [KP.water, KP.zout], stappen: [
     { m: "extraheren", extra: ["water"], doel: "Haal het zout uit het zand. Je mag water gebruiken.",
       in: { zout: 0, water: 0, zand: 1 },
       u: { zout: "Zout lost goed op in water: de ionen gaan tussen de watermoleculen zitten.", water: "Water is het extractiemiddel; het zout zit erin opgelost.", zand: "Zand lost niet op in water en blijft achter." },
       goed: "Zout lost op in water en zand niet: een verschil in <b>oplosbaarheid</b>. Water is het extractiemiddel.",
-      fout: { filtreren: "Het mengsel is droog: zand- en zoutkorrels zijn allebei te groot voor een filter en blijven er allebei in liggen. Welke van de twee stoffen lost op in water?",
-              indampen: "Er is nog niets om in te dampen: het mengsel is droog. Welke van de twee stoffen lost op in water?",
-              bezinken: "Het mengsel is droog; zand en zout zakken in de lucht allebei. Welke van de twee stoffen lost op in water?",
-              destilleren: "Er is geen vloeistof om te verdampen. Welke van de twee stoffen lost op in water?" },
+      fout: { filtreren: "Het mengsel is droog: zand en zout zijn allebei vaste korrels. Lees het doel nog eens: je mag water gebruiken. Wat doet water met zout, en wat met zand?",
+              bezinken: "Het mengsel is droog: er is geen vloeistof waarin iets kan zakken. Wat doet water met zout, en wat met zand?",
+              centrifugeren: "Het mengsel is droog: er is geen vloeistof. Wat doet water met zout, en wat met zand?",
+              destilleren: "Er is geen vloeistof om te verdampen. Wat doet water met zout, en wat met zand?" },
       verder: "alles", verderTekst: "Het zand en de zoutoplossing zitten nog samen in het bekerglas." },
     { m: "filtreren", doel: "Haal het zand uit de zoutoplossing. Je wilt een heldere oplossing.",
       in: { zand: 0, water: 1, zout: 1 },
       u: { zand: "Zandkorrels zijn veel groter dan de gaatjes in het filter.", water: "Watermoleculen zijn klein en gaan door het filter.", zout: "Het zout is opgelost: de ionen zijn klein en gaan door het filter." },
       goed: "Zand is niet opgelost en de zandkorrels zijn veel groter dan de gaatjes in het filter: een verschil in <b>deeltjesgrootte</b>.",
-      fout: { bezinken: "Bezinken haalt het meeste zand weg, maar heel fijne korreltjes blijven zweven: de oplossing wordt niet helemaal helder. Welke methode houdt álle korrels tegen?",
-              indampen: "Dan verdampt het water en blijven zand en zout samen achter: dan heb je weer het begin. Je wilt eerst alleen het zand eruit." },
+      fout: { bezinken: "Bezinken haalt het meeste zand weg, maar heel fijne korreltjes blijven zweven: de oplossing wordt niet helemaal helder. Welke methode houdt álle korrels tegen?" },
       verder: 1, verderTekst: "Je gaat verder met het filtraat: de zoutoplossing." },
     { m: "indampen", doel: "Haal het zout uit de zoutoplossing. Het water hoef je niet op te vangen.",
       in: { water: 0, zout: 1 },
@@ -1079,7 +1105,14 @@ const MENGSELS = [
       fout: { destilleren: "Destilleren kan wel, maar dan vang je ook het water op. Dat hoeft hier niet: welke eenvoudigere methode laat het water gewoon verdampen?",
               filtreren: "Het zout is opgelost: de ionen zijn kleiner dan de gaatjes in het filter en gaan er dwars doorheen." } }
   ] },
-  { id: "zeewater", naam: "Zeewater op een schip", wat: "Op een schip wil je drinkwater maken van zeewater.", d: ["water", "zout"], stappen: [
+  { id: "strand", naam: "Zeewater van het strand", wat: "Een emmer zeewater met zand erin. Je wilt er drinkwater van maken.", d: ["zand", "zout", "water"],
+    gegevens: [KP.water, KP.zout], stappen: [
+    { m: "filtreren", doel: "Haal eerst het zand eruit. Je wilt een heldere oplossing.",
+      in: { zand: 0, water: 1, zout: 1 },
+      u: { zand: "Zandkorrels zijn veel groter dan de gaatjes in het filter.", water: "Watermoleculen zijn klein en gaan door het filter.", zout: "Het zout is opgelost: de ionen zijn klein en gaan door het filter." },
+      goed: "Zand is niet opgelost en de korrels zijn groter dan de gaatjes in het filter: een verschil in <b>deeltjesgrootte</b>.",
+      fout: { bezinken: "Bezinken haalt het meeste zand weg, maar fijne korreltjes blijven zweven: het water wordt niet helemaal helder. Welke methode houdt álle korrels tegen?" },
+      verder: 1, verderTekst: "Je gaat verder met het heldere zeewater (het filtraat)." },
     { m: "destilleren", doel: "Maak drinkwater: je wilt het water opvangen, zonder zout.",
       in: { water: 0, zout: 1 },
       u: { water: "Water verdampt bij 100 °C, condenseert in de koeler en komt in het opvangvat.", zout: "De ionen trekken elkaar sterk aan en verdampen niet: het zout blijft in de kolf." },
@@ -1087,13 +1120,64 @@ const MENGSELS = [
       fout: { indampen: "Bij indampen gaat het water de lucht in. Je wilt het water juist opvangen om te drinken.",
               filtreren: "Het zout is opgelost: de ionen zijn kleiner dan de gaatjes in het filter en gaan er dwars doorheen." } }
   ] },
-  { id: "wijn", naam: "Wijn", wat: "Wijn is vooral water met ethanol (alcohol) en wat kleur- en smaakstoffen.", d: ["water", "ethanol", "kleur"], namen: { kleur: "kleur- en smaakstoffen" }, stappen: [
+  { id: "huiswijn", naam: "Zelfgemaakte wijn", wat: "Na het gisten zitten er nog gistcellen in de wijn. Wijn is vooral water met ethanol (alcohol) en kleurstoffen.", d: ["gist", "water", "ethanol", "kleur"],
+    namen: { kleur: "kleurstoffen" }, gegevens: [KP.ethanol, KP.water, "kleurstoffen en gistcellen verdampen niet"], stappen: [
+    { m: "filtreren", doel: "Haal thuis, met eenvoudige spullen, in één keer alle gistcellen uit de wijn.",
+      in: { gist: 0, water: 1, ethanol: 1, kleur: 1 },
+      u: { gist: "Gistcellen zijn veel groter dan de gaatjes in het filter.", water: "Watermoleculen zijn klein en gaan door het filter.", ethanol: "Ethanol is met water gemengd: de moleculen zijn klein en gaan door het filter.", kleur: "De kleurstoffen zijn opgelost en gaan door het filter." },
+      goed: "Gistcellen zijn niet opgelost en groter dan de gaatjes in het filter: een verschil in <b>deeltjesgrootte</b>.",
+      fout: { bezinken: "Bezinken duurt lang en de kleinste cellen blijven zweven. Welke methode houdt alle vaste deeltjes in één keer tegen?",
+              centrifugeren: "Een centrifuge voor wijn heb je thuis niet. Welke eenvoudige methode houdt vaste deeltjes tegen?" },
+      verder: 1, verderTekst: "Je gaat verder met de heldere wijn." },
     { m: "destilleren", doel: "Haal de ethanol uit de wijn.",
       in: { ethanol: 0, water: 1, kleur: 1 },
-      u: { ethanol: "Ethanol kookt bij 78 °C: de moleculen trekken elkaar minder sterk aan en verdampen het eerst.", water: "Water kookt bij 100 °C: de meeste watermoleculen blijven in de kolf (een beetje gaat mee).", kleur: "De kleur- en smaakstoffen verdampen niet en blijven in de kolf." },
+      u: { ethanol: "Ethanol kookt bij 78 °C: de moleculen trekken elkaar minder sterk aan en verdampen het eerst.", water: "Water kookt bij 100 °C: de meeste watermoleculen blijven in de kolf (een beetje gaat mee).", kleur: "De kleurstoffen verdampen niet en blijven in de kolf." },
       goed: "Ethanol kookt bij 78 °C en water bij 100 °C: een verschil in <b>kookpunt</b>. De ethanol verdampt het eerst en vang je op als destillaat.",
       fout: { indampen: "Bij indampen gaat de damp de lucht in. Je wilt de ethanol juist opvangen.",
-              filtreren: "Ethanol en water zijn allebei vloeistoffen die door elkaar gemengd zijn: de moleculen zijn klein en gaan allemaal door het filter." } }
+              filtreren: "Ethanol en water zijn met elkaar gemengd: de moleculen zijn klein en gaan allemaal door het filter." } }
+  ] },
+  { id: "rivier", naam: "Drinkwater uit de rivier", wat: "Rivierwater is troebel door zand en heel fijne kleideeltjes, en het ruikt door opgeloste geurstoffen. Het waterleidingbedrijf maakt er drinkwater van.", d: ["zand", "klei", "kleur", "water"],
+    namen: { kleur: "geurstoffen" }, gegevens: ["dichtheid zand: 2,65 g/cm³", "dichtheid water: 1,00 g/cm³", "kleideeltjes zijn zo klein dat ze bijna niet zakken"], stappen: [
+    { m: "bezinken", doel: "Haal eerst het grove zand eruit, in een groot bassin, zonder energie te gebruiken.",
+      in: { zand: 0, klei: 1, kleur: 1, water: 1 },
+      u: { zand: "Zand heeft een veel grotere dichtheid dan water en zakt naar de bodem.", klei: "Kleideeltjes zijn zo klein dat ze bijna niet zakken: ze blijven zweven.", kleur: "De geurstoffen zijn opgelost en zakken niet.", water: "Het water blijft erboven." },
+      goed: "Zand heeft een grotere <b>dichtheid</b> dan water en zakt vanzelf. Het kost alleen tijd, geen energie.",
+      fout: { centrifugeren: "Een centrifuge kost energie en is veel te klein voor zoveel water. Welke methode werkt vanzelf in een groot bassin?" },
+      verder: 1, verderTekst: "Je gaat verder met het water boven het bezinksel." },
+    { m: "filtreren", doel: "Haal de zwevende kleideeltjes eruit, zodat het water helder wordt.",
+      in: { klei: 0, kleur: 1, water: 1 },
+      u: { klei: "Kleideeltjes zijn klein, maar nog steeds veel groter dan moleculen: ze blijven in het filter hangen.", kleur: "De geurstoffen zijn opgelost: de moleculen gaan door het filter.", water: "Watermoleculen gaan door het filter." },
+      goed: "Kleideeltjes zijn niet opgelost en groter dan de gaatjes in het filter: een verschil in <b>deeltjesgrootte</b>.",
+      fout: { bezinken: "Kijk bij de gegevens: kleideeltjes zakken bijna niet.", centrifugeren: "Voor zoveel water kost een centrifuge veel te veel energie." },
+      verder: 1, verderTekst: "Je gaat verder met het heldere filtraat." },
+    { m: "adsorberen", doel: "Haal de opgeloste geurstoffen uit het water.",
+      in: { kleur: 0, water: 1 },
+      u: { kleur: "Geurstoffen blijven aan het oppervlak van de actieve kool hangen.", water: "Watermoleculen blijven niet hangen en stromen erlangs." },
+      goed: "Geurstoffen hechten goed aan actieve kool en water niet: een verschil in <b>aanhechtingsvermogen</b>.",
+      fout: { filtreren: "De geurstoffen zijn opgelost: de moleculen zijn klein en gaan door het filter.",
+              destilleren: "Destilleren kan wel, maar kost voor zoveel water veel te veel energie. Welke methode haalt kleine hoeveelheden opgeloste stoffen weg zonder te verwarmen?" } }
+  ] },
+  { id: "suikerbiet", naam: "Suiker uit suikerbieten", wat: "In de suikerfabriek liggen reepjes suikerbiet in heet water. In de bieten zitten suiker en bruine kleurstoffen.", d: ["blad", "suiker", "smaak", "water"],
+    namen: { blad: "bietenvezels", smaak: "bruine kleurstoffen" }, gegevens: [KP.water, "suiker en kleurstoffen verdampen niet"], stappen: [
+    { m: "extraheren", doel: "Haal de suiker uit de bietenreepjes.",
+      in: { suiker: 0, smaak: 0, water: 0, blad: 1 },
+      u: { suiker: "Suiker lost goed op in heet water.", smaak: "De bruine kleurstoffen lossen ook op en gaan mee in het water.", water: "Water is het extractiemiddel: het suikersap is de oplossing.", blad: "Bietenvezels lossen niet op en blijven achter als bietenpulp." },
+      goed: "Suiker lost goed op in heet water en de vezels niet: een verschil in <b>oplosbaarheid</b>.",
+      fout: { filtreren: "De suiker zit nog ín de bietenreepjes: een filter haalt hem er niet uit. Wat doet heet water met suiker?" },
+      verder: 0, verderTekst: "De bietenpulp is eruit gehaald. Je gaat verder met het extract: bruin suikersap." },
+    { m: "adsorberen", doel: "Haal de bruine kleurstoffen uit het suikersap. De suiker moet in de oplossing blijven.",
+      in: { smaak: 0, suiker: 1, water: 1 },
+      u: { smaak: "De kleurstoffen blijven aan het oppervlak van de actieve kool hangen.", suiker: "Suikermoleculen blijven niet hangen en blijven opgelost.", water: "Watermoleculen stromen erlangs." },
+      goed: "Kleurstoffen hechten goed aan actieve kool, suiker en water niet: een verschil in <b>aanhechtingsvermogen</b>.",
+      fout: { filtreren: "De kleurstoffen zijn opgelost: de moleculen zijn klein en gaan door het filter.",
+              destilleren: "Dan verdampt het water, en de kleurstoffen blijven bij de suiker achter." },
+      verder: 1, verderTekst: "Je gaat verder met het kleurloze suikersap." },
+    { m: "indampen", doel: "Haal de suiker uit de oplossing. Het water hoef je niet op te vangen.",
+      in: { water: 0, suiker: 1 },
+      u: { water: "Water verdampt: de moleculen trekken elkaar zwak aan.", suiker: "Suiker verdampt niet: er blijven suikerkristallen achter." },
+      goed: "Water verdampt en suiker niet: een verschil in <b>kookpunt</b>. Je hoeft het water niet op te vangen.",
+      fout: { destilleren: "Destilleren kan wel, maar dan vang je ook het water op. Dat hoeft hier niet.",
+              filtreren: "De suiker is opgelost: de moleculen zijn klein en gaan door het filter." } }
   ] },
   { id: "thee", naam: "Thee zetten", wat: "Een zakje met theeblaadjes in heet water.", d: ["blad", "smaak", "water"], stappen: [
     { m: "extraheren", doel: "Haal de kleur- en smaakstoffen uit de theeblaadjes.",
@@ -1102,7 +1186,7 @@ const MENGSELS = [
       goed: "De kleur- en smaakstoffen lossen goed op in heet water en de rest van het blad niet: een verschil in <b>oplosbaarheid</b>.",
       fout: { filtreren: "Het zakje werkt wel als filter, maar de stoffen moeten eerst uit het blad in het water komen. Welke methode haalt een stof uit een vaste stof met een oplosmiddel?" } }
   ] },
-  { id: "koffie", naam: "Koffie zetten", wat: "Gemalen koffiebonen met heet water in een kan.", d: ["koffiedik", "smaak", "water"], namen: { smaak: "kleur- en smaakstoffen" }, stappen: [
+  { id: "koffie", naam: "Koffie zetten", wat: "Gemalen koffiebonen met heet water in een kan.", d: ["koffiedik", "smaak", "water"], stappen: [
     { m: "extraheren", doel: "Haal de kleur- en smaakstoffen uit de gemalen koffie.",
       in: { smaak: 0, water: 0, koffiedik: 1 },
       u: { smaak: "Kleur- en smaakstoffen lossen goed op in heet water.", water: "Water is het extractiemiddel: de koffie is de oplossing.", koffiedik: "De rest van de gemalen bonen lost niet op: dat is het koffiedik." },
@@ -1114,38 +1198,26 @@ const MENGSELS = [
       goed: "Koffiedik is niet opgelost en de korrels zijn groter dan de gaatjes in het filter: een verschil in <b>deeltjesgrootte</b>.",
       fout: { bezinken: "Bezinken haalt het grove koffiedik weg, maar fijne korreltjes blijven zweven. Welke methode houdt álle korrels tegen?" } }
   ] },
-  { id: "bloed", naam: "Bloed in het laboratorium", wat: "Een buisje bloed: bloedcellen in bloedplasma (vooral water).", d: ["cel", "water"], namen: { water: "bloedplasma (vooral water)" }, stappen: [
+  { id: "bloed", naam: "Bloed in het laboratorium", wat: "Een buisje bloed: bloedcellen in bloedplasma (vooral water).", d: ["cel", "water"], namen: { water: "bloedplasma (vooral water)" },
+    gegevens: ["dichtheid bloedcellen: 1,10 g/cm³", "dichtheid bloedplasma: 1,03 g/cm³"], stappen: [
     { m: "centrifugeren", doel: "Scheid de bloedcellen snel en goed van het bloedplasma.",
       in: { cel: 0, water: 1 },
-      u: { cel: "Bloedcellen hebben een grotere dichtheid dan het plasma en gaan naar de bodem.", water: "Het plasma heeft een kleinere dichtheid en blijft bovenin." },
+      u: { cel: "Bloedcellen hebben de grootste dichtheid (1,10 g/cm³) en gaan naar de bodem.", water: "Het plasma heeft een kleinere dichtheid (1,03 g/cm³) en blijft bovenin." },
       goed: "Bloedcellen hebben een grotere <b>dichtheid</b> dan plasma. Centrifugeren is versneld bezinken: het gaat in minuten in plaats van uren.",
       fout: { bezinken: "Bezinken werkt wel, maar het duurt uren. Je wilt het snel: welke methode versnelt het bezinken?",
-              filtreren: "Bloedcellen zijn zacht en heel klein; ze verstoppen het filter of gaan erdoor. Het verschil dat je hier gebruikt is de dichtheid." } }
+              filtreren: "Bloedcellen zijn zacht en heel klein; ze verstoppen het filter. Kijk bij de gegevens: welk verschil kun je gebruiken?" } }
   ] },
-  { id: "melk", naam: "Room uit melk", wat: "Melk bevat kleine vetdruppeltjes in water. In de zuivelfabriek wil je de room (het vet) eruit halen.", d: ["vet", "water"], namen: { water: "water (de rest van de melk)" }, stappen: [
+  { id: "melk", naam: "Room uit melk", wat: "Melk bevat kleine vetdruppeltjes in magere melk (vooral water). In de zuivelfabriek wil je de room (het vet) eruit halen.", d: ["vet", "water"],
+    namen: { water: "magere melk (vooral water)" }, gegevens: ["dichtheid melkvet: 0,92 g/cm³", "dichtheid magere melk: 1,03 g/cm³"], stappen: [
     { m: "centrifugeren", doel: "Haal de vetdruppeltjes snel uit de melk.",
       in: { water: 0, vet: 1 },
-      u: { water: "Water heeft een grotere dichtheid dan vet en gaat naar de buitenkant (onderin).", vet: "Vet heeft een kleinere dichtheid dan water: de vetdruppeltjes komen bovenin." },
-      goed: "Vet heeft een kleinere <b>dichtheid</b> dan water. Door het snelle draaien gaat het water naar onderen en komen de vetdruppeltjes bovenin.",
+      u: { water: "Magere melk heeft de grootste dichtheid (1,03 g/cm³) en gaat naar onderen.", vet: "Melkvet heeft de kleinste dichtheid (0,92 g/cm³): de vetdruppeltjes komen bovenin." },
+      goed: "Vet heeft een kleinere <b>dichtheid</b> dan de rest van de melk. Door het snelle draaien gaat de magere melk naar onderen en komen de vetdruppeltjes bovenin.",
       fout: { bezinken: "Laat je melk staan, dan komt de room wel langzaam boven, maar dat duurt lang. In de fabriek moet het snel.",
               filtreren: "De vetdruppeltjes zijn zo klein dat ze door een filter gaan." } }
   ] },
-  { id: "sloot", naam: "Slootwater zuiveren", wat: "Water uit een sloot: troebel van het zand, met een bruine kleur en een vieze geur.", d: ["zand", "kleur", "water"], namen: { kleur: "geur- en kleurstoffen" }, stappen: [
-    { m: "bezinken", doel: "Haal eerst het meeste zand eruit, in een groot bassin, zonder apparaten en zonder energie.",
-      in: { zand: 0, water: 1, kleur: 1 },
-      u: { zand: "Zand heeft een grotere dichtheid dan water en zakt naar de bodem.", water: "Het water blijft erboven.", kleur: "De geur- en kleurstoffen zijn opgelost en zakken niet." },
-      goed: "Zand heeft een grotere <b>dichtheid</b> dan water en zakt vanzelf. Het kost alleen tijd, geen energie.",
-      fout: { filtreren: "Filtreren kan, maar bij heel veel water raakt een filter snel verstopt. Welke methode werkt vanzelf in een groot bassin?",
-              centrifugeren: "Een centrifuge kost energie en is veel te klein voor zoveel water. Welke methode werkt vanzelf in een groot bassin?" },
-      verder: 1, verderTekst: "Je gaat verder met het water boven het bezinksel." },
-    { m: "adsorberen", doel: "Haal de opgeloste geur- en kleurstoffen uit het water.",
-      in: { kleur: 0, water: 1 },
-      u: { kleur: "Geur- en kleurstoffen blijven aan het oppervlak van de actieve kool hangen.", water: "Watermoleculen blijven niet hangen en stromen erlangs." },
-      goed: "Geur- en kleurstoffen hechten goed aan actieve kool en water niet: een verschil in <b>aanhechtingsvermogen</b>.",
-      fout: { filtreren: "De geur- en kleurstoffen zijn opgelost: de moleculen zijn klein en gaan door het filter.",
-              destilleren: "Destilleren kan wel, maar kost voor zoveel water veel te veel energie. Welke methode haalt kleine hoeveelheden opgeloste stoffen weg zonder te verwarmen?" } }
-  ] },
-  { id: "emmer", naam: "Emmer met zand en water", wat: "Je hebt een emmer water met veel zand erin, en geen filter.", d: ["zand", "water"], stappen: [
+  { id: "emmer", naam: "Emmer met zand en water", wat: "Je hebt een emmer water met veel zand erin, en geen filter.", d: ["zand", "water"],
+    gegevens: ["dichtheid zand: 2,65 g/cm³", "dichtheid water: 1,00 g/cm³"], stappen: [
     { m: "bezinken", doel: "Haal het meeste zand eruit. Je mag wachten en daarna het water afgieten.",
       in: { zand: 0, water: 1 },
       u: { zand: "Zand heeft een grotere dichtheid dan water en zakt naar de bodem.", water: "Het water blijft erboven en giet je af." },
@@ -1153,7 +1225,7 @@ const MENGSELS = [
       fout: { filtreren: "Je hebt geen filter. Welke methode werkt vanzelf als je even wacht?",
               centrifugeren: "Een emmer past niet in een centrifuge, en je mag wachten. Welke methode werkt vanzelf?" } }
   ] },
-  { id: "zoutpan", naam: "Zoutpan aan zee", wat: "In ondiepe bassins aan zee staat zeewater in de zon.", d: ["water", "zout"], stappen: [
+  { id: "zoutpan", naam: "Zoutpan aan zee", wat: "In ondiepe bassins aan zee staat zeewater in de zon.", d: ["water", "zout"], gegevens: [KP.water, KP.zout], stappen: [
     { m: "indampen", doel: "Win zout uit het zeewater. Het water mag in de lucht verdwijnen.",
       in: { water: 0, zout: 1 },
       u: { water: "Water verdampt: de moleculen trekken elkaar zwak aan.", zout: "De ionen trekken elkaar sterk aan en verdampen niet: er blijven zoutkristallen achter." },
@@ -1186,20 +1258,21 @@ function bekerIcoon(ds) {                           // klein bekerglas met de de
 const spel = { vragen: [], i: 0, punten: [], poging: 1, klaar: false };
 let vorigeMengsels = [];
 function kiesRonde() {
-  // 5 stappen per ronde; kies mengsels zo dat zo veel mogelijk verschillende methoden voorkomen
-  for (let p = 0; p < 60; p++) {
-    const kand = mix(p < 30 ? MENGSELS.filter(m => !vorigeMengsels.includes(m.id)) : MENGSELS);
+  // 5 stappen per ronde; zo veel mogelijk verschillende methoden, minstens één mengsel met 4 en één met 3 stoffen
+  for (let p = 0; p < 400; p++) {
+    const kand = mix(p < 200 ? MENGSELS.filter(m => !vorigeMengsels.includes(m.id)) : MENGSELS);
     const lijst = [], gebruikt = {}; let over = 5;
     while (over > 0) {
       const passend = kand.filter(m => m.stappen.length <= over && !lijst.includes(m));
       if (!passend.length) break;
-      const score = m => m.stappen.reduce((s, st) => s + (gebruikt[st.m] ? -1.5 : 1), 0) / m.stappen.length + Math.random() * 1.2;
+      const score = m => m.stappen.reduce((s, st) => s + (gebruikt[st.m] ? -1.5 : 1), 0) / m.stappen.length + Math.random() * 3;
       const m = passend.map(m => [score(m), m]).sort((a, b) => b[0] - a[0])[0][1];
       lijst.push(m); over -= m.stappen.length; m.stappen.forEach(st => gebruikt[st.m] = (gebruikt[st.m] || 0) + 1);
     }
-    if (over === 0 && Object.values(gebruikt).every(n => n <= 2)) { vorigeMengsels = lijst.map(m => m.id); return lijst; }
+    const n = m => Object.keys(m.stappen[0].in).length;
+    if (over === 0 && Object.values(gebruikt).every(n => n <= 2) && lijst.some(m => n(m) >= 4) && lijst.some(m => n(m) === 3)) { vorigeMengsels = lijst.map(m => m.id); return lijst; }
   }
-  return [MENGSELS[0], MENGSELS[1], MENGSELS[5]];
+  return [MENGSELS.find(m => m.id === "huiswijn"), MENGSELS.find(m => m.id === "strooizout")];
 }
 function spelStart() {
   $("spel").innerHTML = `<div class="kaart start-spel">
@@ -1243,6 +1316,7 @@ function toonVraag() {
       <h3>${mg.naam}</h3>
       <p>${vorige ? `Na het ${NAAM[vorige.m].toLowerCase()}: ${vorige.verderTekst[0].toLowerCase() + vorige.verderTekst.slice(1)}` : mg.wat}${st.extra ? ` Je voegt ${st.extra.map(d => dNaam(mg, d).replace("moleculen", "")).join(" en ")} toe.` : ""}</p>
       <p>In het mengsel: ${ds.map(d => dNaam(mg, d)).join(", ")}.</p>
+      ${mg.gegevens ? `<p class="gegevens"><b>Gegevens:</b> ${mg.gegevens.join(" · ")}</p>` : ""}
       <p class="doel"><b>Doel:</b> ${st.doel}</p></div></div>
     <p class="opdracht" id="s-opdr">Welke scheidingsmethode kies je?</p>
     <div class="methoden" id="s-meth">${METHODEN.map(m => `<button data-m="${m.id}">${m.titel}</button>`).join("")}</div>
@@ -1260,13 +1334,17 @@ function kiesMethode(b) {
   const alle = $("s-meth").querySelectorAll("button");
   if (m === st.m) {
     b.classList.add("goed"); alle.forEach(x => x.disabled = true);
-    feedback("goed", `<p><b>Goed: ${NAAM[m].toLowerCase()}!</b> ${st.goed}</p>`);
+    // nog niet de hele uitleg: die verklapt waar de deeltjes heen gaan (die volgt na het plaatsen)
+    feedback("goed", `<p><b>Goed: ${NAAM[m].toLowerCase()}!</b> Deze methode berust op een verschil in <b>${METHODEN.find(x => x.id === m).verschil}</b>. Zet nu de deeltjes op de goede plek.</p>`);
     toonPlaatsen(false);
   } else {
     b.classList.add("fout"); b.disabled = true;
-    const waarom = (st.fout && st.fout[m]) || `${FOUT_ALG[m]} Past dat bij dit mengsel en dit doel?`;
+    const { si } = spel.vragen[spel.i];
+    const later = mg.stappen.slice(si + 1).some(x => x.m === m);      // methode van een volgende stap: niets verklappen
+    const waarom = later ? `Dat past niet bij het doel van deze stap. Lees het doel nog eens: wat moet er nú uit het mengsel?`
+      : (st.fout && st.fout[m]) || `${FOUT_ALG[m]} Past dat bij dit mengsel en dit doel?`;
     if (spel.poging === 1) {
-      feedback("fout", `<p><b>${NAAM[m]} past hier niet.</b> ${waarom}</p><p>Kijk naar het doel: welk verschil in stofeigenschap tussen de deeltjes kun je gebruiken? Probeer het nog een keer.</p>`);
+      feedback("fout", `<p><b>${NAAM[m]} past hier niet.</b> ${waarom}</p><p>${later ? "" : "Kijk naar het doel: welk verschil in stofeigenschap tussen de deeltjes kun je gebruiken? "}Probeer het nog een keer.</p>`);
       spel.poging = 2; werkBalk();
     } else {
       alle.forEach(x => { x.disabled = true; if (x.dataset.m === st.m) x.classList.add("goed"); });

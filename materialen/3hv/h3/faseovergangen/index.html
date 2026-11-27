@@ -237,7 +237,7 @@ const OVERGANG = {
 
 /* ---------- toestand ---------- */
 let st, Hwarmte, Hmax, modus = "uit", pauze = false, tijd = 0, limiet = null;
-let P = [], sites = [], N = 0, zak = 0, macroDrijf = 0;
+let P = [], sites = [], N = 0, zak = 0;
 let metingen = [], volgendeMeting = 0, grafTijd = 0, wachtOvergang = 0, wachtZicht = 0, sleutelOud = "";
 let bellen = [], volgendeBel = 0, volgendeWissel = 0;
 
@@ -334,9 +334,9 @@ function bouwVeld() {
   E.vloei = maak("rect", { x: 60, width: 260, fill: "rgba(110,165,225,.42)" }, binnen);
   E.vloeiRand = maak("line", { x1: 60, x2: 320, stroke: "#5f93cc", "stroke-width": 2 }, binnen);
   E.bellen = maak("g", {}, binnen);
-  E.blok = maak("g", {}, binnen);
-  E.blokVorm = maak("rect", { rx: 7, "stroke-width": 2 }, E.blok);
-  E.blokGlans = maak("path", { fill: "none", stroke: "#fff", "stroke-width": 3, "stroke-linecap": "round", opacity: .9 }, E.blok);
+  E.vast = maak("rect", { x: 60, width: 260 }, binnen);                 // vaste stof: een laag in de vorm van de kolf
+  E.vastRand = maak("line", { x1: 60, x2: 320, "stroke-width": 2.5 }, binnen);
+  E.vastOnder = maak("line", { x1: 60, x2: 320, "stroke-width": 1.5, "stroke-dasharray": "4 3" }, binnen);
   // kolf: glas
   maak("path", { d: kolfPad, fill: "none", stroke: "#2c5687", "stroke-width": 3.5, "stroke-linejoin": "round" }, m);
   maak("path", { d: "M160,170 L220,170", stroke: "#2c5687", "stroke-width": 5, "stroke-linecap": "round" }, m);
@@ -710,38 +710,47 @@ function tekenMicro(tst) {
   E.badge.setAttribute("opacity", tekst ? 1 : 0);
 }
 
+/* breedte van de binnenkant van de kolf op hoogte y (zie kolfPad) */
+function kolfBreedte(y) { return y >= 472 ? 236 : y >= 240 ? 50 + (y - 240) * 190 / 232 : 50; }
+/* bovenkant van een laag met volume V die op hoogte yOnder begint */
+function kolfHoogte(V, yOnder) {
+  let y = yOnder;
+  while (V > 0 && y > 172) { const b = kolfBreedte(y - .5); if (V < b) return y - V / b; V -= b; y -= 1; }
+  return y;
+}
 function tekenMacro(tst, dt) {
   const fs = tst.f.s || 0, fl = tst.f.l || 0, fg = tst.f.g || 0;
-  const breed = 222, A1 = breed * 46;
-  // vaste stof als blok
-  const ws = 112 * Math.sqrt(fs), hs = 70 * Math.sqrt(fs);
-  let niveau, doelDrijf = 0;
-  if (st.drijft && fl > 0 && fs > 0) {
-    niveau = (fl * A1 + .88 * hs * ws) / breed;
-    if (niveau - .88 * hs > 0) doelDrijf = niveau - .88 * hs;
-    else niveau = Math.min(hs, fl * A1 / (breed - ws));
+  /* Vaste stof en vloeistof liggen als lagen in de kolf en nemen de vorm van de kolf aan: een vloeistof
+     stolt op de plek waar hij is. Water: ijs drijft (en zet uit) en ligt dus bovenop het water; bij het
+     koelen vormt het ijs zich aan het oppervlak, bij het verwarmen smelt het onderaan.
+     Andere stoffen: de vaste stof is dichter dan de vloeistof en ligt onderin. */
+  const VOL = 222 * 66;                            // volume van alle stof als vloeistof (in de tekening)
+  let yL, yLonder, yS, ySonder;
+  if (st.drijft) {
+    yLonder = 490; yL = kolfHoogte(fl * VOL, 490);
+    ySonder = yL; yS = kolfHoogte(fs * VOL * 1.09, yL);
   } else {
-    niveau = fl * A1 / Math.max(40, breed - ws);
-    if (niveau > hs) niveau = (fl * A1 + hs * ws) / breed;
+    ySonder = 490; yS = kolfHoogte(fs * VOL * .92, 490);
+    yLonder = yS; yL = kolfHoogte(fl * VOL, yS);
   }
-  macroDrijf += (doelDrijf - macroDrijf) * Math.min(1, dt * 1.5 + (dt === 0 ? 1 : 0));
-  const yLvl = 490 - niveau;
-  E.vloei.setAttribute("y", yLvl); E.vloei.setAttribute("height", niveau + 2);
+  const niveau = yLonder - yL, dikVast = ySonder - yS, yLvl = yL;
+  E.vloei.setAttribute("y", yL); E.vloei.setAttribute("height", niveau + (st.drijft ? 2 : .5));
   E.vloei.setAttribute("fill", st.kleurVloei);
-  E.vloeiRand.setAttribute("y1", yLvl); E.vloeiRand.setAttribute("y2", yLvl);
-  E.vloeiRand.setAttribute("opacity", niveau > 1 ? 1 : 0);
-  E.blok.setAttribute("display", fs > .005 ? "inline" : "none");
-  const bx = 190 - ws / 2, by = 490 - macroDrijf - hs;
-  E.blokVorm.setAttribute("x", bx); E.blokVorm.setAttribute("y", by);
-  E.blokVorm.setAttribute("width", ws); E.blokVorm.setAttribute("height", hs);
-  E.blokVorm.setAttribute("fill", st.kleurVast); E.blokVorm.setAttribute("stroke", st.randVast);
-  E.blokGlans.setAttribute("d", `M${bx + 8} ${by + hs * .55} L${bx + 8} ${by + 8} L${bx + ws * .45} ${by + 8}`);
+  const vloeiBoven = niveau > 1 && !(st.drijft && dikVast > .5);   // het vloeistofoppervlak is alleen te zien als er geen ijs op ligt
+  E.vloeiRand.setAttribute("y1", yL); E.vloeiRand.setAttribute("y2", yL);
+  E.vloeiRand.setAttribute("opacity", vloeiBoven ? 1 : 0);
+  E.vast.setAttribute("y", yS); E.vast.setAttribute("height", dikVast + (st.drijft ? .5 : 2));
+  E.vast.setAttribute("fill", st.kleurVast); E.vast.setAttribute("display", dikVast > .3 ? "inline" : "none");
+  E.vastRand.setAttribute("y1", yS); E.vastRand.setAttribute("y2", yS); E.vastRand.setAttribute("stroke", st.randVast);
+  E.vastRand.setAttribute("opacity", dikVast > .3 ? 1 : 0);
+  E.vastOnder.setAttribute("y1", ySonder); E.vastOnder.setAttribute("y2", ySonder); E.vastOnder.setAttribute("stroke", st.randVast);
+  E.vastOnder.setAttribute("opacity", st.drijft && dikVast > .3 && niveau > 1 ? 1 : 0);
   // labels
-  E.labVast.textContent = fs > .12 ? st.vast : "";
-  E.labVast.setAttribute("x", 190); E.labVast.setAttribute("y", by + hs / 2 + 5);
+  E.labVast.textContent = fs > .12 && dikVast > 14 ? st.vast : "";
+  E.labVast.setAttribute("x", 190); E.labVast.setAttribute("y", (yS + ySonder) / 2 + 5);
   const vloeiZicht = niveau > 16 && fl > .05;
   E.labVloei.textContent = vloeiZicht ? st.vloei : "";
-  E.labVloei.setAttribute("x", fs > .05 ? 268 : 190); E.labVloei.setAttribute("y", 490 - Math.min(niveau, 40) / 2 + 5);
+  E.labVloei.setAttribute("x", 190); E.labVloei.setAttribute("y", (yL + yLonder) / 2 + 5);
   E.labGas.textContent = fg > .06 ? st.gas : "";
   E.labGas2.setAttribute("display", fg > .06 ? "inline" : "none");
   // gas en ballon (gas neemt veel ruimte in; warmer gas zet verder uit)
@@ -914,7 +923,7 @@ function kiesStof(id) {
   st = STOFFEN[id];
   Hmax = totaalH(st);
   Hwarmte = Hbij(st, st.Tstart);
-  tijd = 0; grafTijd = 0; metingen = []; volgendeMeting = 0; limiet = null; sleutelOud = ""; macroDrijf = 0;
+  tijd = 0; grafTijd = 0; metingen = []; volgendeMeting = 0; limiet = null; sleutelOud = "";
   bellen.forEach(b => b.el.remove()); bellen = [];
   zetModus("uit");
   maakSites(); plaatsBegin();

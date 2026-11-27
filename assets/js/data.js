@@ -13,7 +13,7 @@ window.SOLUTION = {
   /* Versie van de materialen. Verhoog dit (bijv. de datum) als je een animatie of
      simulatie in materialen/ hebt aangepast: browsers laden dan zeker de nieuwe versie
      in plaats van een oude uit hun geheugen (cache). */
-  versie: "2026-11-27r",
+  versie: "2026-11-27s",
 
   /* Soorten materiaal. Je kunt hier zelf soorten aan toevoegen. */
   typen: {
@@ -166,15 +166,6 @@ window.SOLUTION = {
           ],
           materialen: [
             {
-              id: "faseovergangen",
-              type: "simulatie",
-              paragrafen: [2, 3],
-              titel: "Deeltjesmodel: faseovergangen",
-              beschrijving: "Verwarm of koel water, ethanol of koolstofdioxide. Vergelijk met het mengsel water met ethanol: een zuivere stof heeft een kookpunt, een mengsel een kooktraject.",
-              url: "materialen/3hv/h3/faseovergangen/index.html",
-              formaat: "groot"
-            },
-            {
               id: "stofeigenschappen",
               type: ["simulatie", "oefening"],
               paragrafen: [1, 2],
@@ -215,6 +206,15 @@ window.SOLUTION = {
                   url: "materialen/3hv/h3/stofeigenschappen/index.html?tab=spel"
                 }
               ]
+            },
+            {
+              id: "faseovergangen",
+              type: "simulatie",
+              paragrafen: [2, 3],
+              titel: "Deeltjesmodel: faseovergangen",
+              beschrijving: "Verwarm of koel water, ethanol of koolstofdioxide. Vergelijk met het mengsel water met ethanol: een zuivere stof heeft een kookpunt, een mengsel een kooktraject.",
+              url: "materialen/3hv/h3/faseovergangen/index.html",
+              formaat: "groot"
             },
             {
               id: "scheidingsmethoden",

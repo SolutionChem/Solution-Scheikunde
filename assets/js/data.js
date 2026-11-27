@@ -13,7 +13,7 @@ window.SOLUTION = {
   /* Versie van de materialen. Verhoog dit (bijv. de datum) als je een animatie of
      simulatie in materialen/ hebt aangepast: browsers laden dan zeker de nieuwe versie
      in plaats van een oude uit hun geheugen (cache). */
-  versie: "2026-11-27f",
+  versie: "2026-11-27h",
 
   /* Soorten materiaal. Je kunt hier zelf soorten aan toevoegen. */
   typen: {
@@ -173,6 +173,48 @@ window.SOLUTION = {
               beschrijving: "Verwarm of koel water, ethanol of koolstofdioxide.",
               url: "materialen/3hv/h3/faseovergangen/index.html",
               formaat: "groot"
+            },
+            {
+              id: "stofeigenschappen",
+              type: ["simulatie", "oefening"],
+              paragrafen: [1, 2],
+              titel: "Stofeigenschappen van zouten, metalen en moleculaire stoffen",
+              beschrijving: "Bekijk op microniveau waarom zouten, metalen en moleculaire stoffen verschillende eigenschappen hebben.",
+              url: "materialen/3hv/h3/stofeigenschappen/index.html",
+              formaat: "groot",
+              onderdelen: [
+                {
+                  id: "eigenschappen-zouten",
+                  titel: "Zouten",
+                  tekst: "Ionrooster en smeltpunt, waarom een zout bros is, en stroomgeleiding: vast, gesmolten en opgelost in water.",
+                  url: "materialen/3hv/h3/stofeigenschappen/index.html?tab=zout"
+                },
+                {
+                  id: "eigenschappen-metalen",
+                  titel: "Metalen",
+                  tekst: "Stroom en warmte geleiden met vrije elektronen, vervormbaar zonder te breken, en waarom een legering harder is.",
+                  url: "materialen/3hv/h3/stofeigenschappen/index.html?tab=metaal"
+                },
+                {
+                  id: "eigenschappen-moleculair",
+                  titel: "Moleculaire stoffen",
+                  tekst: "Lage smelt- en kookpunten, geen stroomgeleiding, hydrofiel en hydrofoob. Met verdieping: vanderwaalsbinding, dipool-dipoolbinding en waterstofbruggen.",
+                  url: "materialen/3hv/h3/stofeigenschappen/index.html?tab=moleculair"
+                },
+                {
+                  id: "eigenschappen-vergelijken",
+                  titel: "Vergelijken",
+                  tekst: "Alle stofeigenschappen van zouten, metalen en moleculaire stoffen naast elkaar, met de verklaring op microniveau.",
+                  url: "materialen/3hv/h3/stofeigenschappen/index.html?tab=vergelijk"
+                },
+                {
+                  id: "spel-soort-stof",
+                  type: "oefening",
+                  titel: "Spel: wat voor stof is het?",
+                  tekst: "Sleep stofkaarten naar zout, metaal of moleculaire stof en kies de goede verklaring. Vijf vragen per ronde; moleculaire stoffen kun je met verdieping spelen.",
+                  url: "materialen/3hv/h3/stofeigenschappen/index.html?tab=spel"
+                }
+              ]
             }
           ]
         },

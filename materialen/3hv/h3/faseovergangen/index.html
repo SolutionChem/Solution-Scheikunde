@@ -219,7 +219,7 @@ const OVERGANG = {
 /* ---------- toestand ---------- */
 let st, Hwarmte, Hmax, modus = "uit", pauze = false, tijd = 0, limiet = null;
 let P = [], sites = [], N = 0, zak = 0, macroDrijf = 0;
-let metingen = [], volgendeMeting = 0, wachtOvergang = 0, wachtZicht = 0, sleutelOud = "";
+let metingen = [], volgendeMeting = 0, grafTijd = 0, wachtOvergang = 0, wachtZicht = 0, sleutelOud = "";
 let bellen = [], volgendeBel = 0, volgendeWissel = 0;
 
 const $ = id => document.getElementById(id);
@@ -766,12 +766,11 @@ function bouwGrafiek() {
   [st.Tmin, st.Tmax].forEach(T => maak("text", { x: gx0 - 4, y: yT(T) + 4, "text-anchor": "end", "font-size": 11, fill: "#4a5a72" }, graf, fmt(T)));
   maak("text", { x: 4, y: 10, "font-size": 11, fill: "#4a5a72" }, graf, "°C");
   maak("text", { x: gx1, y: grafHoog - 6, "text-anchor": "end", "font-size": 11, fill: "#4a5a72" }, graf, "tijd →");
-  maak("text", { x: gx0, y: grafHoog - 6, "font-size": 11, fill: "#4a5a72" }, graf, `laatste ${VENSTER} s`);
   grafLijn = maak("polyline", { fill: "none", stroke: "#c0392b", "stroke-width": 2.5, "stroke-linejoin": "round" }, graf);
 }
 function tekenGrafiek() {
   const yT = T => gy1 - relatief(T) * (gy1 - gy0);
-  const t0 = Math.max(0, tijd - VENSTER);
+  const t0 = Math.max(0, grafTijd - VENSTER);
   grafLijn.setAttribute("points", metingen.filter(m => m.t >= t0)
     .map(m => `${(gx0 + (m.t - t0) / VENSTER * (gx1 - gx0)).toFixed(1)},${yT(m.T).toFixed(1)}`).join(" "));
 }
@@ -790,12 +789,12 @@ function uitleg(tst) {
       html = `<b>Smelten</b> bij ${T0} °C: de ${st.deeltjes} trillen zo hard dat ze loskomen uit het vaste patroon. Ze blijven wel dicht bij elkaar. De warmte is nodig om de moleculen van elkaar los te maken; daarom blijft de temperatuur ${T0} °C tot alles gesmolten is. De moleculen zelf veranderen niet.`
         + (st.drijft ? ` Zie je dat het ijs drijft? Water is een uitzondering: in ijs zitten de moleculen iets verder uit elkaar dan in vloeibaar water.` : "");
     } else if (soort === "sl") {
-      html = `<b>Stollen</b> bij ${T0} °C: de ${st.deeltjes} bewegen zo langzaam dat de aantrekkingskrachten ze weer in een vast patroon trekken. Daarbij komt warmte vrij. Daarom blijft de temperatuur ${T0} °C tot alles vast is.`
+      html = `<b>Stollen</b> bij ${T0} °C: de ${st.deeltjes} bewegen zo langzaam dat de aantrekkingskrachten ze in een vast patroon trekken. Daarbij komt warmte vrij. Daarom blijft de temperatuur ${T0} °C tot alles vast is.`
         + (st.drijft ? ` Het ijs drijft: in ijs zitten de moleculen iets verder uit elkaar dan in vloeibaar water. Water is daarin een uitzondering.` : "");
     } else if (soort === "lg" && modus === "warm") {
       html = `<b>Verdampen</b> (koken) bij ${T0} °C: de ${st.deeltjes} bewegen zo snel dat ze loskomen van de andere moleculen en uit de vloeistof ontsnappen. In een gas zitten de moleculen heel ver uit elkaar: het gas heeft veel meer ruimte nodig, daarom blaast de ballon op. De temperatuur blijft ${T0} °C tot alles verdampt is.`;
     } else if (soort === "lg") {
-      html = `<b>Condenseren</b> bij ${T0} °C: de gasmoleculen bewegen zo langzaam dat ze elkaar weer aantrekken en samen een vloeistof vormen. Een vloeistof heeft veel minder ruimte nodig dan een gas: de ballon loopt leeg. De temperatuur blijft ${T0} °C tot al het gas vloeibaar is.`;
+      html = `<b>Condenseren</b> bij ${T0} °C: de gasmoleculen bewegen zo langzaam dat de aantrekkingskrachten ze bij elkaar houden: ze vormen samen een vloeistof. Een vloeistof heeft veel minder ruimte nodig dan een gas: de ballon loopt leeg. De temperatuur blijft ${T0} °C tot al het gas vloeibaar is.`;
     } else if (modus === "warm") {
       html = `<b>Sublimeren</b> bij ${T0} °C: de moleculen in het ${st.vast} trillen zo hard dat ze loskomen en meteen als gas wegvliegen. ${cap(st.naam)} wordt bij gewone luchtdruk niet vloeibaar: het gaat direct van vast naar gas. Het gas heeft veel meer ruimte nodig: de ballon blaast op. De temperatuur blijft ${T0} °C tot alles gas is.`;
     } else {
@@ -805,7 +804,7 @@ function uitleg(tst) {
     html = `<b>Vast</b> (${st.vast}): de ${st.deeltjes} zitten dicht op elkaar in een vast patroon. Ze kunnen niet van plaats wisselen, maar trillen op hun plek. Ze trekken elkaar sterk aan. Daarom houdt ${st.vast} zijn eigen vorm.`
       + (modus === "warm" ? " Je verwarmt: de moleculen gaan steeds harder trillen." : modus === "koud" ? " Je koelt: de moleculen trillen steeds minder." : " Klik op <b>Verwarmen</b> en kijk wat de moleculen doen.");
   } else if (tst.fase === "l") {
-    html = `<b>Vloeibaar</b> (${st.vloei}): de ${st.deeltjes} zitten nog dicht bij elkaar${st.drijft ? "" : ", maar iets verder uit elkaar dan in de vaste stof"}. Ze zitten niet meer in een vast patroon en bewegen langs elkaar heen. Daarom kan een vloeistof stromen en neemt hij de vorm van de kolf aan. De moleculen trekken elkaar nog steeds aan.` + richting;
+    html = `<b>Vloeibaar</b> (${st.vloei}): de ${st.deeltjes} zitten dicht bij elkaar${st.drijft ? "" : " (iets verder uit elkaar dan in de vaste stof)"}, maar niet in een vast patroon. Ze bewegen langs elkaar heen. Daarom kan een vloeistof stromen en neemt hij de vorm van de kolf aan. De moleculen trekken elkaar aan, maar minder sterk dan in een vaste stof.` + richting;
   } else {
     html = `<b>Gas</b> (${st.gas}): de ${st.deeltjes} zitten heel ver uit elkaar en vliegen snel alle kanten op. Ze trekken elkaar bijna niet aan. Een gas vult de hele ruimte, ook de ballon. Daarom staan er in dit kleine stukje maar een paar moleculen. ${cap(st.gas)} kun je niet zien.` + richting;
   }
@@ -834,7 +833,7 @@ function kiesStof(id) {
   st = STOFFEN[id];
   Hmax = totaalH(st);
   Hwarmte = Hbij(st, st.Tstart);
-  tijd = 0; metingen = []; volgendeMeting = 0; limiet = null; sleutelOud = ""; macroDrijf = 0;
+  tijd = 0; grafTijd = 0; metingen = []; volgendeMeting = 0; limiet = null; sleutelOud = ""; macroDrijf = 0;
   bellen.forEach(b => b.el.remove()); bellen = [];
   zetModus("uit");
   maakSites(); plaatsBegin();
@@ -868,7 +867,8 @@ function stap(dt) {
   const tst = toestand(Hwarmte);
   overgangen(tst, dt * snel);
   natuurkunde(tst, dt);
-  if (tijd >= volgendeMeting) { metingen.push({ t: tijd, T: tst.T }); volgendeMeting = tijd + .2; if (metingen.length > 600) metingen.shift(); tekenGrafiek(); }
+  grafTijd += dt * snel;                          // simulatietijd: bij Sneller blijft de helling van de lijn gelijk
+  if (grafTijd >= volgendeMeting) { metingen.push({ t: grafTijd, T: tst.T }); volgendeMeting = grafTijd + .2; if (metingen.length > 600) metingen.shift(); tekenGrafiek(); }
   return tst;
 }
 

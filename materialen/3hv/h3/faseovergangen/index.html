@@ -1,0 +1,868 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deeltjesmodel: faseovergangen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Oswald:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #11264a; --navy2: #163a63; --navy3: #2c5687;
+    --licht: #eef4fb; --licht2: #dbe8f5; --rand: #c9d8ea;
+    --tekst: #14213a; --zacht: #4a5a72;
+    --warm: #c0392b; --koud: #2f6fb5;
+    --kop: "Oswald", "Arial Narrow", Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    font-family: Inter, "Helvetica Neue", Arial, sans-serif; color: var(--tekst);
+    background: var(--licht); line-height: 1.45; font-size: 15px; -webkit-font-smoothing: antialiased;
+  }
+  button, select { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  [hidden] { display: none !important; }
+
+  .scherm { padding: 12px; }
+  .app { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 12px; align-items: start; }
+  .kaart { background: #fff; border-radius: 10px; box-shadow: 0 1px 3px rgba(11,26,51,.1); padding: 12px 14px; min-width: 0; }
+  .kaart h2 { margin: 0 0 8px; font-size: .78rem; letter-spacing: .12em; text-transform: uppercase; color: var(--zacht); font-weight: 600; }
+  .paneel { display: flex; flex-direction: column; gap: 12px; }
+
+  .podium { padding: 8px; }
+  #veld { width: 100%; height: auto; display: block; max-height: 74vh; user-select: none; -webkit-user-select: none; }
+  .onderschrift {
+    margin: 6px 4px 2px; padding: 10px 14px; border-radius: 8px; background: var(--licht);
+    border-left: 4px solid var(--navy3); min-height: 5.6em; font-size: 1rem;
+  }
+  .onderschrift b { color: var(--navy); }
+  .onderschrift .punt { display: inline-block; font-size: .75rem; font-weight: 600; color: var(--navy2); background: var(--licht2);
+                        border-radius: 99px; padding: 0 7px; margin-left: 2px; white-space: nowrap; }
+
+  select { width: 100%; padding: 8px 10px; border-radius: 7px; border: 1px solid var(--rand); background: #fff; }
+  .stofinfo { display: flex; gap: 10px; align-items: center; margin-top: 10px; font-size: .88rem; }
+  .stofinfo svg { width: 76px; height: 60px; flex: 0 0 auto; background: var(--licht); border-radius: 8px; }
+  .stofinfo p { margin: 0; }
+  .stofinfo .pt { font-weight: 600; color: var(--navy); }
+  .klein { font-size: .82rem; color: var(--zacht); margin: 8px 0 0; }
+
+  .seg { display: grid; grid-template-columns: 1fr .8fr 1fr; gap: 6px; }
+  .seg button { padding: 10px 6px; border-radius: 8px; border: 1px solid var(--rand); background: #fff; font-weight: 600; font-size: .92rem; }
+  .seg button[data-modus="warm"][aria-pressed="true"] { background: var(--warm); border-color: var(--warm); color: #fff; }
+  .seg button[data-modus="koud"][aria-pressed="true"] { background: var(--koud); border-color: var(--koud); color: #fff; }
+  .seg button[data-modus="uit"][aria-pressed="true"] { background: var(--navy2); border-color: var(--navy2); color: #fff; }
+  .knoppen { display: flex; gap: 8px; margin-top: 8px; }
+  .knoppen button { flex: 1; padding: 8px 10px; border-radius: 7px; border: 1px solid var(--rand); background: #fff; font-weight: 600; }
+  label.optie { display: flex; gap: 8px; align-items: center; font-size: .9rem; margin-top: 8px; cursor: pointer; }
+  label.optie input { width: 17px; height: 17px; accent-color: var(--navy2); }
+
+  .meter { margin-top: 12px; font-size: .85rem; }
+  .meter .baan { height: 10px; border-radius: 99px; background: var(--licht2); overflow: hidden; margin: 4px 0 3px; }
+  .meter .baan i { display: block; height: 100%; width: 0; border-radius: 99px; background: linear-gradient(90deg, var(--koud), var(--warm)); }
+  .meter span { color: var(--zacht); }
+
+  #grafiek { width: 100%; height: auto; display: block; }
+  #grafiek text { font-family: Inter, Arial, sans-serif; }
+
+  ol.model { margin: 0; padding-left: 0; list-style: none; counter-reset: m; display: grid; gap: 4px; font-size: .86rem; }
+  ol.model li { counter-increment: m; display: flex; gap: 8px; padding: 5px 8px; border-radius: 7px; color: var(--zacht); transition: background .3s, color .3s; }
+  ol.model li::before { content: counter(m); flex: 0 0 20px; height: 20px; border-radius: 50%; background: var(--licht2); color: var(--navy2);
+                        font-weight: 700; font-size: .78rem; display: grid; place-items: center; }
+  ol.model li.actief { background: var(--licht); color: var(--tekst); }
+  ol.model li.actief::before { background: var(--navy2); color: #fff; }
+  ol.model b { color: var(--navy); font-weight: 600; }
+
+  svg text { font-family: Inter, Arial, sans-serif; }
+  .titel { font-family: var(--kop); font-size: 17px; letter-spacing: .1em; fill: var(--navy); }
+  .titel tspan.z { font-family: Inter, Arial, sans-serif; letter-spacing: 0; font-size: 14px; fill: var(--zacht); }
+  .lab { font-size: 14px; font-weight: 600; fill: var(--navy2); text-anchor: middle; }
+  .lab-z { font-size: 12px; fill: var(--zacht); text-anchor: middle; }
+
+  @media (max-width: 760px) {
+    .app { display: flex; flex-direction: column; align-items: stretch; }
+    .paneel { display: contents; }
+    .kaart.stof { order: 1; }
+    .kaart.bediening { order: 2; }
+    .podium { order: 3; }
+    .kaart.graf { order: 4; }
+    .kaart.dm { order: 5; }
+    .scherm { padding: 8px; }
+    #veld { max-height: none; }
+  }
+</style>
+</head>
+<body>
+<main class="scherm">
+  <div class="app">
+    <div class="kaart podium">
+      <svg id="veld" viewBox="0 0 1020 540" role="img" aria-label="Kolf met een stof (macroniveau) en ingezoomd de moleculen (microniveau)"></svg>
+      <div class="onderschrift" id="onderschrift" aria-live="polite"></div>
+    </div>
+
+    <div class="paneel">
+      <div class="kaart stof">
+        <h2>Kies een stof</h2>
+        <select id="stof" aria-label="Stof">
+          <option value="water">Water (H₂O)</option>
+          <option value="ethanol">Ethanol, alcohol (C₂H₆O)</option>
+          <option value="co2">Koolstofdioxide (CO₂)</option>
+        </select>
+        <div class="stofinfo">
+          <svg id="mol-voorbeeld" viewBox="-38 -30 76 60" aria-hidden="true"></svg>
+          <p id="stofinfo"></p>
+        </div>
+        <p class="klein">Elke stof heeft zijn eigen soort moleculen. Daarom heeft elke stof een eigen smeltpunt en kookpunt.</p>
+      </div>
+
+      <div class="kaart bediening">
+        <h2>Verwarmen of koelen</h2>
+        <div class="seg" role="group" aria-label="Verwarmen of koelen">
+          <button data-modus="koud" aria-pressed="false">❄ Koelen</button>
+          <button data-modus="uit" aria-pressed="true">Uit</button>
+          <button data-modus="warm" aria-pressed="false">🔥 Verwarmen</button>
+        </div>
+        <div class="knoppen">
+          <button id="pauze">⏸ Pauzeer</button>
+          <button id="opnieuw">↺ Opnieuw</button>
+        </div>
+        <label class="optie"><input type="checkbox" id="krachten"> Toon de aantrekkingskrachten</label>
+        <label class="optie"><input type="checkbox" id="snel"> Sneller (× 3)</label>
+        <div class="meter">
+          Beweging van de moleculen
+          <div class="baan"><i id="meter"></i></div>
+          <span id="meter-tekst"></span>
+        </div>
+      </div>
+
+      <div class="kaart graf">
+        <h2>Temperatuur tegen de tijd</h2>
+        <svg id="grafiek" viewBox="0 0 300 168" role="img" aria-label="Grafiek van de temperatuur tegen de tijd"></svg>
+      </div>
+
+      <div class="kaart dm">
+        <h2>Het deeltjesmodel</h2>
+        <ol class="model" id="model">
+          <li><span>Alle stoffen bestaan uit <b>zeer kleine deeltjes</b> (hier: moleculen).</span></li>
+          <li><span>Deeltjes <b>bewegen altijd</b>: hoe hoger de temperatuur, hoe sneller.</span></li>
+          <li><span>Er zit <b>ruimte tussen de deeltjes</b>: weinig in een vaste stof, veel in een gas.</span></li>
+          <li><span>Deeltjes <b>trekken elkaar aan</b>: sterk in een vaste stof, bijna niet in een gas.</span></li>
+          <li><span>Elke stof heeft zijn <b>eigen soort deeltjes</b>, met een eigen massa en eigenschappen.</span></li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+"use strict";
+/* =====================================================================
+   Deeltjesmodel: faseovergangen (§3.2)
+   Links het macroniveau (kolf met ballon, thermometer), rechts het
+   microniveau (wat je door de loep ziet). De toestand volgt uit de
+   hoeveelheid toegevoerde warmte H: tijdens een faseovergang blijft de
+   temperatuur gelijk tot de overgang klaar is.
+   ===================================================================== */
+
+const NS = "http://www.w3.org/2000/svg";
+const W = 540, H = 430, BODEM = 414;          // microvenster (binnenmaten)
+const ZICHT = 0.2;                              // deel van de gasmoleculen dat in de loep blijft (gas: ver uit elkaar)
+
+/* Atomen per molecuul: [element, x, y, straal]. Kleuren als in molecuulmodellen: O rood, H wit, C zwart. */
+const STOFFEN = {
+  water: {
+    naam: "water", formule: "H₂O", deeltjes: "watermoleculen", molecuul: "watermolecuul",
+    vast: "ijs", vloei: "water", gas: "waterdamp",
+    bouw: "1 zuurstofatoom (rood) en 2 waterstofatomen (wit)",
+    grenzen: [{ T: 0, L: 50, van: "s", naar: "l" }, { T: 100, L: 80, van: "l", naar: "g" }],
+    Tmin: -30, Tmax: 130, Tstart: -20, drijft: true,
+    atomen: [["O", 0, -2, 11], ["H", -9.5, 7, 7], ["H", 9.5, 7, 7]],
+    d: 31, rooster: { cols: 7, rows: 5, dx: 36, dy: 32, hex: true },
+    hoek: (c, r) => ((c + r) % 2 ? Math.PI : 0) + (r % 2 ? .35 : -.35),
+    kleurVast: "#e6f1fc", randVast: "#8fb6e0", kleurVloei: "rgba(110,165,225,.42)"
+  },
+  ethanol: {
+    naam: "ethanol", formule: "C₂H₆O", deeltjes: "ethanolmoleculen", molecuul: "ethanolmolecuul",
+    vast: "vaste ethanol", vloei: "ethanol", gas: "ethanoldamp",
+    bouw: "2 koolstofatomen (zwart), 6 waterstofatomen (wit) en 1 zuurstofatoom (rood)",
+    grenzen: [{ T: -114, L: 45, van: "s", naar: "l" }, { T: 78, L: 70, van: "l", naar: "g" }],
+    Tmin: -135, Tmax: 105, Tstart: 20, drijft: false,
+    atomen: [["C", -14, 3, 9.5], ["C", 2, -4, 9.5], ["O", 17, 3, 9.5],
+             ["H", -24, -2, 6], ["H", -19, 13, 6], ["H", -13, -9, 6],
+             ["H", -3, -15, 6], ["H", 9, -14, 6], ["H", 26, -3, 5.5]],
+    d: 46, rooster: { cols: 6, rows: 5, dx: 54, dy: 38, hex: true },
+    hoek: (c, r) => (r % 2 ? Math.PI : 0) + (c % 2 ? .15 : -.15),
+    kleurVast: "#f1f4f8", randVast: "#a9b6c6", kleurVloei: "rgba(150,185,225,.36)"
+  },
+  co2: {
+    naam: "koolstofdioxide", formule: "CO₂", deeltjes: "koolstofdioxidemoleculen", molecuul: "koolstofdioxidemolecuul",
+    vast: "droogijs", vloei: "vloeibaar koolstofdioxide", gas: "koolstofdioxidegas",
+    bouw: "1 koolstofatoom (zwart) en 2 zuurstofatomen (rood)",
+    grenzen: [{ T: -78, L: 90, van: "s", naar: "g" }],
+    Tmin: -120, Tmax: 20, Tstart: -100, drijft: false,
+    atomen: [["C", 0, 0, 10], ["O", -17, 0, 10.5], ["O", 17, 0, 10.5]],
+    d: 42, rooster: { cols: 7, rows: 5, dx: 48, dy: 46, hex: false },
+    hoek: (c, r) => ((c + r) % 2 ? Math.PI / 4 : -Math.PI / 4),
+    kleurVast: "#f7f9fb", randVast: "#b7c2cf", kleurVloei: "rgba(150,185,225,.36)"
+  }
+};
+const KLEUR = { O: "url(#gO)", H: "url(#gH)", C: "url(#gC)" };
+const RAND = { O: "#9b2a20", H: "#8a97a8", C: "#15181c" };
+const OVERGANG = {
+  sl: ["smelten", "stollen", "vast", "vloeibaar"],
+  lg: ["verdampen", "condenseren", "vloeibaar", "gas"],
+  sg: ["sublimeren", "rijpen", "vast", "gas"]
+};
+
+/* ---------- toestand ---------- */
+let st, Hwarmte, Hmax, modus = "uit", pauze = false, tijd = 0, limiet = null;
+let P = [], sites = [], N = 0, drijf = 0, macroDrijf = 0;
+let metingen = [], volgendeMeting = 0, wachtOvergang = 0, wachtZicht = 0, sleutelOud = "";
+let bellen = [], volgendeBel = 0;
+
+const $ = id => document.getElementById(id);
+const fmt = t => (Math.round(t) < 0 ? "−" : "") + Math.abs(Math.round(t));
+const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+
+function totaalH(stof) {
+  let h = 0, T = stof.Tmin;
+  for (const g of stof.grenzen) { h += g.T - T + g.L; T = g.T; }
+  return h + stof.Tmax - T;
+}
+function Hbij(stof, Tdoel) {                    // warmte bij een temperatuur buiten een overgang
+  let h = 0, T = stof.Tmin;
+  for (const g of stof.grenzen) {
+    if (Tdoel <= g.T) return h + Tdoel - T;
+    h += g.T - T + g.L; T = g.T;
+  }
+  return h + Tdoel - T;
+}
+function toestand(h) {
+  let T = st.Tmin, rest = h, fase = "s";
+  for (const g of st.grenzen) {
+    const dT = g.T - T;
+    if (rest <= dT) return { T: T + rest, f: { [fase]: 1 }, op: null, fase };
+    rest -= dT; T = g.T;
+    if (rest < g.L) { const x = rest / g.L; return { T, f: { [g.van]: 1 - x, [g.naar]: x }, op: g, x }; }
+    rest -= g.L; fase = g.naar;
+  }
+  return { T: T + rest, f: { [fase]: 1 }, op: null, fase };
+}
+function relatief(T) { return Math.max(0, Math.min(1, (T - st.Tmin) / (st.Tmax - st.Tmin))); }
+function bereik(fase) {                          // temperatuurgebied van een fase, voor de beweeglijkheid
+  const gr = st.grenzen;
+  if (fase === "s") return [st.Tmin, gr[0].T];
+  if (fase === "g") return [gr[gr.length - 1].T, st.Tmax];
+  return [gr[0].T, gr[1].T];
+}
+function binnenFase(fase, T) { const [a, b] = bereik(fase); return Math.max(0, Math.min(1, (T - a) / (b - a))); }
+
+/* ---------- SVG-hulp ---------- */
+function maak(tag, attrs, ouder, tekst) {
+  const el = document.createElementNS(NS, tag);
+  for (const k in attrs) el.setAttribute(k, attrs[k]);
+  if (tekst != null) el.textContent = tekst;
+  if (ouder) ouder.appendChild(el);
+  return el;
+}
+function tekenMolecuul(ouder, stof) {
+  const g = maak("g", {}, ouder);
+  for (const [el, x, y, r] of stof.atomen)
+    maak("circle", { cx: x, cy: y, r, fill: KLEUR[el], stroke: RAND[el], "stroke-width": 1 }, g);
+  return g;
+}
+
+const veld = $("veld");
+let E = {};   // verwijzingen naar elementen die elk beeld veranderen
+
+function bouwVeld() {
+  veld.innerHTML = "";
+  const defs = maak("defs", {}, veld);
+  const grad = (id, licht, donker) => {
+    const rg = maak("radialGradient", { id, cx: "35%", cy: "32%", r: "70%" }, defs);
+    maak("stop", { offset: "0", "stop-color": licht }, rg);
+    maak("stop", { offset: "1", "stop-color": donker }, rg);
+  };
+  grad("gO", "#ff9a8c", "#cf3a2e"); grad("gH", "#ffffff", "#d3dae3"); grad("gC", "#7a828d", "#262a30");
+  const kolfPad = "M165,170 L165,240 L70,472 Q66,490 86,490 L294,490 Q314,490 310,472 L215,240 L215,170 Z";
+  const cp = maak("clipPath", { id: "kolf-binnen" }, defs); maak("path", { d: kolfPad }, cp);
+  const cm = maak("clipPath", { id: "micro-binnen" }, defs); maak("rect", { x: 0, y: 0, width: W, height: H, rx: 14 }, cm);
+  const lg = maak("linearGradient", { id: "plaat-warm", x1: 0, y1: 0, x2: 0, y2: 1 }, defs);
+  maak("stop", { offset: 0, "stop-color": "#f07a3c" }, lg); maak("stop", { offset: 1, "stop-color": "#c0392b" }, lg);
+
+  // verbinding loep → microvenster (achter alles)
+  E.kegel = maak("polygon", { fill: "rgba(44,86,135,.08)", stroke: "none" }, veld);
+  E.lijn1 = maak("line", { stroke: "#2c5687", "stroke-width": 2, "stroke-dasharray": "6 5", opacity: .7 }, veld);
+  E.lijn2 = maak("line", { stroke: "#2c5687", "stroke-width": 2, "stroke-dasharray": "6 5", opacity: .7 }, veld);
+
+  /* ===== macroniveau ===== */
+  const m = E.macro = maak("g", {}, veld);
+  const t1 = maak("text", { x: 8, y: 24, class: "titel" }, m, "MACRONIVEAU ");
+  maak("tspan", { class: "z" }, t1, "wat je ziet");
+  // ballon
+  E.ballon = maak("ellipse", { cx: 190, fill: "rgba(156,195,240,.55)", stroke: "#2c5687", "stroke-width": 2 }, m);
+  E.ballonGas = maak("ellipse", { cx: 190, fill: "#8fb6e0", opacity: 0 }, m);
+  maak("rect", { x: 178, y: 158, width: 24, height: 20, rx: 4, fill: "#9cc3f0", stroke: "#2c5687", "stroke-width": 2 }, m);
+  // kolf: binnenkant
+  const binnen = maak("g", { "clip-path": "url(#kolf-binnen)" }, m);
+  maak("path", { d: kolfPad, fill: "#fbfdff" }, binnen);
+  E.gasTint = maak("path", { d: kolfPad, fill: "#8fb6e0", opacity: 0 }, binnen);
+  E.vloei = maak("rect", { x: 60, width: 260, fill: "rgba(110,165,225,.42)" }, binnen);
+  E.vloeiRand = maak("line", { x1: 60, x2: 320, stroke: "#5f93cc", "stroke-width": 2 }, binnen);
+  E.bellen = maak("g", {}, binnen);
+  E.blok = maak("g", {}, binnen);
+  E.blokVorm = maak("rect", { rx: 7, "stroke-width": 2 }, E.blok);
+  E.blokGlans = maak("path", { fill: "none", stroke: "#fff", "stroke-width": 3, "stroke-linecap": "round", opacity: .9 }, E.blok);
+  // kolf: glas
+  maak("path", { d: kolfPad, fill: "none", stroke: "#2c5687", "stroke-width": 3.5, "stroke-linejoin": "round" }, m);
+  maak("path", { d: "M160,170 L220,170", stroke: "#2c5687", "stroke-width": 5, "stroke-linecap": "round" }, m);
+  maak("path", { d: "M180,262 L102,452", stroke: "#fff", "stroke-width": 5, "stroke-linecap": "round", opacity: .8 }, m);
+  // labels in de kolf
+  E.labVast = maak("text", { class: "lab" }, m);
+  E.labVloei = maak("text", { class: "lab" }, m);
+  E.labGas = maak("text", { class: "lab", x: 190, y: 350 }, m);
+  E.labGas2 = maak("text", { class: "lab-z", x: 190, y: 367 }, m, "(gas, onzichtbaar)");
+  // verwarm-/koelplaat
+  E.plaat = maak("rect", { x: 56, y: 494, width: 268, height: 18, rx: 5, stroke: "#11264a", "stroke-width": 2 }, m);
+  E.plaatTekst = maak("text", { x: 190, y: 532, class: "lab-z", "font-weight": 600 }, m);
+  // thermometer
+  maak("rect", { x: 337, y: 214, width: 16, height: 262, rx: 8, fill: "#fff", stroke: "#11264a", "stroke-width": 2 }, m);
+  maak("circle", { cx: 345, cy: 488, r: 14, fill: "#c0392b", stroke: "#11264a", "stroke-width": 2 }, m);
+  E.kwik = maak("rect", { x: 341, width: 8, rx: 4, fill: "#c0392b" }, m);
+  E.temp = maak("text", { x: 345, y: 200, "text-anchor": "middle", "font-size": 24, "font-weight": 700, fill: "#11264a" }, m);
+  E.streepjes = maak("g", {}, m);
+  // loep
+  maak("line", { x1: 228, y1: 404, x2: 262, y2: 370, stroke: "#11264a", "stroke-width": 9, "stroke-linecap": "round" }, m);
+  maak("circle", { cx: 190, cy: 440, r: 52, fill: "rgba(255,255,255,.12)", stroke: "#11264a", "stroke-width": 4 }, m);
+
+  /* ===== microniveau ===== */
+  const u = E.micro = maak("g", {}, veld);
+  const t2 = maak("text", { x: 0, y: -14, class: "titel" }, u, "MICRONIVEAU ");
+  maak("tspan", { class: "z" }, t2, "zo zie je de moleculen door de loep");
+  maak("rect", { x: 0, y: 0, width: W, height: H, rx: 14, fill: "#fbfdff" }, u);
+  const ub = maak("g", { "clip-path": "url(#micro-binnen)" }, u);
+  maak("rect", { x: 0, y: BODEM, width: W, height: H - BODEM, fill: "#c9d8ea" }, ub);
+  maak("text", { x: W - 10, y: H - 3, "text-anchor": "end", "font-size": 11, fill: "#4a5a72" }, ub, "bodem van de kolf");
+  E.krachten = maak("path", { fill: "none", stroke: "#e8890c", "stroke-width": 2, "stroke-dasharray": "3 4", opacity: .8 }, ub);
+  E.deeltjes = maak("g", {}, ub);
+  maak("rect", { x: 0, y: 0, width: W, height: H, rx: 14, fill: "none", stroke: "#11264a", "stroke-width": 4 }, u);
+  E.badge = maak("g", { opacity: 0 }, u);
+  E.badgeRect = maak("rect", { x: 12, y: 12, height: 30, rx: 15, fill: "#163a63" }, E.badge);
+  E.badgeTekst = maak("text", { x: 26, y: 32, fill: "#fff", "font-size": 15, "font-weight": 600 }, E.badge);
+  E.telTekst = maak("text", { x: W - 12, y: 30, "text-anchor": "end", "font-size": 12, fill: "#4a5a72" }, u);
+
+  indeling();
+}
+
+/* breed scherm: naast elkaar; smal scherm: onder elkaar */
+let smal = null;
+function indeling() {
+  const nuSmal = veld.getBoundingClientRect().width < 560;
+  if (nuSmal === smal) return;
+  smal = nuSmal;
+  let mx, my, ux, uy;
+  if (smal) { veld.setAttribute("viewBox", "0 0 560 1030"); mx = 70; my = 0; ux = 10; uy = 586; }
+  else { veld.setAttribute("viewBox", "0 0 1020 540"); mx = 0; my = 0; ux = 466; uy = 62; }
+  E.macro.setAttribute("transform", `translate(${mx} ${my})`);
+  E.micro.setAttribute("transform", `translate(${ux} ${uy})`);
+  const cx = mx + 190, cy = my + 440, r = 52;
+  let a, b, c, d;
+  if (smal) { a = [cx - r, cy]; b = [ux, uy]; c = [ux + W, uy]; d = [cx + r, cy]; }
+  else { a = [cx, cy - r]; b = [ux, uy]; c = [ux, uy + H]; d = [cx, cy + r]; }
+  E.kegel.setAttribute("points", [a, b, c, d].map(p => p.join(",")).join(" "));
+  [[E.lijn1, a, b], [E.lijn2, d, c]].forEach(([l, p, q]) => {
+    l.setAttribute("x1", p[0]); l.setAttribute("y1", p[1]); l.setAttribute("x2", q[0]); l.setAttribute("y2", q[1]);
+  });
+}
+
+/* ---------- deeltjes ---------- */
+function maakSites() {
+  const ro = st.rooster, br = (ro.cols - 1 + (ro.hex ? .5 : 0)) * ro.dx;
+  sites = [];
+  for (let r = 0; r < ro.rows; r++)
+    for (let c = 0; c < ro.cols; c++) {
+      const x = W / 2 - br / 2 + (c + (ro.hex && r % 2 ? .5 : 0)) * ro.dx;
+      const y = BODEM - ro.dy * .62 - r * ro.dy;
+      sites.push({ x, y, r, hoek: st.hoek(c, r), score: r * ro.dy + Math.abs(x - W / 2) * .45 });
+    }
+  N = sites.length;
+}
+
+function nieuwDeeltje() {
+  const p = { x: W / 2, y: BODEM - 40, vx: 0, vy: 0, hoek: Math.random() * 6.28, vh: 0, st: "weg", site: -1,
+              vertrek: false, binnen: true, fx: Math.random() * 6.28, fy: Math.random() * 6.28, fr: .8 + Math.random() * .5 };
+  p.el = tekenMolecuul(E.deeltjes, st);
+  return p;
+}
+
+function doelen(f) {
+  const nS = Math.round((f.s || 0) * N);
+  const nG = Math.min(N - nS, Math.round((f.g || 0) * N));
+  return { nS, nG, nL: N - nS - nG, zicht: nG ? Math.max(1, Math.round(nG * ZICHT)) : 0 };
+}
+function tel() {
+  const c = { s: 0, l: 0, g: 0, weg: 0, zicht: 0 };
+  for (const p of P) { c[p.st]++; if (p.st === "g" && !p.vertrek) c.zicht++; }
+  return c;
+}
+
+function plaatsBegin() {
+  E.deeltjes.innerHTML = "";
+  P = [];
+  for (let i = 0; i < N; i++) P.push(nieuwDeeltje());
+  const d = doelen(toestand(Hwarmte).f);
+  const volg = sites.map((s, i) => i).sort((a, b) => sites[a].score - sites[b].score);
+  let i = 0;
+  for (let k = 0; k < d.nS; k++, i++) { const p = P[i], s = sites[volg[k]]; p.st = "s"; p.site = volg[k]; p.x = s.x; p.y = s.y; p.hoek = s.hoek; }
+  const perRij = Math.floor((W - 20) / (st.d * 1.02));
+  for (let k = 0; k < d.nL; k++, i++) {
+    const p = P[i]; p.st = "l";
+    p.x = 10 + st.d / 2 + (k % perRij) * st.d * 1.02 + Math.random() * 3;
+    p.y = BODEM - st.d / 2 - Math.floor(k / perRij) * st.d * .95;
+  }
+  for (let k = 0; k < d.nG; k++, i++) {
+    const p = P[i];
+    if (k < d.zicht) { p.st = "g"; p.x = 30 + Math.random() * (W - 60); p.y = 30 + Math.random() * (BODEM - 80); const a = Math.random() * 6.28; p.vx = Math.cos(a) * 200; p.vy = Math.sin(a) * 200; }
+  }
+  drijf = 0;
+}
+
+function vrijeSites() {
+  const bezet = new Set(P.filter(p => p.st === "s").map(p => p.site));
+  return sites.map((s, i) => i).filter(i => !bezet.has(i));
+}
+function kiesBovensteVast() {
+  let best = null;
+  for (const p of P) if (p.st === "s" && (!best || sites[p.site].score > sites[best.site].score)) best = p;
+  return best;
+}
+function dichtstbij(lijst, x, y) {
+  let best = null, bd = Infinity;
+  for (const p of lijst) { const dd = (p.x - x) ** 2 + (p.y - y) ** 2; if (dd < bd) { bd = dd; best = p; } }
+  return best;
+}
+function binnenkomen(p, nieuweStaat) {           // een molecuul komt van boven de loep in beeld
+  p.x = 30 + Math.random() * (W - 60); p.y = -st.d; p.vx = (Math.random() - .5) * 120; p.vy = 160 + Math.random() * 100;
+  p.st = nieuweStaat; p.vertrek = false; p.binnen = false;
+}
+
+function overgangen(tst, dt) {
+  wachtOvergang -= dt; wachtZicht -= dt;
+  const c = tel(), d = doelen(tst.f);
+  if (wachtOvergang <= 0) {
+    wachtOvergang = .05;
+    const zichtbaarGas = P.filter(p => p.st === "g" && !p.vertrek);
+    if (c.s > d.nS) {                                     // smelten of sublimeren
+      const p = kiesBovensteVast();
+      if (c.l < d.nL) { p.st = "l"; p.vy = -20; }
+      else { p.st = "g"; p.vx = (Math.random() - .5) * 160; p.vy = -260; p.vertrek = c.zicht >= d.zicht; }
+      p.site = -1;
+    } else if (c.s < d.nS) {                              // stollen of rijpen
+      const vrij = vrijeSites().sort((a, b) => sites[a].score - sites[b].score);
+      const i = vrij[0], s = sites[i];
+      let p;
+      if (c.l > d.nL) p = dichtstbij(P.filter(q => q.st === "l"), s.x, s.y);
+      else {
+        p = dichtstbij(zichtbaarGas, s.x, s.y);
+        if (!p) { p = P.find(q => q.st === "weg" || (q.st === "g" && q.vertrek)); if (p) binnenkomen(p, "s"); }
+      }
+      if (p) { p.st = "s"; p.site = i; p.vertrek = false; }
+    } else if (c.l > d.nL) {                              // verdampen: bovenste molecuul uit de vloeistof
+      let p = null;
+      for (const q of P) if (q.st === "l" && (!p || q.y < p.y)) p = q;
+      p.st = "g"; p.vx = (Math.random() - .5) * 160; p.vy = -280; p.vertrek = c.zicht >= d.zicht;
+    } else if (c.l < d.nL) {                              // condenseren
+      let p = null;
+      for (const q of zichtbaarGas) if (!p || q.y > p.y) p = q;
+      if (p) p.st = "l";
+      else { p = P.find(q => q.st === "weg" || (q.st === "g" && q.vertrek)); if (p) binnenkomen(p, "l"); }
+    }
+  }
+  if (wachtZicht <= 0) {                                  // in een gas zitten de moleculen ver uit elkaar
+    wachtZicht = .15;
+    const c2 = tel();
+    if (c2.zicht > d.zicht) {
+      let p = null;
+      for (const q of P) if (q.st === "g" && !q.vertrek && (!p || q.y < p.y)) p = q;
+      if (p) p.vertrek = true;
+    } else if (c2.zicht < d.zicht) {
+      const p = P.find(q => q.st === "g" && q.vertrek) || P.find(q => q.st === "weg");
+      if (p) { if (p.st === "weg") binnenkomen(p, "g"); else p.vertrek = false; }
+    }
+  }
+}
+
+function natuurkunde(tst, dt) {
+  const T = tst.T, D = st.d;
+  const sS = binnenFase("s", T), sG = relatief(T);
+  const sL = st.grenzen.length > 1 ? binnenFase("l", T) : 0;
+  const vg = 130 + 380 * sG;
+  const c = tel();
+
+  // ijs drijft op water: het rooster komt omhoog als er genoeg water onder kan
+  let doel = 0;
+  if (st.drijft && c.s > 0 && c.l > 0) {
+    let maxRij = 0; for (const p of P) if (p.st === "s") maxRij = Math.max(maxRij, sites[p.site].r);
+    const hs = (maxRij + 1) * st.rooster.dy, ws = st.rooster.cols * st.rooster.dx;
+    const niveau = (c.l * D * D * .95 + .88 * hs * ws) / W;
+    doel = Math.max(0, niveau - .88 * hs);
+  }
+  drijf += (doel - drijf) * Math.min(1, dt * 1.5);
+
+  for (const p of P) {
+    if (p.st === "weg") continue;
+    if (p.st === "s") {
+      const s = sites[p.site], amp = 1.2 + 5 * sS, w = 7 + 5 * sS;
+      const tx = s.x + amp * Math.sin(tijd * w * p.fr + p.fx), ty = s.y - drijf + amp * Math.sin(tijd * w * 1.13 * p.fr + p.fy);
+      const k = Math.min(1, dt * 7);
+      p.x += (tx - p.x) * k; p.y += (ty - p.y) * k; p.vx = p.vy = 0;
+      let dh = s.hoek + .06 * (1 + sS) * Math.sin(tijd * 5 + p.fx) - p.hoek;
+      dh = Math.atan2(Math.sin(dh), Math.cos(dh));
+      p.hoek += dh * Math.min(1, dt * 5);
+    } else if (p.st === "l") {
+      const K = 2600 + 5200 * sL;
+      p.vx += (Math.random() - .5) * 2 * K * dt;
+      p.vy += (Math.random() - .5) * 2 * K * dt + 1400 * dt;
+      const demp = Math.exp(-5 * dt); p.vx *= demp; p.vy *= demp;
+      p.x += p.vx * dt; p.y += p.vy * dt;
+      p.vh += (Math.random() - .5) * 30 * dt; p.vh *= .97; p.hoek += p.vh * dt;
+    } else {
+      const v = Math.hypot(p.vx, p.vy) || 1, f = 1 + (vg / v - 1) * Math.min(1, dt * 2);
+      p.vx *= f; p.vy *= f;
+      p.vy += (p.vertrek ? -500 : 40) * dt;
+      p.x += p.vx * dt; p.y += p.vy * dt;
+      if (!p.vh || Math.abs(p.vh) < .5) p.vh = (Math.random() < .5 ? -1 : 1) * (1 + Math.random() * 2);
+      p.hoek += p.vh * dt;
+    }
+  }
+
+  // botsingen en aantrekking
+  const lijst = P.filter(p => p.st !== "weg");
+  for (let it = 0; it < 2; it++) {
+    for (let i = 0; i < lijst.length; i++) {
+      const a = lijst[i];
+      for (let j = i + 1; j < lijst.length; j++) {
+        const b = lijst[j];
+        const aV = a.st === "s", bV = b.st === "s";
+        if (aV && bV) continue;
+        let dx = b.x - a.x, dy = b.y - a.y, d2 = dx * dx + dy * dy;
+        const dmin = (a.st === "g" || b.st === "g") ? D * .9 : D;
+        if (d2 > (dmin * 1.6) ** 2) continue;
+        let dist = Math.sqrt(d2);
+        if (dist < .01) { dx = .01; dy = 0; dist = .01; }
+        const nx = dx / dist, ny = dy / dist;
+        if (dist < dmin) {
+          const wa = aV ? 0 : 1, wb = bV ? 0 : 1, som = wa + wb, ov = dmin - dist;
+          a.x -= nx * ov * wa / som; a.y -= ny * ov * wa / som;
+          b.x += nx * ov * wb / som; b.y += ny * ov * wb / som;
+          const rel = (b.vx - a.vx) * nx + (b.vy - a.vy) * ny;
+          if (rel < 0) {
+            if (wa && wb) { a.vx += nx * rel; a.vy += ny * rel; b.vx -= nx * rel; b.vy -= ny * rel; }
+            else if (wa) { a.vx += 2 * nx * rel; a.vy += 2 * ny * rel; }
+            else { b.vx -= 2 * nx * rel; b.vy -= 2 * ny * rel; }
+          }
+        } else if (it === 0 && a.st !== "g" && b.st !== "g") {   // moleculen in een vloeistof trekken elkaar aan
+          const kr = 450 * dt;
+          if (a.st === "l") { a.vx += nx * kr; a.vy += ny * kr; }
+          if (b.st === "l") { b.vx -= nx * kr; b.vy -= ny * kr; }
+        }
+      }
+    }
+    // wanden en bodem
+    for (const p of lijst) {
+      if (p.st === "s") continue;
+      const r = D / 2;
+      if (p.x < r) { p.x = r; p.vx = Math.abs(p.vx) * (p.st === "g" ? 1 : .3); }
+      if (p.x > W - r) { p.x = W - r; p.vx = -Math.abs(p.vx) * (p.st === "g" ? 1 : .3); }
+      if (p.y > BODEM - r) { p.y = BODEM - r; p.vy = -Math.abs(p.vy) * (p.st === "g" ? 1 : .2); }
+      if (p.st === "g" && !p.binnen && p.y > r) p.binnen = true;
+      if (p.y < r && (p.st === "l" || (p.st === "g" && p.binnen && !p.vertrek))) { p.y = r; p.vy = Math.abs(p.vy); }
+    }
+  }
+  for (const p of lijst) if (p.st === "g" && p.vertrek && p.y < -D) { p.st = "weg"; p.vertrek = false; }
+}
+
+/* ---------- tekenen ---------- */
+function tekenMicro(tst) {
+  let pad = "";
+  const toon = $("krachten").checked;
+  for (let i = 0; i < P.length; i++) {
+    const p = P[i];
+    if (p.st === "weg") { p.el.setAttribute("display", "none"); continue; }
+    p.el.removeAttribute("display");
+    p.el.setAttribute("transform", `translate(${p.x.toFixed(1)} ${p.y.toFixed(1)}) rotate(${(p.hoek * 57.2958).toFixed(1)})`);
+    if (toon && p.st !== "g")
+      for (let j = i + 1; j < P.length; j++) {
+        const q = P[j];
+        if (q.st !== "s" && q.st !== "l") continue;
+        const d2 = (p.x - q.x) ** 2 + (p.y - q.y) ** 2;
+        if (d2 < (st.d * 1.3) ** 2) pad += `M${p.x.toFixed(0)} ${p.y.toFixed(0)}L${q.x.toFixed(0)} ${q.y.toFixed(0)}`;
+      }
+  }
+  E.krachten.setAttribute("d", pad);
+  const c = tel();
+  const wegTekst = c.weg + (c.g - c.zicht) > 0 ? ` · ${c.weg + c.g - c.zicht} buiten de loep` : "";
+  E.telTekst.textContent = `${N} moleculen${wegTekst}`;
+
+  // naam van de faseovergang
+  let tekst = "";
+  if (tst.op && modus !== "uit") {
+    const o = OVERGANG[tst.op.van + tst.op.naar];
+    tekst = modus === "warm" ? `${cap(o[0])}: ${o[2]} → ${o[3]}` : `${cap(o[1])}: ${o[3]} → ${o[2]}`;
+  }
+  if (tekst !== E.badgeTekst.textContent) {
+    E.badgeTekst.textContent = tekst;
+    E.badgeRect.setAttribute("width", tekst ? E.badgeTekst.getComputedTextLength() + 28 : 0);
+  }
+  E.badge.setAttribute("opacity", tekst ? 1 : 0);
+}
+
+function tekenMacro(tst, dt) {
+  const fs = tst.f.s || 0, fl = tst.f.l || 0, fg = tst.f.g || 0;
+  const breed = 222, A1 = breed * 46;
+  // vaste stof als blok
+  const ws = 112 * Math.sqrt(fs), hs = 70 * Math.sqrt(fs);
+  let niveau, doelDrijf = 0;
+  if (st.drijft && fl > 0 && fs > 0) {
+    niveau = (fl * A1 + .88 * hs * ws) / breed;
+    if (niveau - .88 * hs > 0) doelDrijf = niveau - .88 * hs;
+    else niveau = Math.min(hs, fl * A1 / (breed - ws));
+  } else {
+    niveau = fl * A1 / Math.max(40, breed - ws);
+    if (niveau > hs) niveau = (fl * A1 + hs * ws) / breed;
+  }
+  macroDrijf += (doelDrijf - macroDrijf) * Math.min(1, dt * 1.5 + (dt === 0 ? 1 : 0));
+  const yLvl = 490 - niveau;
+  E.vloei.setAttribute("y", yLvl); E.vloei.setAttribute("height", niveau + 2);
+  E.vloei.setAttribute("fill", st.kleurVloei);
+  E.vloeiRand.setAttribute("y1", yLvl); E.vloeiRand.setAttribute("y2", yLvl);
+  E.vloeiRand.setAttribute("opacity", niveau > 1 ? 1 : 0);
+  E.blok.setAttribute("display", fs > .005 ? "inline" : "none");
+  const bx = 190 - ws / 2, by = 490 - macroDrijf - hs;
+  E.blokVorm.setAttribute("x", bx); E.blokVorm.setAttribute("y", by);
+  E.blokVorm.setAttribute("width", ws); E.blokVorm.setAttribute("height", hs);
+  E.blokVorm.setAttribute("fill", st.kleurVast); E.blokVorm.setAttribute("stroke", st.randVast);
+  E.blokGlans.setAttribute("d", `M${bx + 8} ${by + hs * .55} L${bx + 8} ${by + 8} L${bx + ws * .45} ${by + 8}`);
+  // labels
+  E.labVast.textContent = fs > .12 ? st.vast : "";
+  E.labVast.setAttribute("x", 190); E.labVast.setAttribute("y", by + hs / 2 + 5);
+  const vloeiZicht = niveau > 16 && fl > .05;
+  E.labVloei.textContent = vloeiZicht ? st.vloei : "";
+  E.labVloei.setAttribute("x", fs > .05 ? 268 : 190); E.labVloei.setAttribute("y", 490 - Math.min(niveau, 40) / 2 + 5);
+  E.labGas.textContent = fg > .06 ? st.gas : "";
+  E.labGas2.setAttribute("display", fg > .06 ? "inline" : "none");
+  // gas en ballon (gas neemt veel ruimte in; warmer gas zet verder uit)
+  const uitzet = fg > 0 ? (tst.T + 273) / (st.grenzen[st.grenzen.length - 1].T + 273) : 1;
+  const R = 15 + 52 * Math.sqrt(Math.min(1.25, fg * uitzet));
+  const cy = 170 - R * .92;
+  for (const el of [E.ballon, E.ballonGas]) {
+    el.setAttribute("cy", cy); el.setAttribute("rx", R * .86); el.setAttribute("ry", R);
+  }
+  E.ballonGas.setAttribute("opacity", .25 * fg);
+  E.gasTint.setAttribute("opacity", .14 * fg);
+  // bellen bij het koken
+  const koken = tst.op && tst.op.van === "l" && tst.op.naar === "g" && modus === "warm" && !pauze;
+  if (koken && niveau > 10 && tijd > volgendeBel) {
+    volgendeBel = tijd + .08;
+    const b = maak("circle", { cx: 110 + Math.random() * 160, cy: 486, r: 2 + Math.random() * 3, fill: "#fff", stroke: "#5f93cc", "stroke-width": 1.2 }, E.bellen);
+    bellen.push({ el: b, y: 486, v: 40 + Math.random() * 40 });
+  }
+  bellen = bellen.filter(b => {
+    b.y -= b.v * dt; b.el.setAttribute("cy", b.y);
+    if (b.y < yLvl + 3 || !(tst.f.l > 0)) { b.el.remove(); return false; }
+    return true;
+  });
+  // plaat
+  E.plaat.setAttribute("fill", modus === "warm" ? "url(#plaat-warm)" : modus === "koud" ? "#5aaee0" : "#dbe8f5");
+  E.plaatTekst.textContent = modus === "warm" ? "verwarmen" : modus === "koud" ? "koelen" : "uit";
+  E.plaatTekst.setAttribute("fill", modus === "warm" ? "#c0392b" : modus === "koud" ? "#2f6fb5" : "#4a5a72");
+  // thermometer
+  const yT = T => 466 - relatief(T) * 240;
+  E.kwik.setAttribute("y", yT(tst.T)); E.kwik.setAttribute("height", 480 - yT(tst.T));
+  E.temp.textContent = `${fmt(tst.T)} °C`;
+}
+
+function tekenStreepjes() {
+  E.streepjes.innerHTML = "";
+  const yT = T => 466 - relatief(T) * 240;
+  st.grenzen.forEach(g => {
+    const y = yT(g.T);
+    maak("line", { x1: 333, x2: 357, y1: y, y2: y, stroke: "#11264a", "stroke-width": 2 }, E.streepjes);
+    const naam = g.naar === "l" ? "smeltpunt" : g.van === "l" ? "kookpunt" : "sublimatiepunt";
+    maak("text", { x: 362, y: y - 2, "font-size": 11, fill: "#4a5a72" }, E.streepjes, naam);
+    maak("text", { x: 362, y: y + 11, "font-size": 11, "font-weight": 700, fill: "#11264a" }, E.streepjes, `${fmt(g.T)} °C`);
+  });
+}
+
+/* ---------- grafiek ---------- */
+const graf = $("grafiek"), VENSTER = 60;
+const gx0 = 36, gx1 = 292, gy0 = 12, gy1 = 140;
+let grafLijn;
+function bouwGrafiek() {
+  graf.innerHTML = "";
+  const yT = T => gy1 - relatief(T) * (gy1 - gy0);
+  maak("rect", { x: gx0, y: gy0, width: gx1 - gx0, height: gy1 - gy0, fill: "#f6f9fd", stroke: "#c9d8ea" }, graf);
+  st.grenzen.forEach(g => {
+    const y = yT(g.T);
+    maak("line", { x1: gx0, x2: gx1, y1: y, y2: y, stroke: "#2c5687", "stroke-dasharray": "4 4", opacity: .6 }, graf);
+    const naam = g.naar === "l" ? "smeltpunt" : g.van === "l" ? "kookpunt" : "sublimatiepunt";
+    maak("text", { x: gx1 - 4, y: y - 4, "text-anchor": "end", "font-size": 10, fill: "#4a5a72" }, graf, naam);
+    maak("text", { x: gx0 - 4, y: y + 4, "text-anchor": "end", "font-size": 10, fill: "#11264a", "font-weight": 600 }, graf, fmt(g.T));
+  });
+  [st.Tmin, st.Tmax].forEach(T => maak("text", { x: gx0 - 4, y: yT(T) + 4, "text-anchor": "end", "font-size": 10, fill: "#4a5a72" }, graf, fmt(T)));
+  maak("text", { x: 4, y: 10, "font-size": 10, fill: "#4a5a72" }, graf, "°C");
+  maak("text", { x: gx1, y: 160, "text-anchor": "end", "font-size": 10, fill: "#4a5a72" }, graf, "tijd →");
+  maak("text", { x: gx0, y: 160, "font-size": 10, fill: "#4a5a72" }, graf, `laatste ${VENSTER} s`);
+  grafLijn = maak("polyline", { fill: "none", stroke: "#c0392b", "stroke-width": 2.5, "stroke-linejoin": "round" }, graf);
+}
+function tekenGrafiek() {
+  const yT = T => gy1 - relatief(T) * (gy1 - gy0);
+  const t0 = Math.max(0, tijd - VENSTER);
+  grafLijn.setAttribute("points", metingen.filter(m => m.t >= t0)
+    .map(m => `${(gx0 + (m.t - t0) / VENSTER * (gx1 - gx0)).toFixed(1)},${yT(m.T).toFixed(1)}`).join(" "));
+}
+
+/* ---------- uitleg (hangt af van de stof, de fase en of je verwarmt of koelt) ---------- */
+const punt = n => `<span class="punt">punt ${n}</span>`;
+function uitleg(tst) {
+  const T0 = tst.op ? fmt(tst.op.T) : "";
+  const richting = { warm: " Je verwarmt: de moleculen gaan steeds sneller bewegen.", koud: " Je koelt: de moleculen gaan steeds langzamer bewegen.", uit: "" }[modus];
+  let html, punten;
+  if (tst.op) {
+    const o = OVERGANG[tst.op.van + tst.op.naar], soort = tst.op.van + tst.op.naar;
+    const naamVan = tst.op.van === "s" ? st.vast : st.vloei, naamNaar = tst.op.naar === "l" ? st.vloei : st.gas;
+    if (modus === "uit") {
+      html = `Bij ${T0} °C kunnen ${naamVan} en ${naamNaar} naast elkaar bestaan. Zolang je niet verwarmt of koelt, blijft dat zo. Verwarm om verder te ${o[0]} of koel om te ${o[1]}.`;
+      punten = [2, 4];
+    } else if (soort === "sl" && modus === "warm") {
+      html = `<b>Smelten</b> bij ${T0} °C: de ${st.deeltjes} trillen zo hard dat ze loskomen uit het vaste patroon ${punt(2)}. Ze blijven wel dicht bij elkaar. De warmte is nodig om de moleculen van elkaar los te maken ${punt(4)}; daarom blijft de temperatuur ${T0} °C tot alles gesmolten is. De moleculen zelf veranderen niet.`
+        + (st.drijft ? ` Zie je dat het ijs drijft? Water is een uitzondering: in ijs zitten de moleculen iets verder uit elkaar dan in vloeibaar water.` : "");
+      punten = [2, 4];
+    } else if (soort === "sl") {
+      html = `<b>Stollen</b> bij ${T0} °C: de ${st.deeltjes} bewegen zo langzaam dat de aantrekkingskrachten ze weer in een vast patroon trekken ${punt(4)}. Daarbij komt warmte vrij. Daarom blijft de temperatuur ${T0} °C tot alles vast is.`
+        + (st.drijft ? ` Het ijs drijft: in ijs zitten de moleculen iets verder uit elkaar dan in vloeibaar water. Water is daarin een uitzondering.` : "");
+      punten = [2, 4];
+    } else if (soort === "lg" && modus === "warm") {
+      html = `<b>Verdampen</b> (koken) bij ${T0} °C: de ${st.deeltjes} bewegen zo snel dat ze loskomen van de andere moleculen en uit de vloeistof ontsnappen ${punt(2)}. In een gas zitten de moleculen heel ver uit elkaar ${punt(3)}: het gas heeft veel meer ruimte nodig, daarom blaast de ballon op. De temperatuur blijft ${T0} °C tot alles verdampt is.`;
+      punten = [2, 3, 4];
+    } else if (soort === "lg") {
+      html = `<b>Condenseren</b> bij ${T0} °C: de gasmoleculen bewegen zo langzaam dat ze elkaar weer aantrekken ${punt(4)} en samen een vloeistof vormen. Een vloeistof heeft veel minder ruimte nodig dan een gas ${punt(3)}: de ballon loopt leeg. De temperatuur blijft ${T0} °C tot al het gas vloeibaar is.`;
+      punten = [2, 3, 4];
+    } else if (modus === "warm") {
+      html = `<b>Sublimeren</b> bij ${T0} °C: de moleculen in het ${st.vast} trillen zo hard dat ze loskomen en meteen als gas wegvliegen ${punt(2)}. ${cap(st.naam)} wordt bij gewone luchtdruk niet vloeibaar: het gaat direct van vast naar gas. Het gas heeft veel meer ruimte nodig ${punt(3)}: de ballon blaast op. De temperatuur blijft ${T0} °C tot alles gas is.`;
+      punten = [2, 3, 4];
+    } else {
+      html = `<b>Rijpen</b> bij ${T0} °C: de gasmoleculen bewegen zo langzaam dat de aantrekkingskrachten ze meteen in een vast patroon trekken ${punt(4)}. Het gas wordt direct vast, zonder eerst vloeibaar te worden. De ballon loopt leeg ${punt(3)}. De temperatuur blijft ${T0} °C tot al het gas vast is.`;
+      punten = [2, 3, 4];
+    }
+  } else if (tst.fase === "s") {
+    html = `<b>Vast</b> (${st.vast}): de ${st.deeltjes} zitten dicht op elkaar in een vast patroon ${punt(3)}. Ze kunnen niet van plaats wisselen, maar trillen op hun plek ${punt(2)}. Ze trekken elkaar sterk aan ${punt(4)}. Daarom houdt ${st.vast} zijn eigen vorm.`
+      + (modus === "warm" ? " Je verwarmt: de moleculen gaan steeds harder trillen." : modus === "koud" ? " Je koelt: de moleculen trillen steeds minder." : " Klik op <b>Verwarmen</b> en kijk wat de moleculen doen.");
+    punten = modus === "uit" ? [1, 3, 4] : [1, 2, 3, 4];
+  } else if (tst.fase === "l") {
+    html = `<b>Vloeibaar</b> (${st.vloei}): de ${st.deeltjes} zitten nog dicht bij elkaar${st.drijft ? "" : ", maar iets verder uit elkaar dan in de vaste stof"} ${punt(3)}. Ze zitten niet meer in een vast patroon en bewegen langs elkaar heen ${punt(2)}. Daarom kan een vloeistof stromen en neemt hij de vorm van de kolf aan. De moleculen trekken elkaar nog steeds aan ${punt(4)}.` + richting;
+    punten = [2, 3, 4];
+  } else {
+    html = `<b>Gas</b> (${st.gas}): de ${st.deeltjes} zitten heel ver uit elkaar en vliegen snel alle kanten op ${punt(2)} ${punt(3)}. Ze trekken elkaar bijna niet aan ${punt(4)}. Een gas vult de hele ruimte, ook de ballon. Daarom zie je maar een paar moleculen in de loep. ${cap(st.gas)} kun je niet zien.` + richting;
+    punten = [2, 3, 4];
+  }
+  if (limiet === "max") html += " <b>Warmer kan niet in deze simulatie.</b>";
+  if (limiet === "min") html += " <b>Kouder kan niet in deze simulatie.</b>";
+  return { html, punten };
+}
+function werkUitlegBij(tst) {
+  const sleutel = [st.naam, tst.op ? tst.op.van + tst.op.naar : tst.fase, modus, limiet].join("|");
+  if (sleutel === sleutelOud) return;
+  sleutelOud = sleutel;
+  const { html, punten } = uitleg(tst);
+  $("onderschrift").innerHTML = html;
+  document.querySelectorAll("#model li").forEach((li, i) => li.classList.toggle("actief", punten.includes(i + 1)));
+}
+
+function werkMeterBij(tst) {
+  $("meter").style.width = (8 + 92 * relatief(tst.T)).toFixed(1) + "%";
+  const delen = [];
+  if (tst.f.s) delen.push("trillen op hun plek");
+  if (tst.f.l) delen.push("bewegen langs elkaar heen");
+  if (tst.f.g) delen.push("vliegen alle kanten op");
+  $("meter-tekst").textContent = delen.join(" · ");
+}
+
+/* ---------- stof kiezen, starten ---------- */
+function kiesStof(id) {
+  st = STOFFEN[id];
+  Hmax = totaalH(st);
+  Hwarmte = Hbij(st, st.Tstart);
+  tijd = 0; metingen = []; volgendeMeting = 0; limiet = null; sleutelOud = ""; macroDrijf = 0;
+  bellen.forEach(b => b.el.remove()); bellen = [];
+  zetModus("uit");
+  maakSites(); plaatsBegin();
+  tekenStreepjes(); bouwGrafiek();
+  const vb = $("mol-voorbeeld"); vb.innerHTML = "";
+  ["gO", "gH", "gC"].forEach(id => { const el = document.getElementById(id); if (el) vb.appendChild(el.cloneNode(true)); });
+  tekenMolecuul(vb, st).setAttribute("transform", "scale(1.05)");
+  const gr = st.grenzen;
+  $("stofinfo").innerHTML = `Een ${st.molecuul} bestaat uit ${st.bouw}.<br>` + (gr.length > 1
+    ? `<span class="pt">Smeltpunt ${fmt(gr[0].T)} °C · kookpunt ${fmt(gr[1].T)} °C</span>`
+    : `<span class="pt">Sublimatiepunt ${fmt(gr[0].T)} °C</span> (bij gewone luchtdruk nooit vloeibaar)`);
+  const tst = toestand(Hwarmte);
+  metingen.push({ t: 0, T: tst.T });
+  tekenMacro(tst, 0); tekenMicro(tst); tekenGrafiek(); werkUitlegBij(tst); werkMeterBij(tst);
+}
+
+function zetModus(m) {
+  modus = m;
+  document.querySelectorAll(".seg button").forEach(b => b.setAttribute("aria-pressed", b.dataset.modus === m));
+}
+
+function stap(dt) {
+  tijd += dt;
+  const snel = $("snel").checked ? 3 : 1;
+  const tempo = Hmax / 60 * snel;               // ± 1 minuut van koudst naar warmst
+  if (modus !== "uit") {
+    Hwarmte += (modus === "warm" ? 1 : -1) * tempo * dt;
+    if (Hwarmte >= Hmax) { Hwarmte = Hmax; zetModus("uit"); limiet = "max"; }
+    if (Hwarmte <= 0) { Hwarmte = 0; zetModus("uit"); limiet = "min"; }
+  }
+  const tst = toestand(Hwarmte);
+  overgangen(tst, dt * snel);
+  natuurkunde(tst, dt);
+  if (tijd >= volgendeMeting) { metingen.push({ t: tijd, T: tst.T }); volgendeMeting = tijd + .2; if (metingen.length > 600) metingen.shift(); tekenGrafiek(); }
+  return tst;
+}
+
+let laatst = performance.now();
+function frame(nu) {
+  const dt = Math.min(.05, (nu - laatst) / 1000); laatst = nu;
+  let tst;
+  if (!pauze) tst = stap(dt);
+  else tst = toestand(Hwarmte);
+  tekenMacro(tst, pauze ? 0 : dt);
+  tekenMicro(tst);
+  werkUitlegBij(tst); werkMeterBij(tst);
+  requestAnimationFrame(frame);
+}
+
+function zetPauze(p) {
+  pauze = p;
+  $("pauze").textContent = p ? "▶ Doorgaan" : "⏸ Pauzeer";
+}
+
+/* ---------- bediening ---------- */
+document.querySelectorAll(".seg button").forEach(b => b.addEventListener("click", () => {
+  limiet = null; zetModus(b.dataset.modus);
+  if (pauze && modus !== "uit") zetPauze(false);
+}));
+$("pauze").addEventListener("click", () => zetPauze(!pauze));
+$("opnieuw").addEventListener("click", () => kiesStof($("stof").value));
+$("stof").addEventListener("change", e => kiesStof(e.target.value));
+new ResizeObserver(() => indeling()).observe(veld);
+
+bouwVeld();
+kiesStof("water");
+if (matchMedia("(prefers-reduced-motion: reduce)").matches) zetPauze(true);
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

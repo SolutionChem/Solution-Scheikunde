@@ -33,6 +33,7 @@ materialen/           Eigen animaties en bestanden, per leerjaar en hoofdstuk
   3hv/h1/periodiek-systeem/  Simulatie: interactief periodiek systeem (§1.3)
   3hv/h2/bindingen/       Simulatie: ionbinding (§2.2), metaalbinding (§2.3, ?tab=metaal), atoombinding (§2.4, ?tab=covalent)
                           en het spel Bouw een molecuul (§2.4, ?tab=spel)
+  3hv/h3/faseovergangen/  Simulatie: deeltjesmodel en faseovergangen, macro- en microniveau naast elkaar (§3.2)
 ```
 
 De pagina's worden automatisch opgebouwd uit `assets/js/data.js`. **Je past dus alleen dat bestand aan.**

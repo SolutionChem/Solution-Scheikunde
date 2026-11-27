@@ -53,8 +53,8 @@
   label.schuif input { width: 100%; accent-color: var(--navy2); }
   label.optie { display: flex; gap: 8px; align-items: center; font-size: .9rem; margin-top: 8px; cursor: pointer; }
   label.optie input { width: 17px; height: 17px; accent-color: var(--navy2); }
-  .stoflijst { display: grid; gap: 4px; }
-  .stoflijst button { display: flex; justify-content: space-between; gap: 8px; text-align: left; padding: 4px 10px; border-radius: 7px;
+  .stoflijst { display: grid; gap: 3px; }
+  .stoflijst button { display: flex; justify-content: space-between; gap: 8px; text-align: left; padding: 2px 10px; border-radius: 7px;
                       border: 1px solid var(--rand); background: #fff; font-size: .88rem; }
   .stoflijst button span:last-child { font-weight: 700; color: var(--navy); white-space: nowrap; }
   .stoflijst button[aria-pressed="true"] { border-color: var(--navy2); box-shadow: inset 0 0 0 1px var(--navy2); background: var(--licht); }
@@ -271,7 +271,7 @@ const MOL = {
   water: [["H", -9.5, 7, 7], ["H", 9.5, 7, 7], ["O", 0, -2, 11]],
   co2: [["C", 0, 0, 10], ["O", -17, 0, 10.5], ["O", 17, 0, 10.5]],
   methaan: [["H", -15, 0, 7], ["H", 15, 0, 7], ["H", 0, -15, 7], ["H", 0, 15, 7], ["C", 0, 0, 11]],
-  propaan: alkaan(3),
+  propaan: alkaan(3), butaan: alkaan(4),
   propanon: [...alkaan(3, true), ["O", 0, -24, 11]],
   ethanol: [["H", -24, -2, 6], ["H", -19, 13, 6], ["H", -13, -9, 6], ["H", -3, -15, 6], ["H", 9, -14, 6], ["H", 26, -3, 5.5],
             ["C", -14, 3, 9.5], ["C", 2, -4, 9.5], ["O", 17, 3, 9.5]]
@@ -907,6 +907,7 @@ const STOFFEN = [
   { id: "methaan", naam: "methaan", info: "aardgas", formule: "CH₄", kp: -162, soort: "vdw" },
   { id: "co2", naam: "koolstofdioxide", info: "sublimeert", formule: "CO₂", kp: -78, soort: "vdw", sub: true },
   { id: "propaan", naam: "propaan", info: "kampeergas", formule: "C₃H₈", kp: -42, soort: "vdw" },
+  { id: "butaan", naam: "butaan", info: "kampeergas", formule: "C₄H₁₀", kp: -0.5, soort: "vdw" },
   { id: "propanon", naam: "propanon", info: "aceton", formule: "C₃H₆O", kp: 56, soort: "dipool" },
   { id: "water", naam: "water", info: "", formule: "H₂O", kp: 100, soort: "hbrug" }
 ];
@@ -919,7 +920,8 @@ const TEKST_STOF = {
   methaan: `<b>Methaan</b> (aardgas) is een klein molecuul met alleen de <b>vanderwaalsbinding</b>. De elektronen bewegen: soms zitten er even meer aan één kant. Die kant is dan even een beetje negatief (δ−), de andere kant een beetje positief (δ+): een <b>tijdelijke dipool</b>. Die maakt in het buurmolecuul ook een dipool, en δ− en δ+ trekken elkaar aan. Dat is zwak: methaan kookt al bij −162 °C.`,
   co2: `<b>Koolstofdioxide</b> is een recht, symmetrisch molecuul, ongeveer even groot als propaan. Er werkt alleen de <b>vanderwaalsbinding</b> (tijdelijke dipolen). Vast koolstofdioxide (droogijs) wordt bij gewone luchtdruk niet vloeibaar: het <b>sublimeert</b> bij −78 °C.`,
   propaan: `<b>Propaan</b> (kampeergas) is groter dan methaan en heeft meer elektronen. De <b>tijdelijke dipolen</b> (δ− en δ+) zijn sterker, dus de <b>vanderwaalsbinding</b> is sterker: propaan kookt bij −42 °C. Bij kamertemperatuur is het een gas.`,
-  propanon: `<b>Propanon</b> (aceton, in nagellakremover) is maar iets groter dan propaan. Het O-atoom trekt de elektronen iets naar zich toe: de O-kant is <b>altijd</b> een beetje negatief (δ−), de C-kant een beetje positief (δ+). Dat is een <b>blijvende dipool</b>. δ− en δ+ van buurmoleculen trekken elkaar aan: de <b>dipool-dipoolbinding</b>. Daardoor kookt propanon pas bij 56 °C, veel hoger dan propaan (−42 °C).`,
+  butaan: `<b>Butaan</b> zit ook in kampeergas. Het is nog groter dan propaan: sterkere <b>vanderwaalsbinding</b>, hoger kookpunt (−0,5 °C). Als het vriest, verdampt butaan slecht. Daarom zit er in kampeergas voor de winter vooral propaan.`,
+  propanon: `<b>Propanon</b> (aceton) is ongeveer even groot als butaan. Het O-atoom trekt de elektronen iets naar zich toe: de O-kant is <b>altijd</b> een beetje δ−, de C-kant δ+. Dat is een <b>blijvende dipool</b>. δ− en δ+ van buurmoleculen trekken elkaar aan: de <b>dipool-dipoolbinding</b>. Daardoor kookt propanon pas bij 56&nbsp;°C, butaan al bij −0,5&nbsp;°C.`,
   water: `<b>Water</b> is ongeveer even groot als methaan, maar kookt pas bij 100 °C. De H-atomen zijn sterk δ+ en het O-atoom sterk δ−. Een H-atoom van het ene molecuul trekt het O-atoom van een ander molecuul aan: een <b>waterstofbrug</b>, de sterkste binding tussen moleculen.`
 };
 
@@ -1068,7 +1070,7 @@ const vKrachten = {
       return;
     }
     zetUitleg([TEKST_STOF[this.stof],
-      `Bindingen tussen moleculen zijn veel zwakker dan ionbinding en metaalbinding: <b>lage smelt- en kookpunten</b>. Moleculen zijn niet geladen en er zijn geen vrije elektronen: <b>geen stroomgeleiding</b>.`]);
+      `Bindingen tussen moleculen zijn veel zwakker dan ionbinding en metaalbinding: <b>lage smelt- en kookpunten</b>. Geen geladen deeltjes en geen vrije elektronen: <b>geen stroomgeleiding</b>.`]);
   }
 };
 
@@ -1244,10 +1246,10 @@ const REDENEER = [
     ["Vervormbaar", 0, "Vervormbaar betekent dat je een vaste stof kunt buigen of pletten. Het gaat hier om mengen met water."]],
     u: "Hydrofoob betekent waterafstotend: de stof lost niet op in water. Hexaan is hydrofoob; ethanol is hydrofiel." },
   // ---- verdieping ----
-  { verd: 1, v: "Propaan kookt bij −42 °C, propanon bij 56 °C. Propanon is maar iets groter. Waarom kookt propanon zo veel hoger?", o: [
+  { verd: 1, v: "Butaan kookt bij −0,5 °C, propanon bij 56 °C. De moleculen zijn ongeveer even groot. Waarom kookt propanon hoger?", o: [
     ["Propanon heeft een blijvende dipool: er is dipool-dipoolbinding.", 1],
     ["Propanon vormt waterstofbruggen.", 0, "Voor een waterstofbrug heb je een H-atoom aan een O-atoom nodig (een OH-groep). Heeft propanon die?"],
-    ["Propanonmoleculen zijn veel groter.", 0, "Propanon is maar iets groter; dat verklaart zo'n groot verschil niet. Kijk naar het O-atoom: wat doet dat met de elektronen?"],
+    ["Propanonmoleculen zijn veel groter.", 0, "Ze zijn ongeveer even groot. Kijk naar het O-atoom: wat doet dat met de elektronen?"],
     ["Propanon heeft ionbinding.", 0, "Propanon is een moleculaire stof; er zitten geen ionen in."]],
     u: "Het O-atoom trekt de elektronen iets naar zich toe: de O-kant is altijd δ−, de C-kant δ+. Die blijvende dipolen trekken elkaar aan (dipool-dipoolbinding), naast de vanderwaalsbinding." },
   { verd: 1, v: "Methaan kookt bij −162 °C en water bij 100 °C. De moleculen zijn ongeveer even groot. Waarom kookt water zo veel hoger?", o: [
@@ -1256,11 +1258,11 @@ const REDENEER = [
     ["Bij koken van water gaan de atoombindingen in het molecuul kapot.", 0, "Bij koken blijven de moleculen heel."],
     ["Water bestaat uit ionen.", 0, "Water is een moleculaire stof."]],
     u: "Een H-atoom van het ene watermolecuul trekt het O-atoom van een ander molecuul aan: een waterstofbrug. Dat is de sterkste binding tussen moleculen." },
-  { verd: 1, v: "Methaan kookt bij −162 °C, propaan bij −42 °C. Waarom kookt propaan hoger?", o: [
-    ["Propaan is groter en heeft meer elektronen: de vanderwaalsbinding is sterker.", 1],
-    ["Propaan vormt waterstofbruggen.", 0, "Propaan heeft geen OH-groep, dus geen waterstofbruggen."],
-    ["Propaan heeft een blijvende dipool.", 0, "Propaan heeft geen blijvende dipool: er zit geen O-atoom in."],
-    ["Propaan heeft ionbinding.", 0, "Propaan is een moleculaire stof; er zitten geen ionen in."]],
+  { verd: 1, v: "Propaan kookt bij −42 °C, butaan bij −0,5 °C. Waarom kookt butaan hoger?", o: [
+    ["Butaan is groter en heeft meer elektronen: de vanderwaalsbinding is sterker.", 1],
+    ["Butaan vormt waterstofbruggen.", 0, "Butaan heeft geen OH-groep, dus geen waterstofbruggen."],
+    ["Butaan heeft een blijvende dipool.", 0, "Butaan heeft geen blijvende dipool: er zit geen O-atoom in."],
+    ["Butaan heeft ionbinding.", 0, "Butaan is een moleculaire stof; er zitten geen ionen in."]],
     u: "Hoe groter het molecuul, hoe meer elektronen en hoe sterker de tijdelijke dipolen. De vanderwaalsbinding is dan sterker: het kookpunt is hoger." },
   { verd: 1, v: "Wat is een tijdelijke dipool?", o: [
     ["Even zitten er meer elektronen aan één kant van een molecuul: die kant is even δ−, de andere kant δ+.", 1],

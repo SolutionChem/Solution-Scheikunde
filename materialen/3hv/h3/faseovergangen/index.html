@@ -26,7 +26,7 @@
   [hidden] { display: none !important; }
 
   .scherm { padding: 12px; }
-  .app { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 12px; align-items: start; }
+  .app { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 12px; align-items: stretch; }
   .kaart { background: #fff; border-radius: 10px; box-shadow: 0 1px 3px rgba(11,26,51,.1); padding: 12px 14px; min-width: 0; }
   .kaart h2 { margin: 0 0 8px; font-size: .78rem; letter-spacing: .12em; text-transform: uppercase; color: var(--zacht); font-weight: 600; }
   .paneel, .links { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
@@ -61,7 +61,10 @@
   .meter .baan i { display: block; height: 100%; width: 0; border-radius: 99px; background: linear-gradient(90deg, var(--koud), var(--warm)); }
   .meter span { color: var(--zacht); }
 
-  #grafiek { width: 100%; height: auto; display: block; }
+  .kaart.graf, .kaart.dm { flex: 1 1 auto; }          /* onderkant grafiek = onderkant deeltjesmodel */
+  .kaart.graf { display: flex; flex-direction: column; }
+  .grafvak { flex: 1 1 auto; min-height: 140px; position: relative; }
+  #grafiek { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
   #grafiek text { font-family: Inter, Arial, sans-serif; }
 
   ol.model { margin: 0; padding-left: 0; list-style: none; counter-reset: m; display: grid; gap: 4px; font-size: .86rem; }
@@ -100,7 +103,7 @@
     </div>
     <div class="kaart graf">
       <h2>Temperatuur tegen de tijd</h2>
-      <svg id="grafiek" viewBox="0 0 640 140" role="img" aria-label="Grafiek van de temperatuur tegen de tijd"></svg>
+      <div class="grafvak"><svg id="grafiek" viewBox="0 0 640 140" role="img" aria-label="Grafiek van de temperatuur tegen de tijd"></svg></div>
     </div>
     </div>
 
@@ -164,7 +167,8 @@
 const NS = "http://www.w3.org/2000/svg";
 const W = 540, H = 430, BODEM = 414;          // microvenster (binnenmaten)
 const KOLF_X = 70;                              // kolf staat 70 naar rechts, links ervan de thermometer
-const ZICHT = 0.2;                              // deel van de gasmoleculen dat in beeld blijft (gas: ver uit elkaar)
+const ZICHT = 0.2;
+const ZWAARTE = 1400;                             // houdt de vloeistof onderin                              // deel van de gasmoleculen dat in beeld blijft (gas: ver uit elkaar)
 
 /* Atomen per molecuul: [element, x, y, straal]. Kleuren als in molecuulmodellen: O rood, H wit, C zwart. */
 const STOFFEN = {
@@ -175,7 +179,7 @@ const STOFFEN = {
     grenzen: [{ T: 0, L: 50, van: "s", naar: "l" }, { T: 100, L: 80, van: "l", naar: "g" }],
     Tmin: -30, Tmax: 130, Tstart: -20, drijft: true,
     atomen: [["O", 0, -2, 11], ["H", -9.5, 7, 7], ["H", 9.5, 7, 7]],
-    d: 31, rooster: { cols: 7, rows: 5, dx: 36, dy: 32, hex: true },
+    d: 34, rooster: { rows: 4, dx: 37, dy: 32, hex: true },
     hoek: (c, r) => ((c + r) % 2 ? Math.PI : 0) + (r % 2 ? .35 : -.35),
     kleurVast: "#e6f1fc", randVast: "#8fb6e0", kleurVloei: "rgba(110,165,225,.42)"
   },
@@ -188,7 +192,7 @@ const STOFFEN = {
     atomen: [["C", -14, 3, 9.5], ["C", 2, -4, 9.5], ["O", 17, 3, 9.5],
              ["H", -24, -2, 6], ["H", -19, 13, 6], ["H", -13, -9, 6],
              ["H", -3, -15, 6], ["H", 9, -14, 6], ["H", 26, -3, 5.5]],
-    d: 46, rooster: { cols: 6, rows: 5, dx: 54, dy: 38, hex: true },
+    d: 48, rooster: { rows: 4, dx: 54, dy: 38, hex: true },
     hoek: (c, r) => (r % 2 ? Math.PI : 0) + (c % 2 ? .15 : -.15),
     kleurVast: "#f1f4f8", randVast: "#a9b6c6", kleurVloei: "rgba(150,185,225,.36)"
   },
@@ -199,7 +203,7 @@ const STOFFEN = {
     grenzen: [{ T: -78, L: 90, van: "s", naar: "g" }],
     Tmin: -120, Tmax: 20, Tstart: -100, drijft: false,
     atomen: [["C", 0, 0, 10], ["O", -17, 0, 10.5], ["O", 17, 0, 10.5]],
-    d: 42, rooster: { cols: 7, rows: 5, dx: 48, dy: 46, hex: false },
+    d: 42, rooster: { rows: 4, dx: 48, dy: 46, hex: false },
     hoek: (c, r) => ((c + r) % 2 ? Math.PI / 4 : -Math.PI / 4),
     kleurVast: "#f7f9fb", randVast: "#b7c2cf", kleurVloei: "rgba(150,185,225,.36)"
   }
@@ -214,9 +218,9 @@ const OVERGANG = {
 
 /* ---------- toestand ---------- */
 let st, Hwarmte, Hmax, modus = "uit", pauze = false, tijd = 0, limiet = null;
-let P = [], sites = [], N = 0, drijf = 0, macroDrijf = 0;
+let P = [], sites = [], N = 0, zak = 0, macroDrijf = 0;
 let metingen = [], volgendeMeting = 0, wachtOvergang = 0, wachtZicht = 0, sleutelOud = "";
-let bellen = [], volgendeBel = 0;
+let bellen = [], volgendeBel = 0, volgendeWissel = 0;
 
 const $ = id => document.getElementById(id);
 const fmt = t => (Math.round(t) < 0 ? "−" : "") + Math.abs(Math.round(t));
@@ -375,16 +379,40 @@ function indeling() {
 }
 
 /* ---------- deeltjes ---------- */
+/* Het rooster van de vaste stof loopt over de hele breedte: in beeld zie je een stukje
+   binnen in het blok. Zo bevriest een vloeistof op de plek waar hij is. */
 function maakSites() {
-  const ro = st.rooster, br = (ro.cols - 1 + (ro.hex ? .5 : 0)) * ro.dx;
+  const ro = st.rooster, extra = ro.hex ? .5 : 0;
+  const cols = Math.floor((W - 36) / ro.dx - extra) + 1, br = (cols - 1 + extra) * ro.dx;
   sites = [];
   for (let r = 0; r < ro.rows; r++)
-    for (let c = 0; c < ro.cols; c++) {
+    for (let c = 0; c < cols; c++) {
       const x = W / 2 - br / 2 + (c + (ro.hex && r % 2 ? .5 : 0)) * ro.dx;
       const y = BODEM - ro.dy * .62 - r * ro.dy;
-      sites.push({ x, y, r, hoek: st.hoek(c, r), score: r * ro.dy + Math.abs(x - W / 2) * .45 });
+      sites.push({ x, y, r, hoek: st.hoek(c, r) });
     }
   N = sites.length;
+}
+/* Volgorde: water bevriest bovenaan (ijs drijft) en smelt onderaan (bij de verwarmplaat);
+   andere stoffen bevriezen vanaf de koude bodem en smelten bovenaan. */
+function rijVast(hoogste) {               // een vast molecuul uit de hoogste of laagste rij
+  const vast = P.filter(p => p.st === "s");
+  if (!vast.length) return null;
+  const rij = (hoogste ? Math.max : Math.min)(...vast.map(p => sites[p.site].r));
+  const kandidaten = vast.filter(p => sites[p.site].r === rij);
+  return kandidaten[Math.floor(Math.random() * kandidaten.length)];
+}
+function vrijeRijSite(van, bovenaan) {          // lege plek in de rij waar het vaste stof aangroeit
+  const vrij = vrijeSites();
+  const rij = (bovenaan ? Math.max : Math.min)(...vrij.map(i => sites[i].r));
+  let best = -1, bd = Infinity;
+  for (const i of vrij) {
+    if (sites[i].r !== rij) continue;
+    const q = dichtstbij(van, sites[i].x, sites[i].y);
+    const dd = q ? (q.x - sites[i].x) ** 2 + (q.y - sites[i].y) ** 2 : Math.abs(sites[i].x - W / 2);
+    if (dd < bd) { bd = dd; best = i; }
+  }
+  return best;
 }
 
 function nieuwDeeltje() {
@@ -410,7 +438,7 @@ function plaatsBegin() {
   P = [];
   for (let i = 0; i < N; i++) P.push(nieuwDeeltje());
   const d = doelen(toestand(Hwarmte).f);
-  const volg = sites.map((s, i) => i).sort((a, b) => sites[a].score - sites[b].score);
+  const volg = sites.map((s, i) => i).sort((a, b) => sites[a].r - sites[b].r || Math.abs(sites[a].x - W / 2) - Math.abs(sites[b].x - W / 2));
   let i = 0;
   for (let k = 0; k < d.nS; k++, i++) { const p = P[i], s = sites[volg[k]]; p.st = "s"; p.site = volg[k]; p.x = s.x; p.y = s.y; p.hoek = s.hoek; }
   const perRij = Math.floor((W - 20) / (st.d * 1.02));
@@ -423,17 +451,12 @@ function plaatsBegin() {
     const p = P[i];
     if (k < d.zicht) { p.st = "g"; p.binnen = true; p.x = 30 + Math.random() * (W - 60); p.y = 30 + Math.random() * (BODEM - 80); const a = Math.random() * 6.28; p.vx = Math.cos(a) * 200; p.vy = Math.sin(a) * 200; }
   }
-  drijf = 0;
+  zak = 0;
 }
 
 function vrijeSites() {
   const bezet = new Set(P.filter(p => p.st === "s").map(p => p.site));
   return sites.map((s, i) => i).filter(i => !bezet.has(i));
-}
-function kiesBovensteVast() {
-  let best = null;
-  for (const p of P) if (p.st === "s" && (!best || sites[p.site].score > sites[best.site].score)) best = p;
-  return best;
 }
 function dichtstbij(lijst, x, y) {
   let best = null, bd = Infinity;
@@ -461,24 +484,25 @@ function overgangen(tst, dt) {
     wachtOvergang = .05;
     const zichtbaarGas = P.filter(p => p.st === "g" && !p.vertrek);
     if (c.s > d.nS) {                                     // smelten of sublimeren
-      const p = kiesBovensteVast();
-      if (c.l < d.nL) { p.st = "l"; p.vy = -20; }
+      const naarVloei = c.l < d.nL;
+      const p = rijVast(!(naarVloei && st.drijft));
+      if (naarVloei) { p.st = "l"; p.vx = p.vy = 0; }
       else { p.st = "g"; p.vx = (Math.random() - .5) * 160; p.vy = -260; p.vertrek = c.zicht >= d.zicht; }
       p.site = -1;
     } else if (c.s < d.nS) {                              // stollen of rijpen
-      const vrij = vrijeSites().sort((a, b) => sites[a].score - sites[b].score);
-      const i = vrij[0], s = sites[i];
+      const uitVloei = c.l > d.nL, bron = uitVloei ? P.filter(q => q.st === "l") : zichtbaarGas;
+      const i = vrijeRijSite(bron, uitVloei && st.drijft), s = sites[i];
       let p;
-      if (c.l > d.nL) p = dichtstbij(P.filter(q => q.st === "l"), s.x, s.y);
+      if (uitVloei) p = dichtstbij(bron, s.x, s.y);
       else {
         p = dichtstbij(zichtbaarGas, s.x, s.y);
         if (!p) { p = P.find(q => q.st === "weg" || (q.st === "g" && q.vertrek)); if (p) binnenkomen(p, "s"); }
       }
-      if (p) { p.st = "s"; p.site = i; p.vertrek = false; }
+      if (p) { p.st = "s"; p.site = i; p.vertrek = false; p.wissel = null; }
     } else if (c.l > d.nL) {                              // verdampen: bovenste molecuul uit de vloeistof
       let p = null;
       for (const q of P) if (q.st === "l" && (!p || q.y < p.y)) p = q;
-      p.st = "g"; p.vx = (Math.random() - .5) * 160; p.vy = -280; p.vertrek = c.zicht >= d.zicht;
+      p.wissel = null; p.st = "g"; p.vx = (Math.random() - .5) * 160; p.vy = -280; p.vertrek = c.zicht >= d.zicht;
     } else if (c.l < d.nL) {                              // condenseren
       let p = null;
       for (const q of zichtbaarGas) if (!p || q.y > p.y) p = q;
@@ -507,33 +531,54 @@ function natuurkunde(tst, dt) {
   const vg = 130 + 380 * sG;
   const c = tel();
 
-  // ijs drijft op water: het rooster komt omhoog als er genoeg water onder kan
+  // ijs dat onderaan smelt, zakt mee tot het op het water ligt
   let doel = 0;
-  if (st.drijft && c.s > 0 && c.l > 0) {
-    let maxRij = 0; for (const p of P) if (p.st === "s") maxRij = Math.max(maxRij, sites[p.site].r);
-    const hs = (maxRij + 1) * st.rooster.dy, ws = st.rooster.cols * st.rooster.dx;
-    const niveau = (c.l * D * D * .95 + .88 * hs * ws) / W;
-    doel = Math.max(0, niveau - .88 * hs);
+  if (c.s > 0) {
+    let minRij = 99; for (const p of P) if (p.st === "s") minRij = Math.min(minRij, sites[p.site].r);
+    doel = Math.max(0, minRij * st.rooster.dy - c.l * D * D * .9 / W);
   }
-  drijf += (doel - drijf) * Math.min(1, dt * 1.5);
+  zak += (doel - zak) * Math.min(1, dt * 1.5);
+
+  // in een vloeistof schuiven moleculen voortdurend langs elkaar heen: twee buren ruilen van plek
+  volgendeWissel -= dt;
+  if (volgendeWissel <= 0 && c.l > 1) {
+    volgendeWissel = .16 - .1 * sL;
+    const vrij = P.filter(p => p.st === "l" && !p.wissel);
+    const a = vrij[Math.floor(Math.random() * vrij.length)];
+    const buren = a ? vrij.filter(q => q !== a && (q.x - a.x) ** 2 + (q.y - a.y) ** 2 < (D * 1.5) ** 2) : [];
+    if (buren.length) {
+      const b = buren[Math.floor(Math.random() * buren.length)], duur = 1.1 - .45 * sL, kant = Math.random() < .5 ? 1 : -1;
+      a.wissel = { x0: a.x, y0: a.y, x1: b.x, y1: b.y, t: 0, duur, kant };
+      b.wissel = { x0: b.x, y0: b.y, x1: a.x, y1: a.y, t: 0, duur, kant };
+    }
+  }
 
   for (const p of P) {
     if (p.st === "weg") continue;
     if (p.st === "s") {
-      const s = sites[p.site], amp = 1.2 + 5 * sS, w = 7 + 5 * sS;
-      const tx = s.x + amp * Math.sin(tijd * w * p.fr + p.fx), ty = s.y - drijf + amp * Math.sin(tijd * w * 1.13 * p.fr + p.fy);
-      const k = Math.min(1, dt * 7);
+      const s = sites[p.site], amp = 1 + 3 * sS, w = 7 + 5 * sS;
+      const tx = s.x + amp * Math.sin(tijd * w * p.fr + p.fx), ty = s.y + zak + amp * Math.sin(tijd * w * 1.13 * p.fr + p.fy);
+      const k = Math.min(1, dt * (Math.abs(tx - p.x) + Math.abs(ty - p.y) > 6 ? 3 : 8));   // rustig op zijn plek schuiven
       p.x += (tx - p.x) * k; p.y += (ty - p.y) * k; p.vx = p.vy = 0;
       let dh = s.hoek + .06 * (1 + sS) * Math.sin(tijd * 5 + p.fx) - p.hoek;
       dh = Math.atan2(Math.sin(dh), Math.cos(dh));
       p.hoek += dh * Math.min(1, dt * 5);
     } else if (p.st === "l") {
-      const K = 2600 + 5200 * sL;
-      p.vx += (Math.random() - .5) * 2 * K * dt;
-      p.vy += (Math.random() - .5) * 2 * K * dt + 1400 * dt;
-      const demp = Math.exp(-5 * dt); p.vx *= demp; p.vy *= demp;
-      p.x += p.vx * dt; p.y += p.vy * dt;
-      p.vh += (Math.random() - .5) * 30 * dt; p.vh *= .97; p.hoek += p.vh * dt;
+      if (p.wissel) {                               // schuift langs een buurmolecuul naar diens plek
+        const w = p.wissel; w.t += dt;
+        const f = Math.min(1, w.t / w.duur), e = f * f * (3 - 2 * f), bocht = Math.sin(Math.PI * f) * D * .55 * w.kant;
+        const dx = w.x1 - w.x0, dy = w.y1 - w.y0, l = Math.hypot(dx, dy) || 1;
+        p.x = w.x0 + dx * e - dy / l * bocht; p.y = w.y0 + dy * e + dx / l * bocht;
+        p.vx = p.vy = 0;
+        if (f >= 1) p.wissel = null;
+      } else {
+        const K = 2600 + 5200 * sL;
+        p.vx += (Math.random() - .5) * 2 * K * dt;
+        p.vy += ((Math.random() - .5) * 2 * K + ZWAARTE) * dt;
+        const demp = Math.exp(-5 * dt); p.vx *= demp; p.vy *= demp;
+        p.x += p.vx * dt; p.y += p.vy * dt;
+      }
+      p.vh += (Math.random() - .5) * 40 * dt; p.vh *= .97; p.hoek += p.vh * dt;
     } else {
       const v = Math.hypot(p.vx, p.vy) || 1, f = 1 + (vg / v - 1) * Math.min(1, dt * 2);
       p.vx *= f; p.vy *= f;
@@ -551,7 +596,7 @@ function natuurkunde(tst, dt) {
       const a = lijst[i];
       for (let j = i + 1; j < lijst.length; j++) {
         const b = lijst[j];
-        const aV = a.st === "s", bV = b.st === "s";
+        const aV = a.st === "s" || !!a.wissel, bV = b.st === "s" || !!b.wissel;
         if (aV && bV) continue;
         let dx = b.x - a.x, dy = b.y - a.y, d2 = dx * dx + dy * dy;
         const dmin = (a.st === "g" || b.st === "g") ? D * .9 : D;
@@ -578,7 +623,7 @@ function natuurkunde(tst, dt) {
     }
     // wanden en bodem
     for (const p of lijst) {
-      if (p.st === "s") continue;
+      if (p.st === "s" || p.wissel) continue;
       const r = D / 2;
       if (p.y > BODEM - r) { p.y = BODEM - r; p.vy = -Math.abs(p.vy) * (p.st === "g" ? 1 : .2); }   // de bodem van de kolf
       if (p.st === "g") continue;                     // een gas heeft hier geen wand: het beeld is maar een klein stukje van de kolf
@@ -701,13 +746,14 @@ function tekenStreepjes() {
 
 /* ---------- grafiek ---------- */
 const graf = $("grafiek"), VENSTER = 60;
-let gx0 = 40, gx1 = 632, gy0 = 10, gy1 = 116, grafBreed = 0;
+let gx0 = 40, gx1 = 632, gy0 = 10, gy1 = 116, grafBreed = 0, grafHoog = 0;
 let grafLijn;
 function bouwGrafiek() {
   graf.innerHTML = "";
-  grafBreed = Math.max(260, Math.round(graf.getBoundingClientRect().width) || 640);   // 1 eenheid = 1 pixel: letters blijven even groot
-  graf.setAttribute("viewBox", `0 0 ${grafBreed} 140`);
-  gx1 = grafBreed - 8;
+  const vak = graf.getBoundingClientRect();     // 1 eenheid = 1 pixel: letters blijven even groot
+  grafBreed = Math.max(260, Math.round(vak.width) || 640); grafHoog = Math.max(140, Math.round(vak.height) || 140);
+  graf.setAttribute("viewBox", `0 0 ${grafBreed} ${grafHoog}`);
+  gx1 = grafBreed - 8; gy1 = grafHoog - 24;
   const yT = T => gy1 - relatief(T) * (gy1 - gy0);
   maak("rect", { x: gx0, y: gy0, width: gx1 - gx0, height: gy1 - gy0, fill: "#f6f9fd", stroke: "#c9d8ea" }, graf);
   st.grenzen.forEach(g => {
@@ -719,8 +765,8 @@ function bouwGrafiek() {
   });
   [st.Tmin, st.Tmax].forEach(T => maak("text", { x: gx0 - 4, y: yT(T) + 4, "text-anchor": "end", "font-size": 11, fill: "#4a5a72" }, graf, fmt(T)));
   maak("text", { x: 4, y: 10, "font-size": 11, fill: "#4a5a72" }, graf, "°C");
-  maak("text", { x: gx1, y: 134, "text-anchor": "end", "font-size": 11, fill: "#4a5a72" }, graf, "tijd →");
-  maak("text", { x: gx0, y: 134, "font-size": 11, fill: "#4a5a72" }, graf, `laatste ${VENSTER} s`);
+  maak("text", { x: gx1, y: grafHoog - 6, "text-anchor": "end", "font-size": 11, fill: "#4a5a72" }, graf, "tijd →");
+  maak("text", { x: gx0, y: grafHoog - 6, "font-size": 11, fill: "#4a5a72" }, graf, `laatste ${VENSTER} s`);
   grafLijn = maak("polyline", { fill: "none", stroke: "#c0392b", "stroke-width": 2.5, "stroke-linejoin": "round" }, graf);
 }
 function tekenGrafiek() {
@@ -853,7 +899,8 @@ $("opnieuw").addEventListener("click", () => kiesStof($("stof").value));
 $("stof").addEventListener("change", e => kiesStof(e.target.value));
 new ResizeObserver(() => indeling()).observe(veld);
 new ResizeObserver(() => {
-  if (!st || Math.abs(Math.round(graf.getBoundingClientRect().width) - grafBreed) < 2) return;
+  const vak = graf.getBoundingClientRect();
+  if (!st || (Math.abs(Math.round(vak.width) - grafBreed) < 2 && Math.abs(Math.max(140, Math.round(vak.height)) - grafHoog) < 2)) return;
   bouwGrafiek(); tekenGrafiek();
 }).observe(graf);
 

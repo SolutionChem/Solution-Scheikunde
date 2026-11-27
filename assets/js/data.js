@@ -13,7 +13,7 @@ window.SOLUTION = {
   /* Versie van de materialen. Verhoog dit (bijv. de datum) als je een animatie of
      simulatie in materialen/ hebt aangepast: browsers laden dan zeker de nieuwe versie
      in plaats van een oude uit hun geheugen (cache). */
-  versie: "2026-11-23a",
+  versie: "2026-11-27a",
 
   /* Soorten materiaal. Je kunt hier zelf soorten aan toevoegen. */
   typen: {
@@ -164,7 +164,17 @@ window.SOLUTION = {
             { nr: 3, titel: "Zuivere stoffen en mengsels", pagina: 80 },
             { nr: 4, titel: "Scheidingsmethoden", pagina: 91 }
           ],
-          materialen: []
+          materialen: [
+            {
+              id: "faseovergangen",
+              type: "simulatie",
+              paragrafen: [2],
+              titel: "Deeltjesmodel: faseovergangen",
+              beschrijving: "Verwarm of koel water, ethanol of koolstofdioxide. Je ziet tegelijk wat er in de kolf gebeurt (macroniveau) en wat de moleculen doen (microniveau): smelten, stollen, verdampen, condenseren, sublimeren en rijpen.",
+              url: "materialen/3hv/h3/faseovergangen/index.html",
+              formaat: "groot"
+            }
+          ]
         },
         {
           nr: 4,

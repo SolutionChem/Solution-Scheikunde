@@ -43,9 +43,12 @@ materialen/<jaar>/h<nr>/<naam>/index.html   eigen animaties en bestanden
 - Sluit aan bij de huisstijl (zelfde kleuren, elementtegel-stijl, Inter).
 - Moet werken in een iframe, op mobiel (touch, smal scherm) en in volledig scherm.
 - Respecteer `prefers-reduced-motion` (start dan gepauzeerd) en geef altijd een pauzeknop.
+- **Zonder scrollen op desktop:** elk onderdeel van een simulatie past op ± 1280 × 800 px, en in de viewer in een venster van ± 700 px hoog. Kan een simulatie veel, maak dan onderdelen met knoppen (tabbladen) in plaats van één lange pagina. Op mobiel mag je scrollen.
+- Animatielus: begrens de tijdstap met `dt = Math.max(0, Math.min(.05, (nu - laatst) / 1000))`. Het eerste beeld kan vóór `laatst` liggen; een negatieve `dt` geeft ongeldige (NaN) posities.
+- Een knop als "Sneller" versnelt ook de tijdas van een grafiek (simulatietijd), zodat de helling van de lijn gelijk blijft.
 - Animaties met een verhaal: de leerling start zelf (knoppen Start / Pauzeer / Opnieuw). Geef ruim leestijd: een uitlegtekst van ± 40 woorden staat ± 6 seconden in beeld voordat de animatie verdergaat. Uitleg die bij elkaar hoort **aanvullen** in plaats van vervangen, zodat hij in beeld blijft.
 - Laat bij een overgang naar een andere weergave het model staan en zet de nieuwe weergave ernaast (bijv. atoommodel → structuurformule), zodat leerlingen ze kunnen vergelijken.
-- Slepen en tikken: gebruik `pointerdown`/`pointerup` met `touch-action: none` op het speelveld, niet `click`; op touchschermen valt de eerste tik na het slepen anders weg.
+- Slepen en tikken: gebruik `pointerdown`/`pointerup` met `touch-action: none` op het speelveld, niet `click`; op touchschermen valt de eerste tik na het slepen anders weg. Maak een gesleepte kaart kleiner (± 40 %, rond de vinger), zodat zichtbaar is waar hij heen gaat.
 - Scheikundig correct: controleer gegevens (atoommassa's, elektronenverdeling, formules) tegen de Binas/het boek.
 - Periodiek systeem in een animatie of spel: gebruik dat van *Bouw een atoom* (§1.2: groep- en periodenummers, niet-metaal/metalloïde/metaal). Het spel *Bouw een molecuul* heeft er een kopie van (schakelaar "Toon het periodiek systeem"), daar onbewerkt: alle elementen even duidelijk, niets vervaagd of gemarkeerd; pas ze samen aan.
 - Na het maken: voeg het materiaal toe in `data.js` bij het juiste hoofdstuk, met de paragrafen in `paragrafen`.
@@ -58,12 +61,14 @@ materialen/<jaar>/h<nr>/<naam>/index.html   eigen animaties en bestanden
   - **startscherm** met de spelregels: 5 vragen; twee keer controleren; in één keer goed = 2 punten, goed bij de tweede keer = 1 punt, twee keer fout = 0 punten en dan het goede antwoord;
   - **spelbalk**: "Vraag x van 5", voortgangsstreepjes, score, poging ("Poging 1 van 2 · goed = 2 punten") en Stoppen;
   - **eindscherm** met sterren, totaalscore en de punten per vraag, en Opnieuw spelen.
+- Heeft een spel categorieën (bijv. zout / metaal / moleculaire stof), dan komt elke categorie per ronde ongeveer even vaak voor.
 - Een spel krijgt `"oefening"` in het `type` van de tool en een eigen onderdeel met `type: "oefening"` (ook als het in dezelfde simulatie zit), zodat het als oefening herkenbaar is (label Oefening). Is het spel een losse tool, dan een eigen materiaal met `type: "oefening"`.
 - **Leerlingen moeten altijd weten WAAROM iets goed of fout is.** Dus nooit alleen "fout" of "goed":
   - Bij een goed antwoord: korte uitleg waarom het klopt (bijv. "Massagetal = protonen + neutronen = 6 + 6 = 12").
   - Bij een fout antwoord: zeg waarom het fout is, liefst op basis van de waarschijnlijke denkfout (bijv. "Je hebt de elektronen meegeteld") en geef een hint hoe ze verder kunnen, zonder het antwoord voor te zeggen.
   - Na de laatste poging: het goede antwoord met de uitleg erbij.
 - Leerlijn: in hoofdstuk 1 (§1.1–§1.3) **alleen atomen**. Daar geen ionen, geen lading, geen ionen-schakelaar en ook het woord "ion" niet (ook niet in de beschrijving in `data.js`). Ionen komen vanaf §2.1; daar mag de schakelaar "Ionen meenemen" (standaard aan).
+- Leerlijn moleculaire stoffen (3 havo-vwo): alleen "de moleculen trekken elkaar zwak aan", met lage smelt- en kookpunten, geen stroomgeleiding en hydrofiel/hydrofoob. Vanderwaalsbinding, dipool-dipoolbinding, waterstofbruggen en δ+/δ− alleen achter een schakelaar **Verdieping** (standaard uit; in een spel als schakelaar op het startscherm).
 - Lading laten invoeren met ▲/▼-knoppen (niet typen), zodat er geen verwarring is over de notatie.
 
 ## Scheikundige afspraken
@@ -72,8 +77,22 @@ materialen/<jaar>/h<nr>/<naam>/index.html   eigen animaties en bestanden
 - Kleuren in modellen: kern geel (`#f4c20d`, tekst erop navy; protonen geel, neutronen grijs), elektronen blauw, valentie-elektronen oranje. Metaal geel, niet-metaal rood, metalloïde blauw (zoals het periodiek systeem van §1.3).
 - Structuurformules tekenen met rechte hoeken (90°), zoals een leerling in 3 havo-vwo dat zou doen.
 - Teksten die afhangen van een geval (bijv. dubbele of drievoudige binding, 1 of meer elektronen) altijd laten meebewegen met dat geval; nooit één vaste tekst voor alle gevallen.
+- Uitleg bij een toestand gaat niet uit van de vorige toestand: geen "nog", "niet meer" of "weer" (een leerling kan bij vloeibaar uit vast of uit gas komen).
+- Kleuren bij zouten (stofeigenschappen): positief ion groen, negatief ion rood. Metaalionen geel met vrije elektronen oranje, zoals bij Metaalbinding (§2.3).
+- Microniveau is een **model**: schrijf niet "zo zie je de moleculen door de loep" en teken geen vergrootglas (moleculen zijn daarmee niet te zien), maar een inzoomkader met "een model: zo stel je je de moleculen voor".
+- Fasen op microniveau:
+  - vast: deeltjes trillen op een vaste plek in een rooster;
+  - vloeibaar: dicht op elkaar én langs elkaar heen schuiven (buren ruilen van plek), niet alleen harder trillen;
+  - gas: ver uit elkaar; in een ingezoomd stukje zijn er geen wanden, dus moleculen vliegen het beeld in en uit;
+  - bij stollen gaan deeltjes ter plekke in het rooster zitten; ze springen niet naar een blokje. Water is een uitzondering: ijs drijft.
+- Waterstofbrug tekenen: O–H···O op één lijn; de brug komt bij het O-atoom binnen aan de kant zonder H-atomen en loopt niet langs andere H-atomen.
+- Natuurkundig juist formuleren: warmtegeleiding is energie doorgeven (vrije elektronen geven energie door aan ionen verderop; zonder vrije elektronen geven alleen trillende deeltjes de energie door aan hun buren), niet "warmte meenemen".
 
 ## Controleren
 - Lokaal bekijken: `python3 -m http.server` in de root en `http://localhost:8000` openen.
 - Bekijk wijzigingen op desktop (± 1280 px) en mobiel (± 390 px): geen horizontale scroll, geen fouten in de console.
 - Test met Playwright (Chromium is geïnstalleerd). Speel spellen en animaties helemaal door, met echte sleep- en tikbewegingen (op mobiel met touch), niet alleen een screenshot van de beginsituatie. Controleer ook via de viewer (`materiaal.html?jaar=…&h=…&m=…`).
+- Open elk onderdeel ook direct via de URL-parameters (bijv. `?tab=metaal&deel=vervormen`), niet alleen via de knoppen.
+
+## Werkwijze
+- Pull requests worden vaak snel samengevoegd. Controleer daarom eerst of de vorige pull request al is samengevoegd; zo ja, maak een nieuwe in plaats van de oude bij te werken.

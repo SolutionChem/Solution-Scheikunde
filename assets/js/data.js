@@ -13,7 +13,7 @@ window.SOLUTION = {
   /* Versie van de materialen. Verhoog dit (bijv. de datum) als je een animatie of
      simulatie in materialen/ hebt aangepast: browsers laden dan zeker de nieuwe versie
      in plaats van een oude uit hun geheugen (cache). */
-  versie: "2026-11-27g",
+  versie: "2026-11-27h",
 
   /* Soorten materiaal. Je kunt hier zelf soorten aan toevoegen. */
   typen: {
@@ -176,7 +176,7 @@ window.SOLUTION = {
             },
             {
               id: "stofeigenschappen",
-              type: "simulatie",
+              type: ["simulatie", "oefening"],
               paragrafen: [1, 2],
               titel: "Stofeigenschappen van zouten, metalen en moleculaire stoffen",
               beschrijving: "Bekijk op microniveau waarom zouten, metalen en moleculaire stoffen verschillende eigenschappen hebben.",
@@ -198,7 +198,7 @@ window.SOLUTION = {
                 {
                   id: "eigenschappen-moleculair",
                   titel: "Moleculaire stoffen",
-                  tekst: "Vanderwaalsbinding, dipool-dipoolbinding en waterstofbruggen, gekoppeld aan kookpunten. Hydrofiel en hydrofoob: wat lost op in water?",
+                  tekst: "Lage smelt- en kookpunten, geen stroomgeleiding, hydrofiel en hydrofoob. Met verdieping: vanderwaalsbinding, dipool-dipoolbinding en waterstofbruggen.",
                   url: "materialen/3hv/h3/stofeigenschappen/index.html?tab=moleculair"
                 },
                 {
@@ -206,6 +206,13 @@ window.SOLUTION = {
                   titel: "Vergelijken",
                   tekst: "Alle stofeigenschappen van zouten, metalen en moleculaire stoffen naast elkaar, met de verklaring op microniveau.",
                   url: "materialen/3hv/h3/stofeigenschappen/index.html?tab=vergelijk"
+                },
+                {
+                  id: "spel-soort-stof",
+                  type: "oefening",
+                  titel: "Spel: wat voor stof is het?",
+                  tekst: "Sleep stofkaarten naar zout, metaal of moleculaire stof en kies de goede verklaring. Vijf vragen per ronde; moleculaire stoffen kun je met verdieping spelen.",
+                  url: "materialen/3hv/h3/stofeigenschappen/index.html?tab=spel"
                 }
               ]
             }

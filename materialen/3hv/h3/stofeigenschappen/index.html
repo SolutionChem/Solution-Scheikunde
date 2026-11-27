@@ -988,10 +988,14 @@ const vKrachten = {
     const L = Math.hypot(9.5, 9) * sch + 7 * sch + 11 * sch + 58;     // O–H-binding + afstand H···O
     const hoekOH = Math.atan2(9, 9.5);                                 // richting O→H in het molecuul
     const plek = (ox, oy, h) => [ox - (Math.sin(h) * 2) * sch, oy + (Math.cos(h) * 2) * sch, h];   // middelpunt uit plek van O
-    const Ob = [290, 225], f1 = -32 * Math.PI / 180, f2 = 30 * Math.PI / 180;
-    const ha = f1 - hoekOH, hb = f2 - hoekOH;
+    // Een waterstofbrug komt bij het O-atoom binnen aan de kant zónder H-atomen (in het molecuul: "boven" het O).
+    // a (linksboven) geeft een H aan b; b (midden, rechtop) geeft een H aan c (rechtsonder).
+    const Ob = [295, 280], hb = 0;
+    const f1 = 55 * Math.PI / 180;                     // richting van H(a) naar O(b): schuin naar beneden, dus b's O krijgt hem van boven
+    const f2 = hb + hoekOH;                            // richting van H(b) naar O(c)
+    const ha = f1 - hoekOH, hc = f2 + 1.5 * Math.PI;   // c draait zijn H-vrije kant naar b
     const Oa = [Ob[0] - L * Math.cos(f1), Ob[1] - L * Math.sin(f1)], Oc = [Ob[0] + L * Math.cos(f2), Ob[1] + L * Math.sin(f2)];
-    return [plek(...Oa, ha), plek(...Ob, hb), plek(...Oc, .5)];
+    return [plek(...Oa, ha), plek(...Ob, hb), plek(...Oc, hc)];
   },
   grafiek() {
     const x = 640, y0 = 70, y1 = 450, Tmin = -180, Tmax = 120, yT = T => y1 - (T - Tmin) / (Tmax - Tmin) * (y1 - y0);

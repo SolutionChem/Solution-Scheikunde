@@ -40,7 +40,7 @@
   .kaart h2 { margin: 0 0 8px; font-size: .78rem; letter-spacing: .12em; text-transform: uppercase; color: var(--zacht); font-weight: 600; }
   .paneel { display: flex; flex-direction: column; gap: 10px; }
   .podium { padding: 6px; }
-  #tek { width: 100%; height: clamp(300px, calc(100vh - 140px), 600px); display: block; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+  #tek { width: 100%; height: clamp(300px, calc(100vh - 130px), 640px); display: block; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
 
   .knoppen { display: flex; gap: 6px; flex-wrap: wrap; }
   .knoppen + .knoppen { margin-top: 8px; }
@@ -208,7 +208,7 @@
     .kaart.bed { order: 1; }
     .podium { order: 2; }
     .kaart.uit { order: 3; }
-    #tek { height: auto; aspect-ratio: 900 / 540; }
+    #tek { height: auto; aspect-ratio: 900 / 570; }
     .scherm { padding: 8px; }
     .vergelijk .rij { grid-template-columns: 1fr; }
     .vergelijk .rij.koprij { display: none; }
@@ -240,7 +240,7 @@
 
 <main class="scherm">
   <section class="app" id="app">
-    <div class="kaart podium"><svg id="tek" viewBox="0 0 900 540" role="img"></svg></div>
+    <div class="kaart podium"><svg id="tek" viewBox="0 0 900 570" role="img"></svg></div>
     <div class="paneel">
       <div class="kaart bed">
         <h2 id="bed-titel">Scheidingsmethode</h2>
@@ -352,25 +352,44 @@ const ZWAAR = { zand: 1, cel: 1, vet: 1 };          // korrels en cellen ruilen 
 function fysica(D, S, vak, dt, o = {}) {
   if (dt <= 0) return;
   const K = o.ruis ?? 2200, demp = Math.exp(-4 * dt);
+  const ruil = (a, b, duur) => {
+    const kant = Math.random() < .5 ? 1 : -1;
+    a.wissel = { x0: a.x, y0: a.y, x1: b.x, y1: b.y, t: 0, kant, r: a.r + b.r, duur };
+    b.wissel = { x0: b.x, y0: b.y, x1: a.x, y1: a.y, t: 0, kant, r: a.r + b.r, duur };
+  };
+  const los = p => !p.vast && !p.uit && !p.wissel && !p.spook;
   if (o.wissel) {                                   // in een vloeistof schuiven buren langs elkaar heen
     D.wacht = (D.wacht || 0) - dt;
-    if (D.wacht <= 0) {
-      D.wacht = 1 / o.wissel;
-      const vrij = D.filter(p => !p.vast && !p.uit && !p.wissel && !p.spook && !ZWAAR[p.soort]);
-      const a = vrij[Math.floor(Math.random() * vrij.length)];
+    while (D.wacht <= 0) {
+      D.wacht += 1 / o.wissel;
+      const vrij = D.filter(p => los(p) && !ZWAAR[p.soort]);
+      // opgeloste deeltjes (o.meng) mengen zich vaker: ze verspreiden zich tussen de moleculen (diffusie)
+      const meng = o.meng ? vrij.filter(p => p.soort === o.meng) : [];
+      const a = meng.length && Math.random() < .6 ? meng[Math.floor(Math.random() * meng.length)] : vrij[Math.floor(Math.random() * vrij.length)];
       const buren = a ? vrij.filter(b => b !== a && (b.x - a.x) ** 2 + (b.y - a.y) ** 2 < ((a.r + b.r) * 1.4) ** 2) : [];
-      if (buren.length) {
-        const b = buren[Math.floor(Math.random() * buren.length)], kant = Math.random() < .5 ? 1 : -1;
-        a.wissel = { x0: a.x, y0: a.y, x1: b.x, y1: b.y, t: 0, kant, r: a.r + b.r };
-        b.wissel = { x0: b.x, y0: b.y, x1: a.x, y1: a.y, t: 0, kant, r: a.r + b.r };
-      }
+      if (buren.length) ruil(a, buren[Math.floor(Math.random() * buren.length)], .9);
     }
+  }
+  // zware korrels en cellen zakken: de vloeistof eronder stroomt erlangs omhoog (ruilen met een molecuul eronder)
+  if (o.zakken) for (const p of D) {
+    if (!ZWAAR[p.soort] || p.zw < 100 || !los(p)) continue;
+    p.zt = (p.zt ?? rnd(0, .3)) - dt;
+    if (p.zt > 0) continue;
+    p.zt = 55 / p.zw * rnd(.7, 1.3);
+    let best = null, bs = .35;
+    for (const b of D) {
+      if (ZWAAR[b.soort] || !los(b)) continue;
+      const dx = b.x - p.x, dy = b.y - p.y; if (dy <= 0) continue;
+      const d = Math.hypot(dx, dy); if (d > (p.r + b.r) * 1.35) continue;
+      if (dy / d > bs) { bs = dy / d; best = b; }
+    }
+    if (best) ruil(p, best, .35);
   }
   for (const p of D) {
     p.hoek += p.vh * dt;
     if (p.wissel) {
       const w = p.wissel; w.t += dt;
-      const f = Math.min(1, w.t / .9), e = ease(f), dx = w.x1 - w.x0, dy = w.y1 - w.y0, l = Math.hypot(dx, dy) || 1;
+      const f = Math.min(1, w.t / (w.duur || .9)), e = ease(f), dx = w.x1 - w.x0, dy = w.y1 - w.y0, l = Math.hypot(dx, dy) || 1;
       const boog = Math.sin(Math.PI * f) * w.r * .5 * w.kant;
       p.x = w.x0 + dx * e - dy / l * boog; p.y = w.y0 + dy * e + dx / l * boog; p.vx = p.vy = 0;
       if (f >= 1) p.wissel = null;
@@ -436,7 +455,7 @@ function vul(ouder, D, gebied, afst, kies) {
 }
 
 /* ---------- tekening: macro links, micro rechts ---------- */
-const MK = { x0: 470, y0: 60, x1: 880, y1: 480 };      // micro-kader
+const MK = { x0: 470, y0: 50, x1: 880, y1: 530 };      // micro-kader
 function nieuweTekening() { tek.innerHTML = ""; return maak("g", {}, tek); }
 function kader(spot, kleur = "#fbfdff") {
   maak("text", { x: 225, y: 34, class: "kopje" }, tek, "MACRONIVEAU");
@@ -450,7 +469,7 @@ function kader(spot, kleur = "#fbfdff") {
   const g = maak("g", { "clip-path": "url(#clipM)" }, tek);
   const boven = maak("g", {}, tek);
   maak("rect", { x: MK.x0, y: MK.y0, width: MK.x1 - MK.x0, height: MK.y1 - MK.y0, rx: 12, fill: "none", stroke: "#2c5687", "stroke-width": 3 }, boven);
-  maak("text", { x: 675, y: 504, class: "lab-k", "text-anchor": "middle" }, tek, "een model: zo stel je je de deeltjes voor (niet op schaal)");
+  maak("text", { x: 675, y: 556, class: "lab-k", "text-anchor": "middle" }, tek, "een model: zo stel je je de deeltjes voor (niet op schaal)");
   return { g, boven };
 }
 function label(ouder, x, y, tekst, anker = "start", cls = "lab-k") { return maak("text", { x, y, class: cls, "text-anchor": anker }, ouder, tekst); }
@@ -523,28 +542,28 @@ const mFiltreren = {
     this.dr = [];
     const M = kader({ x: 210, y: 266, r: 15 });
     this.S = [];
-    for (let x = MK.x0 + 27; x < MK.x1; x += 54) this.S.push(deeltje(M.g, "vezel", x, 300));
+    for (let x = MK.x0 + 27; x < MK.x1; x += 54) { const v = deeltje(M.g, "vezel", x, 262); v.r = 13; this.S.push(v); }
     this.D = [];
-    const zand = [[520, 150], [610, 210], [700, 130], [790, 200], [840, 120], [560, 250]];
-    vul(M.g, this.D, { x0: MK.x0, y0: 110, x1: MK.x1, y1: 284 }, 22.5, (x, y) => zand.some(([a, b]) => Math.hypot(x - a, y - b) < 32) ? null : "water");
+    const zand = [[520, 120], [610, 180], [700, 100], [790, 170], [840, 90], [560, 215]];
+    vul(M.g, this.D, { x0: MK.x0, y0: 70, x1: MK.x1, y1: 246 }, 22.5, (x, y) => zand.some(([a, b]) => Math.hypot(x - a, y - b) < 32) ? null : "water");
     for (const [x, y] of zand) { const p = deeltje(M.g, "zand", x, y); p.vh *= .3; this.D.push(p); }
-    this.mRes = label(M.boven, 480, 92, "boven het filter", "start", "lab-m");
-    this.mFil = label(M.boven, 480, 470, "filtraat", "start", "lab-m");
-    label(M.boven, 870, 336, "filtreerpapier", "end", "lab-m");
+    this.mRes = label(M.boven, 480, 74, "boven het filter", "start", "lab-m");
+    this.mFil = label(M.boven, 480, MK.y1 - 10, "filtraat", "start", "lab-m");
+    label(M.boven, 870, 296, "filtreerpapier", "end", "lab-m");
   },
   stap(dt) {
     const t = this.t, aan = t > 0;
-    for (const p of this.D) p.zw = p.soort === "zand" ? (aan ? 700 : 0) : (aan ? 110 : 260);
-    fysica(this.D, this.S, { x0: MK.x0, y0: 40, x1: MK.x1, y1: aan ? MK.y1 : 284 }, dt, { ruis: 1800, wissel: 3 });
+    for (const p of this.D) p.zw = p.soort === "zand" ? (aan ? 700 : 0) : (aan ? 420 : 260);
+    fysica(this.D, this.S, { x0: MK.x0, y0: 30, x1: MK.x1, y1: aan ? MK.y1 : 246 }, dt, { ruis: 2000, wissel: 3 });
     this.D.forEach(zet);
     // macro
     const xl = y => 104 + (y - 146) * .7, xr = y => 316 - (y - 146) * .7;
-    const yS = 282 - 22 * tussen(t, 2, 14), L = 160 + 104 * tussen(t, 1, 20);
+    const yS = 282 - 22 * tussen(t, 1.5, 9), L = 160 + 104 * tussen(t, 1, 11);
     this.zl.setAttribute("d", `M${xl(yS)},${yS} L${xr(yS)},${yS} L${xr(282)},282 L${xl(282)},282 Z`);
     this.vl.setAttribute("d", L < yS ? `M${xl(L)},${L} L${xr(L)},${L} L${xr(yS)},${yS} L${xl(yS)},${yS} Z` : "");
-    const h = 80 * tussen(t, 2, 21);
+    const h = 80 * tussen(t, 1.8, 12);
     this.filtraat.setAttribute("y", 498 - h); this.filtraat.setAttribute("height", h);
-    druppels(this, this.dg, 210, 392, 498 - h, t > 1.5 && t < 20.5, dt);
+    druppels(this, this.dg, 210, 392, 498 - h, t > 1.5 && t < 11.5, dt);
     this.lRes.setAttribute("opacity", t >= 8 ? 1 : 0); this.lFil.setAttribute("opacity", t >= 8 ? 1 : 0);
     this.mRes.textContent = t >= 8 ? "residu: zandkorrels op het filter" : "boven het filter";
     this.mFil.setAttribute("opacity", t >= 8 ? 1 : 0);
@@ -573,16 +592,16 @@ const mBezinken = {
     this.lHel = label(g, 318, 260, "helder water", "start", "lab");
     const M = kader({ x: 210, y: 452, r: 24 });
     this.S = []; this.D = [];
-    const zand = [[520, 120], [640, 180], [760, 110], [830, 250], [560, 300], [700, 340], [800, 400]];
+    const zand = [[510, 90], [620, 140], [740, 80], [840, 150], [560, 230], [690, 250], [810, 280], [500, 350], [630, 370], [760, 390], [850, 440], [560, 470]];
     vul(M.g, this.D, { x0: MK.x0, y0: MK.y0, x1: MK.x1, y1: MK.y1 }, 24, (x, y) => zand.some(([a, b]) => Math.hypot(x - a, y - b) < 33) ? null : "water");
     for (const [x, y] of zand) { const p = deeltje(M.g, "zand", x, y); p.vh *= .3; this.D.push(p); }
     maak("rect", { x: MK.x0, y: MK.y1 - 6, width: MK.x1 - MK.x0, height: 6, fill: "#2c5687" }, M.g);
-    label(M.boven, 870, 466, "bodem van het bekerglas", "end", "lab-m");
+    label(M.boven, 870, MK.y1 - 14, "bodem van het bekerglas", "end", "lab-m");
   },
   stap(dt) {
     const t = this.t;
-    for (const p of this.D) p.zw = p.soort === "zand" ? (t > 0 ? 240 : 0) : 0;
-    fysica(this.D, this.S, { x0: MK.x0, y0: MK.y0, x1: MK.x1, y1: MK.y1 - 6 }, dt, { ruis: 1700, wissel: 3 });
+    for (const p of this.D) p.zw = p.soort === "zand" ? (t > 0 ? 125 : 0) : 0;
+    fysica(this.D, this.S, { x0: MK.x0, y0: MK.y0, x1: MK.x1, y1: MK.y1 - 6 }, dt, { ruis: 1700, wissel: 3, zakken: true });
     this.D.forEach(zet);
     const b = 26 * tussen(t, 2, 18), top = 210 + (478 - b - 210) * tussen(t, 1.5, 19);
     this.bez.setAttribute("y", 478 - b); this.bez.setAttribute("height", b);
@@ -625,17 +644,17 @@ const mCentrifugeren = {
     this.lPl = label(g, 246, 352, "bloedplasma", "start", "lab"); this.lCel = label(g, 246, 462, "bloedcellen", "start", "lab");
     const M = kader({ x: 210, y: 440, r: 20 }, "#fdf6dc");
     this.S = []; this.D = [];
-    const cellen = [[520, 110], [650, 150], [790, 100], [560, 230], [720, 260], [840, 300], [600, 380], [760, 410], [500, 440]];
+    const cellen = [[520, 100], [650, 140], [790, 90], [560, 220], [720, 250], [840, 300], [600, 370], [760, 400], [500, 460], [680, 490], [830, 470]];
     vul(M.g, this.D, { x0: MK.x0, y0: MK.y0, x1: MK.x1, y1: MK.y1 }, 24, (x, y) => cellen.some(([a, c]) => Math.hypot(x - a, y - c) < 34) ? null : "water");
     for (const [x, y] of cellen) { const p = deeltje(M.g, "cel", x, y); p.vh *= .4; this.D.push(p); }
-    maak("line", { x1: 858, y1: 120, x2: 858, y2: 420, stroke: "#2c5687", "stroke-width": 3, "marker-end": "url(#pijl)" }, M.boven);
-    label(M.boven, 848, 110, "naar de bodem", "end", "lab-m");
+    maak("line", { x1: 858, y1: 110, x2: 858, y2: 470, stroke: "#2c5687", "stroke-width": 3, "marker-end": "url(#pijl)" }, M.boven);
+    label(M.boven, 848, 100, "naar de bodem", "end", "lab-m");
     this.hoek = 0;
   },
   stap(dt) {
     const t = this.t, draai = tussen(t, 1, 3) * (1 - tussen(t, 15, 18));
     for (const p of this.D) p.zw = p.soort === "cel" ? (t > 0 ? Math.max(40 + 900 * draai, t > 10 ? 500 : 0) : 0) : 0;
-    fysica(this.D, this.S, { x0: MK.x0, y0: MK.y0, x1: MK.x1, y1: MK.y1 }, dt, { ruis: 1700, wissel: 3 });
+    fysica(this.D, this.S, { x0: MK.x0, y0: MK.y0, x1: MK.x1, y1: MK.y1 }, dt, { ruis: 1700, wissel: 3, zakken: true });
     this.D.forEach(zet);
     this.hoek += draai * 520 * dt;
     this.rotor.setAttribute("transform", `rotate(${(this.hoek % 360).toFixed(1)} 210 165)`);
@@ -671,33 +690,69 @@ const mDestilleren = {
   ],
   bouw() {
     const g = nieuweTekening();
-    const cp = maak("clipPath", { id: "kolf" }, g); maak("circle", { cx: 110, cy: 330, r: 58 }, cp);
-    this.wijn = maak("rect", { x: 50, width: 120, height: 130, fill: "#8e2a3a", opacity: .72, "clip-path": "url(#kolf)" }, g);
-    maak("path", { d: "M100,170 L100,276 A60,60 0 1 0 120,276 L120,170", fill: "none", stroke: "#2c5687", "stroke-width": 3.5 }, g);
-    // thermometer
-    maak("line", { x1: 110, y1: 150, x2: 110, y2: 226, stroke: "#8796a6", "stroke-width": 5, "stroke-linecap": "round" }, g);
-    maak("circle", { cx: 110, cy: 230, r: 5, fill: "#c0392b" }, g);
-    this.tT = label(g, 96, 160, "20 °C", "end", "lab");
-    // zijbuis en koeler
-    maak("path", { d: "M120,206 L345,330 L345,404", fill: "none", stroke: "#2c5687", "stroke-width": 3.5, "stroke-linejoin": "round" }, g);
-    maak("path", { d: "M182,232 L198,203 L320,271 L304,300 Z", fill: "#dcebfa", stroke: "#2c5687", "stroke-width": 2.5 }, g);
-    maak("path", { d: "M188,222 L246,254", stroke: "#2c5687", "stroke-width": 2, fill: "none" }, g);
-    maak("path", { d: "M308,292 L318,310 M196,210 L206,192", stroke: "#2c5687", "stroke-width": 6, fill: "none" }, g);
-    label(g, 250, 196, "koeler", "start", "lab");
-    label(g, 324, 318, "koud water in", "start");
+    const glas = { fill: "none", stroke: "#2c5687", "stroke-width": 3, "stroke-linejoin": "round", "stroke-linecap": "round" };
+    const metaal = { fill: "#4a5a72", stroke: "#2b3540", "stroke-width": 1.5 };
+    // statieven
+    maak("rect", { x: 14, y: 512, width: 78, height: 10, rx: 2, ...metaal }, g);
+    maak("rect", { x: 36, y: 120, width: 6, height: 394, ...metaal }, g);
+    maak("rect", { x: 252, y: 512, width: 78, height: 10, rx: 2, ...metaal }, g);
+    maak("rect", { x: 287, y: 252, width: 6, height: 262, ...metaal }, g);
+    // klem om de hals, ring met gaasje onder de kolf
+    maak("rect", { x: 39, y: 226, width: 64, height: 5, ...metaal }, g);
+    maak("rect", { x: 98, y: 220, width: 10, height: 18, rx: 2, ...metaal }, g);
+    maak("rect", { x: 39, y: 390, width: 30, height: 5, ...metaal }, g);
+    maak("rect", { x: 66, y: 386, width: 100, height: 6, rx: 1, fill: "#8796a6", stroke: "#4a5a72" }, g);
+    // kolf met wijn
+    const cp = maak("clipPath", { id: "kolf" }, g); maak("circle", { cx: 115, cy: 332, r: 50 }, cp);
+    this.wijn = maak("rect", { x: 60, width: 120, height: 120, fill: "#8e2a3a", opacity: .72, "clip-path": "url(#kolf)" }, g);
+    maak("path", { d: "M106,190 L106,282 A52,52 0 1 0 124,282 L124,190", ...glas, "stroke-width": 3.5 }, g);
+    maak("rect", { x: 101, y: 178, width: 28, height: 15, rx: 3, fill: "#c0703a", stroke: "#7a4520" }, g);
+    // thermometer: het bolletje zit ter hoogte van de zijbuis (daar meet je de temperatuur van de damp)
+    maak("rect", { x: 111, y: 66, width: 8, height: 148, rx: 4, fill: "#fff", stroke: "#8796a6", "stroke-width": 1.5 }, g);
+    maak("circle", { cx: 115, cy: 214, r: 5, fill: "#c0392b" }, g);
+    this.kwik = maak("rect", { x: 113, width: 4, fill: "#c0392b" }, g);
+    this.tT = label(g, 104, 84, "20 °C", "end", "lab");
+    label(g, 126, 76, "thermometer");
+    // zijbuis en koeler (Liebigkoeler, schuin naar beneden)
+    const hoek = 17 * Math.PI / 180, x0 = 160, y0 = 212, L = 255;
+    const pt = (u, v) => [x0 + u * Math.cos(hoek) - v * Math.sin(hoek), y0 + u * Math.sin(hoek) + v * Math.cos(hoek)];
+    const eind = pt(L, 0);
+    maak("path", { d: `M124,206 L150,206 L${x0},${y0}`, ...glas }, g);
+    const kg = maak("g", { transform: `translate(${x0} ${y0}) rotate(17)` }, g);
+    maak("rect", { x: 30, y: -13, width: 190, height: 26, rx: 13, fill: "#dcebfa", stroke: "#2c5687", "stroke-width": 2.5 }, kg);
+    maak("path", { d: `M0,-3 L${L},-3 M0,3 L${L},3`, ...glas, "stroke-width": 2 }, kg);
+    maak("path", { d: "M45,-13 L45,-24 M205,13 L205,24", ...glas, "stroke-width": 6 }, kg);
+    maak("path", { d: `M${L},0 L${L},0`, ...glas }, kg);
+    maak("path", { d: `M${eind[0]},${eind[1]} L${eind[0] + 2},${eind[1] + 6} L${eind[0] + 2},420`, ...glas }, g);
+    const [ux, uy] = pt(45, -24), [ix, iy] = pt(205, 24);
+    const slang = { fill: "none", stroke: "#b5562a", "stroke-width": 5, "stroke-linecap": "round" };
+    maak("path", { d: `M${ux},${uy} Q${ux + 4},${uy - 30} ${ux + 30},${uy - 52}`, ...slang }, g);
+    maak("path", { d: `M${ix},${iy} L${ix},${iy + 40}`, ...slang }, g);
+    maak("line", { x1: ux + 30, y1: uy - 52, x2: ux + 42, y2: uy - 64, stroke: "#11264a", "stroke-width": 2, "marker-end": "url(#pijl)" }, g);
+    maak("line", { x1: ix, y1: iy + 72, x2: ix, y2: iy + 48, stroke: "#11264a", "stroke-width": 2, "marker-end": "url(#pijl)" }, g);
+    label(g, ux + 46, uy - 62, "water uit"); label(g, ix - 8, iy + 70, "water in", "end");
+    maak("rect", { x: 283, y: 246, width: 14, height: 14, rx: 2, ...metaal }, g);
+    label(g, 318, 236, "koeler", "start", "lab");
     // opvangvat (erlenmeyer)
-    const ce = maak("clipPath", { id: "erl" }, g); maak("path", { d: "M335,410 L355,410 L355,428 L392,490 L298,490 L335,428 Z" }, ce);
-    this.dest = maak("rect", { x: 290, width: 110, fill: "#cfe3f7", "clip-path": "url(#erl)" }, g);
-    maak("path", { d: "M333,404 L335,410 L335,428 L298,490 L392,490 L355,428 L355,410 L357,404", fill: "none", stroke: "#2c5687", "stroke-width": 3, "stroke-linejoin": "round" }, g);
-    this.lDest = label(g, 398, 474, "destillaat", "end", "lab");
-    this.vlam = brander(g, 110, 400);
-    this.lRes = label(g, 176, 384, "kolf met wijn", "start", "lab");
+    const ex = eind[0] + 2;
+    const erl = `M${ex - 10},420 L${ex - 10},442 L${ex - 48},514 L${ex + 48},514 L${ex + 10},442 L${ex + 10},420`;
+    const ce = maak("clipPath", { id: "erl" }, g); maak("path", { d: erl + " Z" }, ce);
+    this.dest = maak("rect", { x: ex - 50, width: 100, fill: "#cfe3f7", "clip-path": "url(#erl)" }, g);
+    maak("path", { d: erl, ...glas }, g);
+    this.ex = ex;
+    this.lDest = label(g, ex, 540, "destillaat", "middle", "lab");
+    // gasbrander
+    this.vlam = brander(g, 115, 425);
+    maak("path", { d: "M93,500 Q60,508 14,500", fill: "none", stroke: "#e07a2e", "stroke-width": 5, "stroke-linecap": "round" }, g);
+    label(g, 146, 480, "gasbrander");
+    lijntje(g, 160, 340, 172, 346);
+    this.lRes = label(g, 176, 352, "kolf met wijn", "start", "lab");
     this.dg = maak("g", {}, g);
-    const M = kader({ x: 110, y: 312, r: 16 });
+    const M = kader({ x: 115, y: 330, r: 15 });
     this.S = []; this.D = [];
-    vul(M.g, this.D, { x0: MK.x0, y0: 250, x1: MK.x1, y1: MK.y1 }, 25, () => { const r = Math.random(); return r < .27 ? "ethanol" : r < .32 ? "kleur" : "water"; });
-    label(M.boven, 480, 86, "damp", "start", "lab-m");
-    label(M.boven, 480, 470, "wijn in de kolf", "start", "lab-m");
+    vul(M.g, this.D, { x0: MK.x0, y0: 290, x1: MK.x1, y1: MK.y1 }, 25, () => { const r = Math.random(); return r < .27 ? "ethanol" : r < .32 ? "kleur" : "water"; });
+    label(M.boven, 480, 76, "damp", "start", "lab-m");
+    label(M.boven, 480, MK.y1 - 10, "wijn in de kolf", "start", "lab-m");
   },
   stap(dt) {
     const t = this.t, aan = t > 0;
@@ -707,11 +762,13 @@ const mDestilleren = {
     this.D.forEach(zet);
     const T = 20 + 58 * tussen(t, 0, 1.4);
     this.tT.textContent = `${Math.round(T)} °C`;
-    flakker(this.vlam, aan && t < 21, 110, 400);
-    this.wijn.setAttribute("y", 318 + 8 * tussen(t, 2, 20));
-    const h = 24 * tussen(t, 3.5, 21);
-    this.dest.setAttribute("y", 490 - h); this.dest.setAttribute("height", h);
-    druppels(this, this.dg, 345, 406, 490 - h, t > 3 && t < 20.5, dt);
+    const yK = 200 - (T - 20) / 80 * 120;
+    this.kwik.setAttribute("y", yK); this.kwik.setAttribute("height", 214 - yK);
+    flakker(this.vlam, aan && t < 21, 115, 425);
+    this.wijn.setAttribute("y", 322 + 9 * tussen(t, 2, 20));
+    const h = 26 * tussen(t, 3.5, 21);
+    this.dest.setAttribute("y", 514 - h); this.dest.setAttribute("height", h);
+    druppels(this, this.dg, this.ex, 424, 514 - h, t > 3 && t < 20.5, dt);
     this.lDest.setAttribute("opacity", t >= 8 ? 1 : 0); this.lRes.textContent = t >= 14.5 ? "residu in de kolf" : "kolf met wijn";
   }
 };
@@ -744,19 +801,19 @@ const mExtraheren = {
     this.lExt = label(g, 205, 506, "extract: thee", "middle", "lab");
     const M = kader({ x: 204, y: 300, r: 15 });
     this.S = []; this.D = []; this.losT = [];
-    for (let c = 0; c < 3; c++) for (let r = 0; r < 10; r++) this.S.push(deeltje(M.g, "blad", 495 + c * 42, 84 + r * 42));
+    for (let c = 0; c < 3; c++) for (let r = 0; r < 11; r++) this.S.push(deeltje(M.g, "blad", 495 + c * 42, 76 + r * 42));
     maak("line", { x1: 618, y1: MK.y0, x2: 618, y2: MK.y1, stroke: "#b4aa90", "stroke-width": 3, "stroke-dasharray": "3 6" }, M.g);
     const vak = { x0: 620, y0: MK.y0, x1: MK.x1, y1: MK.y1 };
     vul(M.g, this.D, vak, 24, () => "water");
     this.kleur = [];
-    for (let r = 0; r < 9; r++) {                      // smaakstoffen aan en in het blad
-      const p = deeltje(M.g, "smaak", r % 2 ? 600 : 558, 105 + r * 42); p.vast = true; p.spook = true; p.vak = vak;
+    for (let r = 0; r < 10; r++) {                     // smaakstoffen aan en in het blad
+      const p = deeltje(M.g, "smaak", r % 2 ? 600 : 558, 97 + r * 42); p.vast = true; p.spook = true; p.vak = vak;
       p.los = 1.6 + (r % 2 ? r * .45 : 4 + r * .9); this.kleur.push(p); this.D.push(p);
     }
     this.vak = vak;
-    label(M.boven, 480, 86, "blad", "start", "lab-m");
-    label(M.boven, 870, 86, "heet water", "end", "lab-m");
-    label(M.boven, 612, 470, "zakje", "end", "lab-m");
+    label(M.boven, 480, 76, "blad", "start", "lab-m");
+    label(M.boven, 870, 76, "heet water", "end", "lab-m");
+    label(M.boven, 612, MK.y1 - 10, "zakje", "end", "lab-m");
   },
   stap(dt) {
     const t = this.t, aan = t > 0;
@@ -764,7 +821,7 @@ const mExtraheren = {
       if (p.vast && aan && t >= p.los) { p.vast = false; p.ax = 900; }
       if (p.spook && p.x > 640) { p.spook = false; p.ax = 0; }
     }
-    fysica(this.D, this.S, this.vak, dt, { ruis: 2700, wissel: 3 });
+    fysica(this.D, this.S, this.vak, dt, { ruis: 2700, wissel: 14, meng: "smaak" });
     for (const p of this.kleur) if (p.spook && !p.vast) p.x = Math.max(p.x, 540);
     this.D.forEach(zet);
     const f = tussen(t, 1.5, 22);
@@ -789,27 +846,49 @@ const mAdsorberen = {
   ],
   bouw() {
     const g = nieuweTekening();
-    this.boven = maak("rect", { x: 182, width: 56, fill: "#8e44ad", opacity: .5 }, g);
-    for (let y = 212; y < 392; y += 13) for (let x = 188 + (y % 2) * 4; x < 236; x += 13) maak("circle", { cx: x + rnd(-1, 1), cy: y, r: 6.5, fill: "#3c4248" }, g);
-    maak("path", { d: "M180,120 L180,396 L203,418 L203,436 M240,120 L240,396 L217,418 L217,436", fill: "none", stroke: "#2c5687", "stroke-width": 3.5, "stroke-linejoin": "round" }, g);
-    this.opv = maak("rect", { x: 152, width: 116, fill: "#cfe3f7" }, g);
-    beker(g, 150, 440, 120, 60);
+    // kolom met actieve kool; de vloeistof zakt erdoorheen
+    const d = maak("defs", {}, g), lg = maak("linearGradient", { id: "gKool", x1: 0, y1: 200, x2: 0, y2: 392, gradientUnits: "userSpaceOnUse" }, d);
+    maak("stop", { offset: 0, "stop-color": "#b27fc6" }, lg);
+    this.stopP = maak("stop", { offset: .2, "stop-color": "#b27fc6" }, lg);
+    this.stopB = maak("stop", { offset: .4, "stop-color": "#cfe3f7" }, lg);
+    maak("stop", { offset: 1, "stop-color": "#cfe3f7" }, lg);
+    this.boven = maak("rect", { x: 167, width: 86, fill: "#b27fc6" }, g);
+    this.nat = maak("rect", { x: 167, y: 200, width: 86, fill: "url(#gKool)" }, g);
+    this.stroom = [];
+    for (let i = 0; i < 16; i++) this.stroom.push({ x: rnd(172, 248), y: rnd(200, 392), el: maak("circle", { r: 3, opacity: 0 }, g) });
+    for (let y = 206; y < 392; y += 15) for (let x = 174 + ((y / 15) % 2) * 7; x < 250; x += 15)
+      maak("circle", { cx: x + rnd(-2, 2), cy: y + rnd(-2, 2), r: rnd(5, 6.5), fill: "#2f3439" }, g);
+    maak("path", { d: "M165,110 L165,396 L203,426 L203,444 M255,110 L255,396 L217,426 L217,444", fill: "none", stroke: "#2c5687", "stroke-width": 3.5, "stroke-linejoin": "round" }, g);
+    maak("path", { d: "M162,400 L258,400", stroke: "#8796a6", "stroke-width": 3, "stroke-dasharray": "4 3" }, g);
+    this.opv = maak("rect", { x: 142, width: 136, fill: "#cfe3f7" }, g);
+    beker(g, 140, 448, 140, 66);
     this.dg = maak("g", {}, g);
-    label(g, 250, 150, "water met kleurstof"); label(g, 250, 300, "actieve kool");
-    this.lUit = label(g, 278, 492, "kleurloos water", "start", "lab");
+    for (const y of [210, 290, 370]) maak("line", { x1: 140, y1: y, x2: 140, y2: y + 40, stroke: "#2c5687", "stroke-width": 2.5, "marker-end": "url(#pijl)" }, g);
+    label(g, 132, 250, "stroming", "end");
+    label(g, 266, 150, "water met"); label(g, 266, 166, "kleurstof");
+    label(g, 266, 290, "korrels"); label(g, 266, 306, "actieve kool");
+    this.lUit = label(g, 288, 506, "kleurloos water", "start", "lab");
     const M = kader({ x: 210, y: 300, r: 15 });
+    // drie korrels actieve kool; de vloeistof stroomt ertussendoor
     this.S = []; this.D = [];
-    const gat = (c, r) => (r >= 4 && r <= 5 && c >= 2) || (r >= 10 && r <= 11 && c >= 1) || (c >= 4 && r >= 7 && r <= 8);
-    for (let c = 0; c < 6; c++) for (let r = 0; r < 17; r++) if (!gat(c, r)) this.S.push(deeltje(M.g, "kool", 482 + c * 25, 70 + r * 25));
-    vul(M.g, this.D, { x0: 614, y0: MK.y0, x1: MK.x1, y1: MK.y1 }, 24, (x, y) => Math.random() < .09 ? "kleur" : "water");
+    this.korrels = [[505, 150, 95], [848, 300, 90], [540, 470, 82]];
+    for (const [cx, cy, R] of this.korrels)
+      for (let r = -5; r <= 5; r++) for (let c = -5; c <= 5; c++) {
+        const x = cx + (c + (r % 2 ? .5 : 0)) * 24, y = cy + r * 21;
+        if (Math.hypot(x - cx, y - cy) < R - 6) this.S.push(deeltje(M.g, "kool", x, y));
+      }
+    const inKorrel = (x, y) => this.korrels.some(([cx, cy, R]) => Math.hypot(x - cx, y - cy) < R + 10);
+    this.inKorrel = inKorrel;
+    vul(M.g, this.D, MK, 24, (x, y) => inKorrel(x, y) ? null : Math.random() < .08 ? "kleur" : "water");
     this.kleur = this.D.filter(p => p.soort === "kleur");
-    label(M.boven, 482, 86, "actieve kool", "start", "lab-m");
-    maak("line", { x1: 860, y1: 120, x2: 860, y2: 300, stroke: "#2c5687", "stroke-width": 3, "marker-end": "url(#pijl)" }, M.boven);
-    label(M.boven, 850, 110, "stroming", "end", "lab-m");
+    label(M.boven, 480, 72, "korrel actieve kool", "start", "lab-m");
+    label(M.boven, 870, MK.y1 - 10, "korrel actieve kool", "end", "lab-m");
+    maak("line", { x1: 690, y1: 80, x2: 690, y2: 160, stroke: "#2c5687", "stroke-width": 3, "marker-end": "url(#pijl)" }, M.boven);
+    label(M.boven, 700, 100, "stroming", "start", "lab-m");
   },
   stap(dt) {
     const t = this.t, aan = t > 0;
-    for (const p of this.D) p.zw = aan ? 140 : 0;
+    for (const p of this.D) p.zw = aan ? 100 : 0;
     if (t > 1.2) for (const p of this.kleur) {            // kleurstof dichtbij de kool wordt aangetrokken en blijft hangen
       if (p.vast) continue;
       let best = null, bd = 1e9;
@@ -818,17 +897,27 @@ const mAdsorberen = {
       else if (bd < 160) { p.ax = (best.x - p.x) / bd * 1500; p.ay = (best.y - p.y) / bd * 1500; }
       else p.ax = p.ay = 0;
     }
-    fysica(this.D, this.S, MK, dt, { ruis: 1900, wissel: 3, rond: true });
+    fysica(this.D, this.S, MK, dt, { ruis: 2300, wissel: 3, rond: true });
     for (const p of this.D) {                             // stroming: onderaan eruit, bovenaan komt nieuw water binnen
-      if (p.y > MK.y1 + p.r) { p.y = MK.y0 - p.r; p.x = rnd(625, 860); p.wissel = null; }
+      if (p.y > MK.y1 + p.r) { p.y = MK.y0 - p.r; do p.x = rnd(MK.x0 + 15, MK.x1 - 15); while (this.inKorrel(p.x, MK.y0 + 10)); p.wissel = null; }
       if (p.y < MK.y0 - 30) p.y = MK.y0 - 30;
     }
     this.D.forEach(zet);
-    const L = 130 + 70 * tussen(t, 1, 22);
-    this.boven.setAttribute("y", L); this.boven.setAttribute("height", 208 - L);
-    const h = 40 * tussen(t, 3, 22);
-    this.opv.setAttribute("y", 498 - h); this.opv.setAttribute("height", h);
-    druppels(this, this.dg, 210, 440, 498 - h, t > 2.5 && t < 21, dt);
+    const L = 124 + 76 * tussen(t, 1, 22), front = 192 * tussen(t, .5, 4);
+    this.boven.setAttribute("y", L); this.boven.setAttribute("height", Math.max(0, 200 - L));
+    this.nat.setAttribute("height", front);
+    const paars = .15 + .25 * tussen(t, 4, 22);                      // de bovenste kool raakt langzaam vol met kleurstof
+    this.stopP.setAttribute("offset", paars.toFixed(3)); this.stopB.setAttribute("offset", (paars + .2).toFixed(3));
+    const stroomt = aan && t < 22;
+    for (const s of this.stroom) {                                    // de vloeistof zakt tussen de korrels door
+      if (stroomt) { s.y += 45 * dt; if (s.y > 392) s.y = 200; }
+      const zicht = stroomt && s.y < 200 + front;
+      s.el.setAttribute("cx", s.x); s.el.setAttribute("cy", s.y.toFixed(1)); s.el.setAttribute("opacity", zicht ? .9 : 0);
+      s.el.setAttribute("fill", s.y < 200 + 192 * paars ? "#7d3c98" : "#5aa0dc");
+    }
+    const h = 44 * tussen(t, 4, 22);
+    this.opv.setAttribute("y", 512 - h); this.opv.setAttribute("height", h);
+    druppels(this, this.dg, 210, 448, 512 - h, t > 4 && t < 21.5, dt);
     this.lUit.setAttribute("opacity", t >= 8 ? 1 : 0);
   }
 };
@@ -861,13 +950,13 @@ const mIndampen = {
     const M = kader({ x: 210, y: 318, r: 16 });
     this.S = []; this.D = [];
     const ionen = [];
-    for (let i = 0; i < 16; i++) ionen.push([500 + (i % 8) * 50 + rnd(-6, 6), 270 + Math.floor(i / 8) * 110 + rnd(-10, 10), i % 2 ? "min" : "plus"]);
-    vul(M.g, this.D, { x0: MK.x0, y0: 200, x1: MK.x1, y1: MK.y1 - 6 }, 24, (x, y) => ionen.some(([a, b]) => Math.hypot(x - a, y - b) < 22) ? null : "water");
+    for (let i = 0; i < 16; i++) ionen.push([500 + (i % 8) * 50 + rnd(-6, 6), 320 + Math.floor(i / 8) * 110 + rnd(-10, 10), i % 2 ? "min" : "plus"]);
+    vul(M.g, this.D, { x0: MK.x0, y0: 250, x1: MK.x1, y1: MK.y1 - 6 }, 24, (x, y) => ionen.some(([a, b]) => Math.hypot(x - a, y - b) < 22) ? null : "water");
     for (const [x, y, s] of ionen) this.D.push(deeltje(M.g, s, x, y));
     this.ionen = this.D.filter(p => p.soort !== "water");
     maak("rect", { x: MK.x0, y: MK.y1 - 6, width: MK.x1 - MK.x0, height: 6, fill: "#2c5687" }, M.g);
-    label(M.boven, 480, 86, "lucht", "start", "lab-m");
-    label(M.boven, 870, 466, "bodem van de schaal", "end", "lab-m");
+    label(M.boven, 480, 76, "lucht", "start", "lab-m");
+    label(M.boven, 870, MK.y1 - 14, "bodem van de schaal", "end", "lab-m");
     this.rooster = false;
   },
   stap(dt) {
@@ -890,6 +979,9 @@ const mIndampen = {
       const k = Math.min(1, dt * 1.6); p.x += (p.doel.x - p.x) * k; p.y += (p.doel.y - p.y) * k; p.vh = 0;
     }
     fysica(this.D, this.S, { x0: MK.x0, y0: MK.y0 - 60, x1: MK.x1, y1: MK.y1 - 6 }, dt, { ruis: aan ? 2500 : 1900, wissel: 3 });
+    // ionen verdampen niet: ze blijven onder het oppervlak van de vloeistof
+    const ys = this.D.filter(p => p.soort === "water" && !p.uit).map(p => p.y).sort((a, b) => a - b);
+    if (ys.length > 5) for (const p of this.ionen) if (!p.vast && p.y < ys[4] + 4) { p.y = ys[4] + 4; p.vy = Math.max(0, p.vy); }
     this.D.forEach(zet);
     flakker(this.vlam, aan && t < 21, 210, 390);
     this.vl.setAttribute("y", 290 + 37 * tussen(t, 1.5, 19));

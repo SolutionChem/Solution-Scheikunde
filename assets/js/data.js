@@ -13,7 +13,7 @@ window.SOLUTION = {
   /* Versie van de materialen. Verhoog dit (bijv. de datum) als je een animatie of
      simulatie in materialen/ hebt aangepast: browsers laden dan zeker de nieuwe versie
      in plaats van een oude uit hun geheugen (cache). */
-  versie: "2026-11-27l",
+  versie: "2026-11-27m",
 
   /* Soorten materiaal. Je kunt hier zelf soorten aan toevoegen. */
   typen: {
@@ -213,6 +213,35 @@ window.SOLUTION = {
                   titel: "Spel: wat voor stof is het?",
                   tekst: "Sleep stofkaarten naar zout, metaal of moleculaire stof en kies de goede verklaring. Vijf vragen per ronde; moleculaire stoffen kun je met verdieping spelen.",
                   url: "materialen/3hv/h3/stofeigenschappen/index.html?tab=spel"
+                }
+              ]
+            },
+            {
+              id: "scheidingsmethoden",
+              type: ["simulatie", "oefening"],
+              paragrafen: [4],
+              titel: "Scheidingsmethoden",
+              beschrijving: "Zeven scheidingsmethoden, elk met een voorbeeld uit het dagelijks leven en een model op microniveau: op welk verschil in stofeigenschap berust de methode, en waarom gebruik je hem?",
+              url: "materialen/3hv/h3/scheidingsmethoden/index.html",
+              formaat: "groot",
+              onderdelen: [
+                {
+                  id: "scheiden-macro-micro",
+                  titel: "Macro en micro",
+                  tekst: "Filtreren, bezinken, centrifugeren, destilleren, extraheren, adsorberen en indampen: bekijk het voorbeeld (bijv. thee zetten) naast de deeltjes, met de uitleg waarom je de methode gebruikt."
+                },
+                {
+                  id: "scheiden-overzicht",
+                  titel: "Overzicht",
+                  tekst: "Alle methoden naast elkaar: het verschil in stofeigenschap, wat er op microniveau gebeurt en waarvoor je de methode gebruikt.",
+                  url: "materialen/3hv/h3/scheidingsmethoden/index.html?tab=overzicht"
+                },
+                {
+                  id: "spel-scheid-het-mengsel",
+                  type: "oefening",
+                  titel: "Spel: scheid het mengsel",
+                  tekst: "Kies bij een mengsel en een doel de goede scheidingsmethode en zet daarna de deeltjes op de plek waar ze terechtkomen. Sommige mengsels scheid je in meer stappen.",
+                  url: "materialen/3hv/h3/scheidingsmethoden/index.html?tab=spel"
                 }
               ]
             }

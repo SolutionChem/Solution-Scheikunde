@@ -156,14 +156,14 @@
 /* =====================================================================
    Deeltjesmodel: faseovergangen (§3.2)
    Links het macroniveau (kolf met ballon, thermometer), rechts het
-   microniveau (wat je door de loep ziet). De toestand volgt uit de
+   microniveau (een model van de moleculen in een klein, ingezoomd stukje). De toestand volgt uit de
    hoeveelheid toegevoerde warmte H: tijdens een faseovergang blijft de
    temperatuur gelijk tot de overgang klaar is.
    ===================================================================== */
 
 const NS = "http://www.w3.org/2000/svg";
 const W = 540, H = 430, BODEM = 414;          // microvenster (binnenmaten)
-const ZICHT = 0.2;                              // deel van de gasmoleculen dat in de loep blijft (gas: ver uit elkaar)
+const ZICHT = 0.2;                              // deel van de gasmoleculen dat in beeld blijft (gas: ver uit elkaar)
 
 /* Atomen per molecuul: [element, x, y, straal]. Kleuren als in molecuulmodellen: O rood, H wit, C zwart. */
 const STOFFEN = {
@@ -287,7 +287,7 @@ function bouwVeld() {
   const lg = maak("linearGradient", { id: "plaat-warm", x1: 0, y1: 0, x2: 0, y2: 1 }, defs);
   maak("stop", { offset: 0, "stop-color": "#f07a3c" }, lg); maak("stop", { offset: 1, "stop-color": "#c0392b" }, lg);
 
-  // verbinding loep → microvenster (achter alles)
+  // verbinding ingezoomd stukje → microvenster (achter alles)
   E.kegel = maak("polygon", { fill: "rgba(44,86,135,.08)", stroke: "none" }, veld);
   E.lijn1 = maak("line", { stroke: "#2c5687", "stroke-width": 2, "stroke-dasharray": "6 5", opacity: .7 }, veld);
   E.lijn2 = maak("line", { stroke: "#2c5687", "stroke-width": 2, "stroke-dasharray": "6 5", opacity: .7 }, veld);
@@ -328,14 +328,14 @@ function bouwVeld() {
   E.kwik = maak("rect", { x: 341, width: 8, rx: 4, fill: "#c0392b" }, m);
   E.temp = maak("text", { x: 345, y: 200, "text-anchor": "middle", "font-size": 24, "font-weight": 700, fill: "#11264a" }, m);
   E.streepjes = maak("g", {}, m);
-  // loep
-  maak("line", { x1: 228, y1: 404, x2: 262, y2: 370, stroke: "#11264a", "stroke-width": 9, "stroke-linecap": "round" }, m);
-  maak("circle", { cx: 190, cy: 440, r: 52, fill: "rgba(255,255,255,.12)", stroke: "#11264a", "stroke-width": 4 }, m);
+  // inzoomcirkel
+  // ingezoomd stukje (geen vergrootglas: moleculen zijn daarmee niet te zien)
+  maak("circle", { cx: 190, cy: 440, r: 52, fill: "rgba(255,255,255,.12)", stroke: "#11264a", "stroke-width": 3, "stroke-dasharray": "8 5" }, m);
 
   /* ===== microniveau ===== */
   const u = E.micro = maak("g", {}, veld);
   const t2 = maak("text", { x: 0, y: -14, class: "titel" }, u, "MICRONIVEAU ");
-  maak("tspan", { class: "z" }, t2, "zo zie je de moleculen door de loep");
+  maak("tspan", { class: "z" }, t2, "een model: zo stel je je de moleculen voor");
   maak("rect", { x: 0, y: 0, width: W, height: H, rx: 14, fill: "#fbfdff" }, u);
   const ub = maak("g", { "clip-path": "url(#micro-binnen)" }, u);
   maak("rect", { x: 0, y: BODEM, width: W, height: H - BODEM, fill: "#c9d8ea" }, ub);
@@ -437,7 +437,7 @@ function dichtstbij(lijst, x, y) {
   for (const p of lijst) { const dd = (p.x - x) ** 2 + (p.y - y) ** 2; if (dd < bd) { bd = dd; best = p; } }
   return best;
 }
-function binnenkomen(p, nieuweStaat) {           // een molecuul komt van buiten de loep in beeld
+function binnenkomen(p, nieuweStaat) {           // een molecuul komt van buiten beeld binnen
   const D = st.d, kant = nieuweStaat === "g" ? Math.floor(Math.random() * 3) : 0;
   const v = nieuweStaat === "g" ? gasSnelheid() : 220;
   if (kant === 0) {                                 // van boven
@@ -578,13 +578,13 @@ function natuurkunde(tst, dt) {
       if (p.st === "s") continue;
       const r = D / 2;
       if (p.y > BODEM - r) { p.y = BODEM - r; p.vy = -Math.abs(p.vy) * (p.st === "g" ? 1 : .2); }   // de bodem van de kolf
-      if (p.st === "g") continue;                     // een gas heeft hier geen wand: de loep is maar een klein stukje van de kolf
+      if (p.st === "g") continue;                     // een gas heeft hier geen wand: het beeld is maar een klein stukje van de kolf
       if (p.x < r) { p.x = r; p.vx = Math.abs(p.vx) * .3; }
       if (p.x > W - r) { p.x = W - r; p.vx = -Math.abs(p.vx) * .3; }
       if (p.y < r) { p.y = r; p.vy = Math.abs(p.vy); }
     }
   }
-  // gasmoleculen vliegen de loep uit; er komt dan elders een ander molecuul binnen
+  // gasmoleculen vliegen uit beeld; er komt dan elders een ander molecuul binnen
   for (const p of lijst) {
     if (p.st !== "g") continue;
     const buiten = p.x < -D || p.x > W + D || p.y < -D;
@@ -603,7 +603,7 @@ function tekenMicro(tst) {
     p.el.setAttribute("transform", `translate(${p.x.toFixed(1)} ${p.y.toFixed(1)}) rotate(${(p.hoek * 57.2958).toFixed(1)})`);
   }
   const c = tel();
-  const wegTekst = c.weg + (c.g - c.zicht) > 0 ? ` · ${c.weg + c.g - c.zicht} buiten de loep` : "";
+  const wegTekst = c.weg + (c.g - c.zicht) > 0 ? ` · ${c.weg + c.g - c.zicht} buiten beeld` : "";
   E.telTekst.textContent = `${N} moleculen${wegTekst}`;
 
   // naam van de faseovergang
@@ -758,7 +758,7 @@ function uitleg(tst) {
   } else if (tst.fase === "l") {
     html = `<b>Vloeibaar</b> (${st.vloei}): de ${st.deeltjes} zitten nog dicht bij elkaar${st.drijft ? "" : ", maar iets verder uit elkaar dan in de vaste stof"}. Ze zitten niet meer in een vast patroon en bewegen langs elkaar heen. Daarom kan een vloeistof stromen en neemt hij de vorm van de kolf aan. De moleculen trekken elkaar nog steeds aan.` + richting;
   } else {
-    html = `<b>Gas</b> (${st.gas}): de ${st.deeltjes} zitten heel ver uit elkaar en vliegen snel alle kanten op. Ze trekken elkaar bijna niet aan. Een gas vult de hele ruimte, ook de ballon. Daarom zie je maar een paar moleculen in de loep. ${cap(st.gas)} kun je niet zien.` + richting;
+    html = `<b>Gas</b> (${st.gas}): de ${st.deeltjes} zitten heel ver uit elkaar en vliegen snel alle kanten op. Ze trekken elkaar bijna niet aan. Een gas vult de hele ruimte, ook de ballon. Daarom staan er in dit kleine stukje maar een paar moleculen. ${cap(st.gas)} kun je niet zien.` + richting;
   }
   if (limiet === "max") html += " <b>Warmer kan niet in deze simulatie.</b>";
   if (limiet === "min") html += " <b>Kouder kan niet in deze simulatie.</b>";

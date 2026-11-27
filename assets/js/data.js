@@ -13,7 +13,7 @@ window.SOLUTION = {
   /* Versie van de materialen. Verhoog dit (bijv. de datum) als je een animatie of
      simulatie in materialen/ hebt aangepast: browsers laden dan zeker de nieuwe versie
      in plaats van een oude uit hun geheugen (cache). */
-  versie: "2026-11-27h",
+  versie: "2026-11-27i",
 
   /* Soorten materiaal. Je kunt hier zelf soorten aan toevoegen. */
   typen: {
@@ -198,7 +198,7 @@ window.SOLUTION = {
                 {
                   id: "eigenschappen-moleculair",
                   titel: "Moleculaire stoffen",
-                  tekst: "Lage smelt- en kookpunten, geen stroomgeleiding, hydrofiel en hydrofoob. Met verdieping: vanderwaalsbinding, dipool-dipoolbinding en waterstofbruggen.",
+                  tekst: "Lage smelt- en kookpunten en geen stroomgeleiding. Met verdieping: vanderwaalsbinding, dipool-dipoolbinding en waterstofbruggen.",
                   url: "materialen/3hv/h3/stofeigenschappen/index.html?tab=moleculair"
                 },
                 {
